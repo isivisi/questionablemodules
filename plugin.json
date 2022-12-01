@@ -1,0 +1,29 @@
+{
+  "slug": "nrandomizer",
+  "name": "nrandomizer",
+  "version": "2.0.0",
+  "license": "proprietary",
+  "brand": "isitec",
+  "author": "John Iannandrea",
+  "authorEmail": "",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": [
+    {
+      "slug": "module",
+      "name": "module",
+      "description": "",
+      "tags": []
+    },
+    {
+      "slug": "nrandomizer",
+      "name": "nrandomizer",
+      "description": "Normalizes inputs and randomly",
+      "tags": []
+    }
+  ]
+}
