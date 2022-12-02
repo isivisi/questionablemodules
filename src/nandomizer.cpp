@@ -1,6 +1,6 @@
 #include "plugin.hpp"
 #include <vector>
-#include <list>
+#include <algorithm>
 #include <random>
 
 /*
@@ -15,7 +15,7 @@ const int MAX_INPUTS = 8;
 
 struct Nandomizer : Module {
 	enum ParamId {
-		PITCH_PARAM,
+		FADE_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -49,17 +49,18 @@ struct Nandomizer : Module {
 
 	int inputsUsed{8};
 
-	float history[MAX_INPUTS][MAX_HISTORY] {{0.0}};
+	float history[MAX_INPUTS][MAX_HISTORY] {{0.f}};
 	int historyIterator[MAX_INPUTS] = {0};
+	float inputFades[MAX_INPUTS] = {0.f};
 
 	bool hasLoadedImage{false};
 
-	int activeOutput = randomInteger(0, MAX_INPUTS-1);
+	int activeOutput = 0;
 	float lastTriggerValue = 0.0;
 
 	Nandomizer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
+		configParam(FADE_PARAM, 0.f, 1.f, 0.f, "");
 		configInput(VOLTAGE_IN_1, "");
 		configInput(VOLTAGE_IN_2, "");
 		configInput(VOLTAGE_IN_3, "");
@@ -97,7 +98,6 @@ struct Nandomizer : Module {
 
 	void process(const ProcessArgs& args) override {
 
-		float inputRMSValues[inputsUsed] = {0};
 		std::vector<int> usableInputs;
 
 		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
@@ -108,24 +108,26 @@ struct Nandomizer : Module {
 			if (inputs[i].isConnected()) {
 				usableInputs.push_back(i);
 				lights[i].setBrightness(1.f);
-			} else lights[i].setBrightness(0.f);
+			} else {
+				lights[i].setBrightness(0.f);
+			}
 		}
 
 		if (!usableInputs.size()) return;
 
 		if (shouldRandomize) activeOutput = usableInputs[randomInteger(0, usableInputs.size()-1)];
 
-		/*for (int i = 0; i < inputsUsed; i++) {
-			float inputVoltage = inputs[i].getVoltage();
-			
-			history[i][historyIterator[i]] = inputVoltage;
-			historyIterator[i] += 1;
-			if (historyIterator[i] >= MAX_HISTORY) historyIterator[i] = 0;
+		float fadingInputs = 0.f;
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			if (i != activeOutput) {
+				inputFades[i] = std::max(0.f, inputFades[i] - ((inputFades[i] * args.sampleTime)));
+				fadingInputs += inputs[i].getVoltage() * inputFades[i];
+			} else {
+				inputFades[i] = 1.f;
+			}
+		}
 
-			inputRMSValues[i] = rmsValue(history[i], MAX_HISTORY);
-		}*/
-
-		outputs[0].setVoltage(inputs[activeOutput].getVoltage());
+		outputs[0].setVoltage(inputs[activeOutput].getVoltage() + (fadingInputs * params[FADE_PARAM].getValue()));
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
 		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
@@ -190,12 +192,12 @@ struct NandomizerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 95)), module, Nandomizer::FADE_PARAM));
 		
 		if (module) {
 			for (int i = 0; i < module->inputsUsed; i++) {
 				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 15.478  + (10.0*float(i)))), module, i));
-				addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(20.24, 20.478 + (10.0*float(i)))), module, i));
+				addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(20.24, 20.478 + (10.0*float(i)))), module, i));
 			}
 		}
 
