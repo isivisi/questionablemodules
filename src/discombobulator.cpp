@@ -125,6 +125,9 @@ struct Discombobulator : Module {
 			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage());
 		}
 
+		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
+		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
+
 	}
 };
 
@@ -175,7 +178,7 @@ struct DiscombobulatorWidget : ModuleWidget {
 		backdrop = new MSMPanel();
 		backdrop->box.size = Vec(9 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.png");
-		backdrop->scalar = 3.7;
+		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 		
 		setPanel(backdrop);
