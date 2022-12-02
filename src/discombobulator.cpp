@@ -13,7 +13,7 @@
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
 
-struct Nandomizer : Module {
+struct Discombobulator : Module {
 	enum ParamId {
 		PITCH_PARAM,
 		PARAMS_LEN
@@ -31,6 +31,14 @@ struct Nandomizer : Module {
 		INPUTS_LEN
 	};
 	enum OutputId {
+		VOLTAGE_OUT_1,
+		VOLTAGE_OUT_2,
+		VOLTAGE_OUT_3,
+		VOLTAGE_OUT_4,
+		VOLTAGE_OUT_5,
+		VOLTAGE_OUT_6,
+		VOLTAGE_OUT_7,
+		VOLTAGE_OUT_8,
 		SINE_OUTPUT,
 		OUTPUTS_LEN
 	};
@@ -47,17 +55,14 @@ struct Nandomizer : Module {
 		LIGHTS_LEN
 	};
 
-	int inputsUsed{2};
-
-	float history[MAX_INPUTS][MAX_HISTORY] {{0.0}};
-	int historyIterator[MAX_INPUTS] = {0};
+	int inputsUsed{8};
 
 	bool hasLoadedImage{false};
 
 	int activeOutput = randomInteger(0, MAX_INPUTS-1);
 	float lastTriggerValue = 0.0;
 
-	Nandomizer() {
+	Discombobulator() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
 		configInput(VOLTAGE_IN_1, "");
@@ -73,21 +78,6 @@ struct Nandomizer : Module {
 		
 	}
 
-	float rmsValue(float arr[], int n) {
-		int square = 0;
-		float mean = 0.0, root = 0.0;
-
-		for (int i = 0; i < n; i++) {
-			square += pow(arr[i], 2);
-		}
-
-		mean = (square / (float)(n));
-
-		root = sqrt(mean);
-
-		return root;
-	}
-
 	int randomInteger(int min, int max) {
 		std::random_device rd; // obtain a random number from hardware
 		std::mt19937 gen(rd()); // seed the generator
@@ -97,27 +87,7 @@ struct Nandomizer : Module {
 
 	void process(const ProcessArgs& args) override {
 
-		float inputRMSValues[inputsUsed] = {0};
-
-		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
-		lastTriggerValue = inputs[8].getVoltage();
-
-		if (shouldRandomize) activeOutput = randomInteger(0, inputsUsed-1);
-
-		for (int i = 0; i < inputsUsed; i++) {
-			float inputVoltage = inputs[i].getVoltage();
-			
-			history[i][historyIterator[i]] = inputVoltage;
-			historyIterator[i] += 1;
-			if (historyIterator[i] >= MAX_HISTORY) historyIterator[i] = 0;
-
-			inputRMSValues[i] = rmsValue(history[i], MAX_HISTORY);
-		}
-
-		outputs[0].setVoltage(inputs[activeOutput].getVoltage());
-
-		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
-		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
+		
 
 	}
 };
@@ -159,17 +129,17 @@ struct MSMPanel : TransparentWidget {
 };
 
 
-struct NandomizerWidget : ModuleWidget {
+struct DiscombobulatorWidget : ModuleWidget {
 	MSMPanel *backdrop;
 
-	NandomizerWidget(Nandomizer* module) {
+	DiscombobulatorWidget(Discombobulator* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
 
 		backdrop = new MSMPanel();
-		backdrop->box.size = Vec(6 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.png");
-		backdrop->scalar = 3.5;
+		backdrop->box.size = Vec(9 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.png");
+		backdrop->scalar = 3.7;
 		backdrop->visible = true;
 		
 		setPanel(backdrop);
@@ -183,16 +153,16 @@ struct NandomizerWidget : ModuleWidget {
 		
 		if (module) {
 			for (int i = 0; i < module->inputsUsed; i++) {
-				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 15.478  + (10.0*float(i)))), module, i));
-				addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(20.24, 20.478 + (10.0*float(i)))), module, i));
+				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.24, 15.478  + (10.0*float(i)))), module, i));
+				addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 15.478  + (10.0*float(i)))), module, i));
 			}
 		}
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 110.713)), module, Nandomizer::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 110.713)), module, Nandomizer::TRIGGER));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 110.713)), module, Discombobulator::SINE_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.24, 110.713)), module, Discombobulator::TRIGGER));
 
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Discombobulator::BLINK_LIGHT));
 	}
 };
 
-//Model* modelNandomizer = createModel<Nandomizer, NandomizerWidget>("nandomizer");
+Model* modelDiscombobulator = createModel<Discombobulator, DiscombobulatorWidget>("discombobulator");

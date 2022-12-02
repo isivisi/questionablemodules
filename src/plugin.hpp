@@ -15,3 +15,5 @@ extern Model* modelNandomizer5;
 extern Model* modelNandomizer6;
 extern Model* modelNandomizer7;
 extern Model* modelNandomizer8;
+
+extern Model* modelDiscombobulator;

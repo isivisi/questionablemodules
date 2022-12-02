@@ -14,6 +14,12 @@
   "changelogUrl": "",
   "modules": [
     {
+      "slug": "discombobulator",
+      "name": "discombobulator",
+      "description": "Randomly switches inputs and outputs",
+      "tags": []
+    },
+    {
       "slug": "nandomizer",
       "name": "nandomizer",
       "description": "Normalizes inputs and randomly",
