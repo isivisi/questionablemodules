@@ -57,9 +57,9 @@ struct Discombobulator : Module {
 
 	int inputsUsed{8};
 
-	bool hasLoadedImage{false};
+	int outputSwaps[MAX_INPUTS];
+	float lastInput[MAX_INPUTS] = {0.f};
 
-	int activeOutput = randomInteger(0, MAX_INPUTS-1);
 	float lastTriggerValue = 0.0;
 
 	Discombobulator() {
@@ -68,13 +68,25 @@ struct Discombobulator : Module {
 		configInput(VOLTAGE_IN_1, "");
 		configInput(VOLTAGE_IN_2, "");
 		configInput(VOLTAGE_IN_3, "");
-		configInput(VOLTAGE_IN_4, "");
 		configInput(VOLTAGE_IN_5, "");
 		configInput(VOLTAGE_IN_6, "");
 		configInput(VOLTAGE_IN_7, "");
 		configInput(VOLTAGE_IN_8, "");
 		configOutput(SINE_OUTPUT, "");
+		configOutput(VOLTAGE_OUT_1, "");
+		configOutput(VOLTAGE_OUT_2, "");
+		configOutput(VOLTAGE_OUT_3, "");
+		configOutput(VOLTAGE_OUT_4, "");
+		configOutput(VOLTAGE_OUT_5, "");
+		configOutput(VOLTAGE_OUT_6, "");
+		configOutput(VOLTAGE_OUT_7, "");
+		configOutput(VOLTAGE_OUT_8, "");
 		configInput(TRIGGER, "");
+
+		// Initialize default locations
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			outputSwaps[i] = i;
+		}
 		
 	}
 
@@ -87,7 +99,28 @@ struct Discombobulator : Module {
 
 	void process(const ProcessArgs& args) override {
 
-		
+		std::vector<int> usableInputs;
+
+		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
+		lastTriggerValue = inputs[8].getVoltage();
+
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			float voltage = inputs[i].getVoltage();
+			if (lastInput[i] != voltage) usableInputs.push_back(i);
+			lastInput[i] = voltage;
+		}
+
+		// swap usable inputs
+		if (shouldRandomize) {
+			for (int i = usableInputs.size() -1; i >= 0; i--) {
+				outputSwaps[i] = randomInteger(0, usableInputs.size());
+				usableInputs.pop_back();
+			}
+		}
+
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage());
+		}
 
 	}
 };
@@ -153,13 +186,13 @@ struct DiscombobulatorWidget : ModuleWidget {
 		
 		if (module) {
 			for (int i = 0; i < module->inputsUsed; i++) {
-				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.24, 15.478  + (10.0*float(i)))), module, i));
+				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 15.478  + (10.0*float(i)))), module, i));
 				addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 15.478  + (10.0*float(i)))), module, i));
 			}
 		}
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 110.713)), module, Discombobulator::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(12.24, 110.713)), module, Discombobulator::TRIGGER));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::SINE_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Discombobulator::BLINK_LIGHT));
 	}

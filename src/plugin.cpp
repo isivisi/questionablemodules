@@ -7,13 +7,13 @@ void init(Plugin* p) {
 	pluginInstance = p;
 
 	// Add modules here
-	p->addModel(modelNandomizer2);
-	p->addModel(modelNandomizer3);
+	p->addModel(modelNandomizer);
+	/*p->addModel(modelNandomizer3);
 	p->addModel(modelNandomizer4);
 	p->addModel(modelNandomizer5);
 	p->addModel(modelNandomizer6);
 	p->addModel(modelNandomizer7);
-	p->addModel(modelNandomizer8);
+	p->addModel(modelNandomizer8);*/
 
 	p->addModel(modelDiscombobulator);
 
