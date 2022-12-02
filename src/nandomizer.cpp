@@ -51,7 +51,6 @@ struct Nandomizer : Module {
 
 	float history[MAX_INPUTS][MAX_HISTORY] {{0.0}};
 	int historyIterator[MAX_INPUTS] = {0};
-	float lastInput[MAX_INPUTS] = {0.f};
 
 	bool hasLoadedImage{false};
 
@@ -106,13 +105,17 @@ struct Nandomizer : Module {
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			float voltage = inputs[i].getVoltage();
-			if (lastInput[i] != voltage) usableInputs.push_back(i);
-			lastInput[i] = voltage;
+			if (inputs[i].isConnected()) {
+				usableInputs.push_back(i);
+				lights[i].setBrightness(1.f);
+			} else lights[i].setBrightness(0.f);
 		}
+
+		if (!usableInputs.size()) return;
 
 		if (shouldRandomize) activeOutput = usableInputs[randomInteger(0, usableInputs.size()-1)];
 
-		for (int i = 0; i < inputsUsed; i++) {
+		/*for (int i = 0; i < inputsUsed; i++) {
 			float inputVoltage = inputs[i].getVoltage();
 			
 			history[i][historyIterator[i]] = inputVoltage;
@@ -120,7 +123,7 @@ struct Nandomizer : Module {
 			if (historyIterator[i] >= MAX_HISTORY) historyIterator[i] = 0;
 
 			inputRMSValues[i] = rmsValue(history[i], MAX_HISTORY);
-		}
+		}*/
 
 		outputs[0].setVoltage(inputs[activeOutput].getVoltage());
 
