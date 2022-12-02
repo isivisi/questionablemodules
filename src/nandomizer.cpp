@@ -47,10 +47,11 @@ struct Nandomizer : Module {
 		LIGHTS_LEN
 	};
 
-	int inputsUsed{2};
+	int inputsUsed{8};
 
 	float history[MAX_INPUTS][MAX_HISTORY] {{0.0}};
 	int historyIterator[MAX_INPUTS] = {0};
+	float lastInput[MAX_INPUTS] = {0.f};
 
 	bool hasLoadedImage{false};
 
@@ -98,11 +99,18 @@ struct Nandomizer : Module {
 	void process(const ProcessArgs& args) override {
 
 		float inputRMSValues[inputsUsed] = {0};
+		std::vector<int> usableInputs;
 
 		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
 		lastTriggerValue = inputs[8].getVoltage();
 
-		if (shouldRandomize) activeOutput = randomInteger(0, inputsUsed-1);
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			float voltage = inputs[i].getVoltage();
+			if (lastInput[i] != voltage) usableInputs.push_back(i);
+			lastInput[i] = voltage;
+		}
+
+		if (shouldRandomize) activeOutput = usableInputs[randomInteger(0, usableInputs.size()-1)];
 
 		for (int i = 0; i < inputsUsed; i++) {
 			float inputVoltage = inputs[i].getVoltage();
@@ -188,11 +196,11 @@ struct NandomizerWidget : ModuleWidget {
 			}
 		}
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 110.713)), module, Nandomizer::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 110.713)), module, Nandomizer::TRIGGER));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, Nandomizer::SINE_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 113)), module, Nandomizer::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
 	}
 };
 
-//Model* modelNandomizer = createModel<Nandomizer, NandomizerWidget>("nandomizer");
+Model* modelNandomizer = createModel<Nandomizer, NandomizerWidget>("nandomizer");

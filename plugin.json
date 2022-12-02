@@ -3,7 +3,7 @@
   "name": "nandomizer",
   "version": "2.0.0",
   "license": "proprietary",
-  "brand": "isitec",
+  "brand": "isiaudio",
   "author": "John Iannandrea",
   "authorEmail": "",
   "authorUrl": "",
@@ -22,42 +22,6 @@
     {
       "slug": "nandomizer",
       "name": "nandomizer",
-      "description": "Normalizes inputs and randomly",
-      "tags": []
-    },
-    {
-      "slug": "nandomizer3",
-      "name": "nandomizer3",
-      "description": "Normalizes inputs and randomly",
-      "tags": []
-    },
-    {
-      "slug": "nandomizer4",
-      "name": "nandomizer4",
-      "description": "Normalizes inputs and randomly",
-      "tags": []
-    },
-    {
-      "slug": "nandomizer5",
-      "name": "nandomizer5",
-      "description": "Normalizes inputs and randomly",
-      "tags": []
-    },
-    {
-      "slug": "nandomizer6",
-      "name": "nandomizer6",
-      "description": "Normalizes inputs and randomly",
-      "tags": []
-    },
-    {
-      "slug": "nandomizer7",
-      "name": "nandomizer7",
-      "description": "Normalizes inputs and randomly",
-      "tags": []
-    },
-    {
-      "slug": "nandomizer8",
-      "name": "nandomizer8",
       "description": "Normalizes inputs and randomly",
       "tags": []
     }
