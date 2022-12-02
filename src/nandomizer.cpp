@@ -11,32 +11,9 @@
 */
 
 const int MAX_HISTORY = 32;
-const int MAX_INPUTS = 2;
+const int MAX_INPUTS = 8;
 
-float rmsValue(float arr[], int n) {
-	int square = 0;
-	float mean = 0.0, root = 0.0;
-
-	for (int i = 0; i < n; i++) {
-		square += pow(arr[i], 2);
-	}
-
-	mean = (square / (float)(n));
-
-	root = sqrt(mean);
-
-	return root;
-}
-
-int randomInteger(int min, int max) {
-	std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(min, max); // define the range
-	return distr(gen);
-}
-
-
-struct Nrandomizer : Module {
+struct Nandomizer : Module {
 	enum ParamId {
 		PITCH_PARAM,
 		PARAMS_LEN
@@ -58,9 +35,19 @@ struct Nrandomizer : Module {
 		OUTPUTS_LEN
 	};
 	enum LightId {
+		VOLTAGE_IN_LIGHT_1,
+		VOLTAGE_IN_LIGHT_2,
+		VOLTAGE_IN_LIGHT_3,
+		VOLTAGE_IN_LIGHT_4,
+		VOLTAGE_IN_LIGHT_5,
+		VOLTAGE_IN_LIGHT_6,
+		VOLTAGE_IN_LIGHT_7,
+		VOLTAGE_IN_LIGHT_8,
 		BLINK_LIGHT,
 		LIGHTS_LEN
 	};
+
+	int inputsUsed{2};
 
 	float history[MAX_INPUTS][MAX_HISTORY] {{0.0}};
 	int historyIterator[MAX_INPUTS] = {0};
@@ -70,7 +57,7 @@ struct Nrandomizer : Module {
 	int activeOutput = randomInteger(0, MAX_INPUTS-1);
 	float lastTriggerValue = 0.0;
 
-	Nrandomizer() {
+	Nandomizer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
 		configInput(VOLTAGE_IN_1, "");
@@ -86,16 +73,38 @@ struct Nrandomizer : Module {
 		
 	}
 
+	float rmsValue(float arr[], int n) {
+		int square = 0;
+		float mean = 0.0, root = 0.0;
+
+		for (int i = 0; i < n; i++) {
+			square += pow(arr[i], 2);
+		}
+
+		mean = (square / (float)(n));
+
+		root = sqrt(mean);
+
+		return root;
+	}
+
+	int randomInteger(int min, int max) {
+		std::random_device rd; // obtain a random number from hardware
+		std::mt19937 gen(rd()); // seed the generator
+		std::uniform_int_distribution<> distr(min, max); // define the range
+		return distr(gen);
+	}
+
 	void process(const ProcessArgs& args) override {
 
-		float inputRMSValues[MAX_INPUTS] = {0};
+		float inputRMSValues[inputsUsed] = {0};
 
 		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
 		lastTriggerValue = inputs[8].getVoltage();
 
-		if (shouldRandomize) activeOutput = randomInteger(0, MAX_INPUTS-1);
+		if (shouldRandomize) activeOutput = randomInteger(0, inputsUsed-1);
 
-		for (int i = 0; i < MAX_INPUTS; i++) {
+		for (int i = 0; i < inputsUsed; i++) {
 			float inputVoltage = inputs[i].getVoltage();
 			
 			history[i][historyIterator[i]] = inputVoltage;
@@ -114,7 +123,7 @@ struct Nrandomizer : Module {
 };
 
 struct MSMPanel : TransparentWidget {
-  NVGcolor backgroundColor = componentlibrary::SCHEME_LIGHT_GRAY;wqeqweqweqweqwewwww
+  NVGcolor backgroundColor = componentlibrary::SCHEME_LIGHT_GRAY;
   float scalar = 1.0;
   std::string imagePath;
 	void draw(const DrawArgs &args) override {
@@ -150,10 +159,10 @@ struct MSMPanel : TransparentWidget {
 };
 
 
-struct NrandomizerWidget : ModuleWidget {
+struct NandomizerWidget : ModuleWidget {
 	MSMPanel *backdrop;
 
-	NrandomizerWidget(Nrandomizer* module) {
+	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
 
@@ -171,21 +180,19 @@ struct NrandomizerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
+		
+		if (module) {
+			for (int i = 0; i < module->inputsUsed; i++) {
+				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 15.478  + (10.0*float(i)))), module, i));
+				addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(20.24, 20.478 + (10.0*float(i)))), module, i));
+			}
+		}
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 22.478)), module, Nrandomizer::VOLTAGE_IN_1));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 33.478)), module, Nrandomizer::VOLTAGE_IN_2));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 44.478)), module, Nrandomizer::VOLTAGE_IN_3));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 55.478)), module, Nrandomizer::VOLTAGE_IN_4));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 66.478)), module, Nrandomizer::VOLTAGE_IN_5));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 77.478)), module, Nrandomizer::VOLTAGE_IN_6));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 88.478)), module, Nrandomizer::VOLTAGE_IN_7));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 99.478)), module, Nrandomizer::VOLTAGE_IN_8));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 110.713)), module, Nandomizer::SINE_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 110.713)), module, Nandomizer::TRIGGER));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 110.713)), module, Nrandomizer::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 110.713)), module, Nrandomizer::TRIGGER));
-
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nrandomizer::BLINK_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
 	}
 };
 
-Model* modelNrandomizer = createModel<Nrandomizer, NrandomizerWidget>("nrandomizer");
+//Model* modelNandomizer = createModel<Nandomizer, NandomizerWidget>("nandomizer");
