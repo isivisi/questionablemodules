@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include <vector>
 #include <list>
+#include <random>
 
 /*
     Param: Read with params[...].getValue()
@@ -27,6 +28,13 @@ float rmsValue(float arr[], int n) {
 	return root;
 }
 
+int randomInteger(int min, int max) {
+	std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_int_distribution<> distr(min, max); // define the range
+	return distr(gen);
+}
+
 
 struct Nrandomizer : Module {
 	enum ParamId {
@@ -42,6 +50,7 @@ struct Nrandomizer : Module {
 		VOLTAGE_IN_6,
 		VOLTAGE_IN_7,
 		VOLTAGE_IN_8,
+		TRIGGER,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -58,6 +67,9 @@ struct Nrandomizer : Module {
 
 	bool hasLoadedImage{false};
 
+	int activeOutput = randomInteger(0, MAX_INPUTS-1);
+	float lastTriggerValue = 0.0;
+
 	Nrandomizer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
@@ -70,12 +82,18 @@ struct Nrandomizer : Module {
 		configInput(VOLTAGE_IN_7, "");
 		configInput(VOLTAGE_IN_8, "");
 		configOutput(SINE_OUTPUT, "");
+		configInput(TRIGGER, "");
 		
 	}
 
 	void process(const ProcessArgs& args) override {
 
 		float inputRMSValues[MAX_INPUTS] = {0};
+
+		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
+		lastTriggerValue = inputs[8].getVoltage();
+
+		if (shouldRandomize) activeOutput = randomInteger(0, MAX_INPUTS-1);
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			float inputVoltage = inputs[i].getVoltage();
@@ -87,13 +105,16 @@ struct Nrandomizer : Module {
 			inputRMSValues[i] = rmsValue(history[i], MAX_HISTORY);
 		}
 
+		outputs[0].setVoltage(inputs[activeOutput].getVoltage());
 
+		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
+		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
 
 	}
 };
 
 struct MSMPanel : TransparentWidget {
-  NVGcolor backgroundColor = componentlibrary::SCHEME_LIGHT_GRAY;
+  NVGcolor backgroundColor = componentlibrary::SCHEME_LIGHT_GRAY;wqeqweqweqweqwewwww
   float scalar = 1.0;
   std::string imagePath;
 	void draw(const DrawArgs &args) override {
@@ -160,9 +181,10 @@ struct NrandomizerWidget : ModuleWidget {
 		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 88.478)), module, Nrandomizer::VOLTAGE_IN_7));
 		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 99.478)), module, Nrandomizer::VOLTAGE_IN_8));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 108.713)), module, Nrandomizer::SINE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 110.713)), module, Nrandomizer::SINE_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 110.713)), module, Nrandomizer::TRIGGER));
 
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 25.81)), module, Nrandomizer::BLINK_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nrandomizer::BLINK_LIGHT));
 	}
 };
 
