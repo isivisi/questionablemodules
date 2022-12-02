@@ -8,4 +8,10 @@ using namespace rack;
 extern Plugin* pluginInstance;
 
 // Declare each Model, defined in each module source file
-extern Model* modelNrandomizer;
+extern Model* modelNandomizer2;
+extern Model* modelNandomizer3;
+extern Model* modelNandomizer4;
+extern Model* modelNandomizer5;
+extern Model* modelNandomizer6;
+extern Model* modelNandomizer7;
+extern Model* modelNandomizer8;
