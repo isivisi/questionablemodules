@@ -147,7 +147,7 @@ struct MSMPanel : TransparentWidget {
 	  }
 
 	  // Border
-	  NVGcolor borderColor = nvgRGBAf(0.5, 0.5, 0.5, 0.5);
+	  NVGcolor borderColor = componentlibrary::SCHEME_LIGHT_GRAY; //nvgRGBAf(0.5, 0.5, 0.5, 0.5);
 	  nvgBeginPath(args.vg);
 	  nvgRect(args.vg, 0.5, 0.5, box.size.x - 1.0, box.size.y - 1.0);
 	  nvgStrokeColor(args.vg, borderColor);
