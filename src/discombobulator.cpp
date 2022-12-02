@@ -106,9 +106,12 @@ struct Discombobulator : Module {
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			float voltage = inputs[i].getVoltage();
-			if (lastInput[i] != voltage) usableInputs.push_back(i);
-			lastInput[i] = voltage;
+			if (inputs[i].isConnected()) {
+				usableInputs.push_back(i);
+			}
 		}
+
+		if (!usableInputs.size()) return;
 
 		// swap usable inputs
 		if (shouldRandomize) {
