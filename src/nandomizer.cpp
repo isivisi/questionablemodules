@@ -28,6 +28,7 @@ struct Nandomizer : Module {
 		VOLTAGE_IN_7,
 		VOLTAGE_IN_8,
 		TRIGGER,
+		FADE_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -60,17 +61,18 @@ struct Nandomizer : Module {
 
 	Nandomizer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(FADE_PARAM, 0.f, 1.f, 0.f, "");
-		configInput(VOLTAGE_IN_1, "");
-		configInput(VOLTAGE_IN_2, "");
-		configInput(VOLTAGE_IN_3, "");
-		configInput(VOLTAGE_IN_4, "");
-		configInput(VOLTAGE_IN_5, "");
-		configInput(VOLTAGE_IN_6, "");
-		configInput(VOLTAGE_IN_7, "");
-		configInput(VOLTAGE_IN_8, "");
+		configParam(FADE_PARAM, 0.f, 1.f, 0.f, "Fade Amount");
+		configInput(VOLTAGE_IN_1, "1");
+		configInput(VOLTAGE_IN_2, "2");
+		configInput(VOLTAGE_IN_3, "3");
+		configInput(VOLTAGE_IN_4, "4");
+		configInput(VOLTAGE_IN_5, "5");
+		configInput(VOLTAGE_IN_6, "6");
+		configInput(VOLTAGE_IN_7, "7");
+		configInput(VOLTAGE_IN_8, "8");
+		configInput(FADE_INPUT, "Fade");
 		configOutput(SINE_OUTPUT, "");
-		configInput(TRIGGER, "");
+		configInput(TRIGGER, "Gate");
 		
 	}
 
@@ -99,7 +101,7 @@ struct Nandomizer : Module {
 	void process(const ProcessArgs& args) override {
 
 		std::vector<int> usableInputs;
-
+		float fadeAmnt = params[FADE_PARAM].getValue() + inputs[FADE_INPUT].getVoltage();
 		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
 		lastTriggerValue = inputs[8].getVoltage();
 
@@ -127,7 +129,7 @@ struct Nandomizer : Module {
 			}
 		}
 
-		outputs[0].setVoltage(inputs[activeOutput].getVoltage() + (fadingInputs * params[FADE_PARAM].getValue()));
+		outputs[0].setVoltage(inputs[activeOutput].getVoltage() + (fadingInputs * fadeAmnt));
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
 		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
@@ -192,13 +194,12 @@ struct NandomizerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 95)), module, Nandomizer::FADE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 100)), module, Nandomizer::FADE_INPUT));
 		
-		if (module) {
-			for (int i = 0; i < module->inputsUsed; i++) {
-				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 15.478  + (10.0*float(i)))), module, i));
-				addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(20.24, 20.478 + (10.0*float(i)))), module, i));
-			}
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 10.478  + (10.0*float(i)))), module, i));
+			addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(20.24, 15.478 + (10.0*float(i)))), module, i));
 		}
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, Nandomizer::SINE_OUTPUT));

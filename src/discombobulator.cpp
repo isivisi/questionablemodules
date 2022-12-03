@@ -15,7 +15,7 @@ const int MAX_INPUTS = 8;
 
 struct Discombobulator : Module {
 	enum ParamId {
-		PITCH_PARAM,
+		FADE_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -28,6 +28,7 @@ struct Discombobulator : Module {
 		VOLTAGE_IN_7,
 		VOLTAGE_IN_8,
 		TRIGGER,
+		FADE_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -64,24 +65,26 @@ struct Discombobulator : Module {
 
 	Discombobulator() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(PITCH_PARAM, 0.f, 1.f, 0.f, "");
-		configInput(VOLTAGE_IN_1, "");
-		configInput(VOLTAGE_IN_2, "");
-		configInput(VOLTAGE_IN_3, "");
-		configInput(VOLTAGE_IN_5, "");
-		configInput(VOLTAGE_IN_6, "");
-		configInput(VOLTAGE_IN_7, "");
-		configInput(VOLTAGE_IN_8, "");
+		configParam(FADE_PARAM, 0.f, 1.f, 0.f, "Fade Amount");
+		configInput(VOLTAGE_IN_1, "1");
+		configInput(VOLTAGE_IN_2, "2");
+		configInput(VOLTAGE_IN_3, "3");
+		configInput(VOLTAGE_IN_4, "4");
+		configInput(VOLTAGE_IN_5, "5");
+		configInput(VOLTAGE_IN_6, "6");
+		configInput(VOLTAGE_IN_7, "7");
+		configInput(VOLTAGE_IN_8, "8");
+		configInput(FADE_INPUT, "Fade");
 		configOutput(SINE_OUTPUT, "");
-		configOutput(VOLTAGE_OUT_1, "");
-		configOutput(VOLTAGE_OUT_2, "");
-		configOutput(VOLTAGE_OUT_3, "");
-		configOutput(VOLTAGE_OUT_4, "");
-		configOutput(VOLTAGE_OUT_5, "");
-		configOutput(VOLTAGE_OUT_6, "");
-		configOutput(VOLTAGE_OUT_7, "");
-		configOutput(VOLTAGE_OUT_8, "");
-		configInput(TRIGGER, "");
+		configOutput(VOLTAGE_OUT_1, "1");
+		configOutput(VOLTAGE_OUT_2, "2");
+		configOutput(VOLTAGE_OUT_3, "3");
+		configOutput(VOLTAGE_OUT_4, "4");
+		configOutput(VOLTAGE_OUT_5, "5");
+		configOutput(VOLTAGE_OUT_6, "6");
+		configOutput(VOLTAGE_OUT_7, "7");
+		configOutput(VOLTAGE_OUT_8, "8");
+		configInput(TRIGGER, "Gate");
 
 		// Initialize default locations
 		for (int i = 0; i < MAX_INPUTS; i++) {
@@ -114,12 +117,23 @@ struct Discombobulator : Module {
 		if (!usableInputs.size()) return;
 
 		// swap usable inputs
+		//float fadingInputs[MAX_INPUTS][MAX_INPUTS] = {{0.f}};
 		if (shouldRandomize) {
 			for (int i = usableInputs.size() -1; i >= 0; i--) {
+				//fadingInputs[i][outputSwaps[i]] = 1.f; // set full fade before swapping
 				outputSwaps[i] = randomInteger(0, usableInputs.size());
 				usableInputs.pop_back();
 			}
 		}
+
+		/*for (int i = 0; i < MAX_INPUTS; i++) {
+			if (i != activeOutput) {
+				inputFades[i] = std::max(0.f, inputFades[i] - ((inputFades[i] * args.sampleTime)));
+				fadingInputs[i] += inputs[i].getVoltage() * inputFades[i];
+			} else {
+				inputFades[i] = 1.f;
+			}
+		}*/
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage());
@@ -189,12 +203,13 @@ struct DiscombobulatorWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
+
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 90)), module, Discombobulator::FADE_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 100)), module, Discombobulator::FADE_INPUT));
 		
-		if (module) {
-			for (int i = 0; i < module->inputsUsed; i++) {
-				addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 15.478  + (10.0*float(i)))), module, i));
-				addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 15.478  + (10.0*float(i)))), module, i));
-			}
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
+			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
 		}
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::SINE_OUTPUT));
