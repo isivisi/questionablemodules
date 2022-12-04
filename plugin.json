@@ -22,7 +22,7 @@
     {
       "slug": "nandomizer",
       "name": "nandomizer",
-      "description": "Normalizes inputs and randomly",
+      "description": "Normalizes inputs and randomly selects one for output",
       "tags": []
     }
   ]

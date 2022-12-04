@@ -1,7 +1,7 @@
 #include "plugin.hpp"
+#include "imagepanel.cpp"
 #include <vector>
 #include <algorithm>
-#include <random>
 
 /*
     Param: Read with params[...].getValue()
@@ -76,6 +76,13 @@ struct Nandomizer : Module {
 		
 	}
 
+	int randomInteger(int min, int max) {
+		std::random_device rd; // obtain a random number from hardware
+		std::mt19937 gen(rd()); // seed the generator
+		std::uniform_int_distribution<> distr(min, max); // define the range
+		return distr(gen);
+	}
+
 	float rmsValue(float arr[], int n) {
 		int square = 0;
 		float mean = 0.0, root = 0.0;
@@ -91,11 +98,8 @@ struct Nandomizer : Module {
 		return root;
 	}
 
-	int randomInteger(int min, int max) {
-		std::random_device rd; // obtain a random number from hardware
-		std::mt19937 gen(rd()); // seed the generator
-		std::uniform_int_distribution<> distr(min, max); // define the range
-		return distr(gen);
+	float fclamp(float min, float max, float value) {
+		return std::min(min, std::max(max, value));
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -137,51 +141,14 @@ struct Nandomizer : Module {
 	}
 };
 
-struct MSMPanel : TransparentWidget {
-  NVGcolor backgroundColor = componentlibrary::SCHEME_LIGHT_GRAY;
-  float scalar = 1.0;
-  std::string imagePath;
-	void draw(const DrawArgs &args) override {
-      std::shared_ptr<Image> backgroundImage = APP->window->loadImage(imagePath);
-	  nvgBeginPath(args.vg);
-	  nvgRect(args.vg, 0.0, 0.0, box.size.x, box.size.y);
-
-	  // Background color
-	  if (backgroundColor.a > 0) {
-	    nvgFillColor(args.vg, backgroundColor);
-	    nvgFill(args.vg);
-	  }
-
-	  // Background image
-	  if (backgroundImage) {
-	    int width, height;
-	    nvgImageSize(args.vg, backgroundImage->handle, &width, &height);
-	    NVGpaint paint = nvgImagePattern(args.vg, 0.0, 0.0, width/scalar, height/scalar, 0.0, backgroundImage->handle, 1.0);
-	    nvgFillPaint(args.vg, paint);
-	    nvgFill(args.vg);
-	  }
-
-	  // Border
-	  NVGcolor borderColor = componentlibrary::SCHEME_LIGHT_GRAY; //nvgRGBAf(0.5, 0.5, 0.5, 0.5);
-	  nvgBeginPath(args.vg);
-	  nvgRect(args.vg, 0.5, 0.5, box.size.x - 1.0, box.size.y - 1.0);
-	  nvgStrokeColor(args.vg, borderColor);
-	  nvgStrokeWidth(args.vg, 1.0);
-	  nvgStroke(args.vg);
-
-	  Widget::draw(args);
-	}
-};
-
-
 struct NandomizerWidget : ModuleWidget {
-	MSMPanel *backdrop;
+	ImagePanel *backdrop;
 
 	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
 
-		backdrop = new MSMPanel();
+		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(6 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.png");
 		backdrop->scalar = 3.5;
