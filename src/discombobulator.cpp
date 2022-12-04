@@ -60,6 +60,7 @@ struct Discombobulator : Module {
 	int inputsUsed{8};
 
 	int outputSwaps[MAX_INPUTS];
+	float fadingInputs[MAX_INPUTS][MAX_INPUTS] = {{0.f}};
 	float lastInput[MAX_INPUTS] = {0.f};
 
 	float lastTriggerValue = 0.0;
@@ -119,13 +120,13 @@ struct Discombobulator : Module {
 		if (!usableInputs.size()) return;
 
 		// swap usable inputs
-		float fadingInputs[MAX_INPUTS][MAX_INPUTS] = {{0.f}};
 		if (shouldRandomize) {
 			std::vector<int> usableInputPool(usableInputs);
 			for (int i = usableInputs.size() -1; i >= 0; i--) {
+				int randomInput = randomInteger(0, usableInputPool.size()-1);
 				fadingInputs[usableInputs[i]][outputSwaps[usableInputs[i]]] = 1.f; // set full fade before swapping
-				outputSwaps[usableInputs[i]] = usableInputPool[randomInteger(0, usableInputs.size()-1)];
-				usableInputPool.pop_back();
+				outputSwaps[usableInputs[i]] = usableInputPool[randomInput];
+				usableInputPool.erase(usableInputPool.begin()+randomInput);
 			}
 		}
 		
@@ -140,7 +141,7 @@ struct Discombobulator : Module {
 		}
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage() + (cumulatedFading[outputSwaps[i]] * fadeAmnt));
+			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage() + (cumulatedFading[i] * fadeAmnt));
 		}
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
