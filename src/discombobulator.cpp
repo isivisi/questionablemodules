@@ -172,7 +172,7 @@ struct DiscombobulatorWidget : ModuleWidget {
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 105)), module, Discombobulator::FADE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {
