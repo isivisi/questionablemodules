@@ -104,6 +104,7 @@ struct Discombobulator : Module {
 	void process(const ProcessArgs& args) override {
 
 		std::vector<int> usableInputs;
+		float fadeAmnt = params[FADE_PARAM].getValue() + inputs[FADE_INPUT].getVoltage();
 
 		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
 		lastTriggerValue = inputs[8].getVoltage();
@@ -118,26 +119,28 @@ struct Discombobulator : Module {
 		if (!usableInputs.size()) return;
 
 		// swap usable inputs
-		//float fadingInputs[MAX_INPUTS][MAX_INPUTS] = {{0.f}};
+		float fadingInputs[MAX_INPUTS][MAX_INPUTS] = {{0.f}};
 		if (shouldRandomize) {
+			std::vector<int> usableInputPool(usableInputs);
 			for (int i = usableInputs.size() -1; i >= 0; i--) {
-				//fadingInputs[i][outputSwaps[i]] = 1.f; // set full fade before swapping
-				outputSwaps[i] = randomInteger(0, usableInputs.size());
-				usableInputs.pop_back();
+				fadingInputs[usableInputs[i]][outputSwaps[usableInputs[i]]] = 1.f; // set full fade before swapping
+				outputSwaps[usableInputs[i]] = usableInputPool[randomInteger(0, usableInputs.size()-1)];
+				usableInputPool.pop_back();
+			}
+		}
+		
+		float cumulatedFading[MAX_INPUTS] = {0.f};
+		for (int i = 0; i < MAX_INPUTS; i++) {
+			for (int x = 0; x < MAX_INPUTS; x++) {
+				if (x != i) { // skip own audio
+					fadingInputs[i][x] = std::max(0.f, fadingInputs[i][x] - (fadingInputs[i][x] * args.sampleTime));
+					cumulatedFading[i] += inputs[x].getVoltage() * fadingInputs[i][x];
+				}
 			}
 		}
 
-		/*for (int i = 0; i < MAX_INPUTS; i++) {
-			if (i != activeOutput) {
-				inputFades[i] = std::max(0.f, inputFades[i] - ((inputFades[i] * args.sampleTime)));
-				fadingInputs[i] += inputs[i].getVoltage() * inputFades[i];
-			} else {
-				inputFades[i] = 1.f;
-			}
-		}*/
-
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage());
+			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage() + (cumulatedFading[outputSwaps[i]] * fadeAmnt));
 		}
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
@@ -168,18 +171,17 @@ struct DiscombobulatorWidget : ModuleWidget {
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 90)), module, Discombobulator::FADE_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 100)), module, Discombobulator::FADE_INPUT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 105)), module, Discombobulator::FADE_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
 			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
 		}
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::SINE_OUTPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
 
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Discombobulator::BLINK_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Discombobulator::BLINK_LIGHT));
 	}
 };
 
