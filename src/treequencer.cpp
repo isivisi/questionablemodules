@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <random>
 #include <algorithm>
 
 const int MAX_OUTPUTS = 8;
@@ -60,7 +61,7 @@ struct Treequencer : Module {
 		PARAMS_LEN
 	};
 	enum InputId {
-		VOLTAGE_IN_1,
+		GATE_IN_1,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -82,10 +83,14 @@ struct Treequencer : Module {
 
 	Node rootNode;
 
+	Node* activeNode;
+
+	float lastTriggerValue = 0.f;
+
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configParam(FADE_PARAM, 0.f, 1.f, 0.f, "Fade Amount");
-		//configInput(VOLTAGE_IN_1, "1");
+		configInput(GATE_IN_1, "Clock");
 		//configOutput(SINE_OUTPUT, "");
 		//configInput(TRIGGER, "Gate");
 
@@ -100,6 +105,9 @@ struct Treequencer : Module {
 
 		rootNode.fillToDepth(3);
 		
+		rootNode.enabled = true;
+		activeNode = &rootNode;
+		
 	}
 
 	float fclamp(float min, float max, float value) {
@@ -107,6 +115,24 @@ struct Treequencer : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
+
+		bool shouldIterate = fabs(lastTriggerValue - inputs[GATE_IN_1].getVoltage()) > 0.1f;
+		lastTriggerValue = inputs[GATE_IN_1].getVoltage();
+
+		if (shouldIterate) {
+			activeNode->enabled = false;
+			outputs[activeNode->output].setVoltage(0.f); 
+			if (!activeNode->children.size()) activeNode = &rootNode;
+			else {
+				std::uniform_real_distribution<float> distribution(0, 1);
+				std::random_device rd;
+				float r = distribution(rd);
+				activeNode = &activeNode->children[r < 0.5 ? 0 : 1];
+			}
+			activeNode->enabled = true;
+		}
+
+		outputs[activeNode->output].setVoltage(1.f); 
 
 	}
 };
@@ -143,20 +169,26 @@ struct NodeDisplay : Widget {
         float newDragX = APP->scene->rack->getMousePos().x;
         float newDragY = APP->scene->rack->getMousePos().y;
 
-		xOffset += newDragX - dragX;
-		yOffset += newDragY - dragY;
+		xOffset += (newDragX - dragX) / screenScale;
+		yOffset += (newDragY - dragY) / screenScale;
 
 		dragX = newDragX;
 		dragY = newDragY;
 
     }
 
-	void drawNode(NVGcontext* vg, float x, float y,  float scale) {
+	void onHoverScroll(const HoverScrollEvent& e) {
+
+		e.consume(this);
+		screenScale += e.scrollDelta.y / 256;
+	}
+
+	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
 		
 		float xSize = NODE_SIZE * scale;
 		float ySize = NODE_SIZE * scale;
 
-		nvgFillColor(vg, nvgRGB(255,127,80));
+		nvgFillColor(vg, node->enabled ? nvgRGB(124,252,0) : nvgRGB(255,127,80));
         nvgBeginPath(vg);
         nvgRect(vg, x + xOffset, y + yOffset, xSize, ySize);
         nvgFill(vg);
@@ -170,12 +202,13 @@ struct NodeDisplay : Widget {
 		float cumulativeX = 50.f;
 		for (int d = 0; d < nodeBins.size(); d++) {
 			float scale = (1 - ((float)d/depth));
-			cumulativeX += ((NODE_SIZE + 1)*scale) + 5;
+			float prevScale = (1 - ((float)(d-1)/depth));
+			cumulativeX += ((NODE_SIZE)*prevScale) + 1;
 			for(int i = 0; i < nodeBins[d].size(); i++) {
 				Node* node = nodeBins[d][i];
-				float y = ((((NODE_SIZE + 1) *scale) * i) - (((26*scale) * nodeBins[d].size()) / 2)) + 15;
+				float y = ((((NODE_SIZE + 1) *scale) * i) - (((NODE_SIZE*scale) * nodeBins[d].size()) / 2)) + 15;
 
-				drawNode(vg, cumulativeX, y, scale);
+				drawNode(vg, node, cumulativeX, y, scale);
 			}
 		}
 
@@ -233,7 +266,7 @@ struct NodeDisplay : Widget {
 		nvgSave(args.vg);
 		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
-		screenScale = 1 - (xOffset / NODE_SIZE);
+		//screenScale = 1 - (xOffset / NODE_SIZE);
 
 		nvgScale(args.vg, screenScale, screenScale);
 
@@ -295,6 +328,8 @@ struct TreequencerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, 10)), module, Treequencer::GATE_IN_1));
 
 		for (int i = 0; i < MAX_OUTPUTS; i++) {
 			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.f + (10.0*float(i)), 113.f)), module, i));
