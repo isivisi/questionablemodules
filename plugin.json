@@ -23,6 +23,12 @@
       "name": "Nandomizer",
       "description": "Randomly switches inputs",
       "tags": ["Random"]
+    },
+    {
+      "slug": "treequencer",
+      "name": "Treequencer",
+      "description": "Sequences using a tree algorithm",
+      "tags": ["sequencer", "random", "tree"]
     }
   ]
 }
