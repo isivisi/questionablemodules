@@ -18,20 +18,23 @@ Vec lerp(Vec& point1, Vec& point2, float t) {
 
 // A node in the tree
 struct Node {
-  	int output;
-	int depth;
+  	int output = 0;
+	bool enabled = false;
+	float chance = 0.5;
+	Node* parent;
   	std::vector<Node> children;
+
 
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
-  	void fillToDepth(int desiredDepth, int origDepth=-1) {
+  	void fillToDepth(int desiredDepth) {
 		if (desiredDepth <= 0) return;
-		if(origDepth == -1) origDepth = desiredDepth;
-		depth = origDepth - desiredDepth;
 		Node child1 = Node();
 		Node child2 = Node();
-		child1.fillToDepth(desiredDepth-1, origDepth);
-		child2.fillToDepth(desiredDepth-1, origDepth);
+		child1.parent = this;
+		child2.parent = this;
+		child1.fillToDepth(desiredDepth-1);
+		child2.fillToDepth(desiredDepth-1);
 		children.push_back(child1);
 		children.push_back(child2);
   	}
@@ -95,7 +98,7 @@ struct Treequencer : Module {
 		configInput(SEQ_OUT_1, "Sequence 7");
 		configInput(SEQ_OUT_1, "Sequence 8");
 
-		rootNode.fillToDepth(3);
+		rootNode.fillToDepth(7);
 		
 	}
 
@@ -144,39 +147,37 @@ struct NodeDisplay : Widget {
 
     }
 
-	void drawNode(NVGcontext* vg, int x, int y,  float scale=1.f) {
+	int DEPTH_DIV = 8;
+
+	void drawNode(NVGcontext* vg, float x, float y,  float scale) {
 		
-		int xSize = 25 * scale;
-		int ySize = 15 * scale;
+		float xSize = 25 * scale;
+		float ySize = 25 * scale;
 
 		nvgFillColor(vg, nvgRGB(255,127,80));
         nvgBeginPath(vg);
-        nvgRoundedRect(vg, (x * scale) + xOffset, (y * scale) + yOffset, xSize, ySize, 3);
+        nvgRect(vg, x + xOffset, y + yOffset, xSize, ySize);
         nvgFill(vg);
 
 	}
 
-	void drawNodes(NVGcontext* vg, Node& node, int x = 0, int y = 0, int dx = 100, int initDx = 100) {
+	void drawNodes(NVGcontext* vg) {
 
-		//Vec xy = distort_point(Vec(x,y), 100);
+		int depth = module->rootNode.maxDepth() + 2;
+		
+		float cumulativeX = 50.f;
+		for (int d = 0; d < nodeBins.size(); d++) {
+			float scale = (1 - ((float)d/depth));
+			cumulativeX += (25*scale) + 5;
+			for(int i = 0; i < nodeBins[d].size(); i++) {
+				Node* node = nodeBins[d][i];
+				float y = (((26*scale) * i) - (((26*scale) * nodeBins[d].size()) / 2)) + 15;
 
-		//x = xy.x;
-		//y = xy.y;
+				drawNode(vg, cumulativeX, y, scale);
+			}
+		}
 
-		//nvgSave(vg);
-
-		// Calculate the scale factor for the x and y axes
-		//float x_scale = 1.0 - (x / 500.0);
-
-		// Apply the distortion using nvgScale
-		//nvgTransform(vg, matrix);
-		//nvgTransform(vg, x_scale, 0.0, 0.0, x_scale, 0.0, 0.0);
-
-		float scale = 1 - (node.depth / 10);
-
-		drawNode(vg, x, y, scale);
-
-		for (int i = 0; i < node.children.size(); i++) {
+		/*for (int i = 0; i < node.children.size(); i++) {
 
 			int newX = x + 45;
 			int newY = (y + (dx/2)) + (i - node.children.size() / 2) * dx;
@@ -199,8 +200,8 @@ struct NodeDisplay : Widget {
 			nvgClosePath(vg);
 
 			// recursive draw child node
-			drawNodes(vg, node.children[i], newX, newY, dx / node.children.size(), initDx);
-		}
+			drawNodes(vg, node.children[i], newX, newY, depth+1);
+		}*/
 
 		//nvgRestore(vg);
 
@@ -216,6 +217,8 @@ struct NodeDisplay : Widget {
 
 	}
 
+	std::vector<std::vector<Node*>> nodeBins;
+
 	void drawLayer(const DrawArgs &args, int layer) override {
 		if (module == NULL) return;
 
@@ -228,15 +231,35 @@ struct NodeDisplay : Widget {
 		nvgSave(args.vg);
 		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
+		//if (xOffset > 0) nvgScale(args.vg, std::max(1.f, (float)abs(xOffset)/8), std::max(1.f, (float)abs(xOffset)/8));
+
 		if (layer == 1) {
 
 			int depth = module->rootNode.maxDepth();
 			if (!depth) return;
-			drawNodes(args.vg, module->rootNode, 25, 25, depth * 100, depth * 100);
+
+			// Initialize bins
+			nodeBins.clear();
+			for (int i = 0; i < depth+1; i++) {
+				nodeBins.push_back(std::vector<Node*>());
+			}
+
+			gatherNodesForBins(module->rootNode);
+			drawNodes(args.vg);
 
 		}
 
 		nvgRestore(args.vg);
+
+	}
+
+	void gatherNodesForBins(Node& node, int depth = 0) {
+
+		nodeBins[depth].push_back(&node);
+
+		for (int i = 0; i < node.children.size(); i++) {
+			gatherNodesForBins(node.children[i], depth+1);
+		}
 
 	}
 
