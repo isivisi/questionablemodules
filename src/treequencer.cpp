@@ -19,16 +19,19 @@ Vec lerp(Vec& point1, Vec& point2, float t) {
 // A node in the tree
 struct Node {
   	int output;
+	int depth;
   	std::vector<Node> children;
 
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
-  	void fillToDepth(int depth) {
-		if (depth <= 0) return;
+  	void fillToDepth(int desiredDepth, int origDepth=-1) {
+		if (desiredDepth <= 0) return;
+		if(origDepth == -1) origDepth = desiredDepth;
+		depth = origDepth - desiredDepth;
 		Node child1 = Node();
 		Node child2 = Node();
-		child1.fillToDepth(depth-1);
-		child2.fillToDepth(depth-1);
+		child1.fillToDepth(desiredDepth-1, origDepth);
+		child2.fillToDepth(desiredDepth-1, origDepth);
 		children.push_back(child1);
 		children.push_back(child2);
   	}
@@ -141,20 +144,40 @@ struct NodeDisplay : Widget {
 
     }
 
-	void drawNode(NVGcontext* vg, int x, int y) {
+	void drawNode(NVGcontext* vg, int x, int y,  float scale=1.f) {
+		
+		int xSize = 25 * scale;
+		int ySize = 15 * scale;
 
 		nvgFillColor(vg, nvgRGB(255,127,80));
         nvgBeginPath(vg);
-        nvgRoundedRect(vg, x + xOffset, y + yOffset, 25, 15, 3);
+        nvgRoundedRect(vg, (x * scale) + xOffset, (y * scale) + yOffset, xSize, ySize, 3);
         nvgFill(vg);
 
 	}
 
 	void drawNodes(NVGcontext* vg, Node& node, int x = 0, int y = 0, int dx = 100, int initDx = 100) {
 
-		drawNode(vg, x, y);
+		//Vec xy = distort_point(Vec(x,y), 100);
+
+		//x = xy.x;
+		//y = xy.y;
+
+		//nvgSave(vg);
+
+		// Calculate the scale factor for the x and y axes
+		//float x_scale = 1.0 - (x / 500.0);
+
+		// Apply the distortion using nvgScale
+		//nvgTransform(vg, matrix);
+		//nvgTransform(vg, x_scale, 0.0, 0.0, x_scale, 0.0, 0.0);
+
+		float scale = 1 - (node.depth / 10);
+
+		drawNode(vg, x, y, scale);
 
 		for (int i = 0; i < node.children.size(); i++) {
+
 			int newX = x + 45;
 			int newY = (y + (dx/2)) + (i - node.children.size() / 2) * dx;
 
@@ -179,10 +202,12 @@ struct NodeDisplay : Widget {
 			drawNodes(vg, node.children[i], newX, newY, dx / node.children.size(), initDx);
 		}
 
+		//nvgRestore(vg);
+
 	}
 
 	void draw(const DrawArgs &args) override {
-		if (module == NULL) return;
+		//if (module == NULL) return;
 
 		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
         nvgBeginPath(args.vg);
