@@ -10,4 +10,4 @@ extern Plugin* pluginInstance;
 // Declare each Model, defined in each module source file
 extern Model* modelNandomizer;
 extern Model* modelDiscombobulator;
-//extern Model* modelTreequencer;
+extern Model* modelTreequencer;
