@@ -24,6 +24,12 @@
       "name": "nandomizer",
       "description": "Normalizes inputs and randomly selects one for output",
       "tags": []
+    },
+    {
+      "slug": "treequencer",
+      "name": "treequencer",
+      "description": "Tree based sequencer",
+      "tags": []
     }
   ]
 }

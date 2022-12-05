@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "map": "cpp",
+        "unordered_map": "cpp",
+        "xutility": "cpp",
+        "xiosbase": "cpp",
+        "vector": "cpp",
+        "cmath": "cpp"
+    }
+}
