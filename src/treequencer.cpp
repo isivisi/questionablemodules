@@ -194,6 +194,13 @@ struct NodeDisplay : Widget {
 	void drawLayer(const DrawArgs &args, int layer) override {
 		if (module == NULL) return;
 
+		// nvgScale
+		// nvgText
+		// nvgFontSize
+		// nvgCreateFont
+
+		nvgText(0, 0 )
+
 		nvgSave(args.vg);
 		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
