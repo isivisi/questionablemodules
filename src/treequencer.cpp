@@ -98,7 +98,7 @@ struct Treequencer : Module {
 		configInput(SEQ_OUT_1, "Sequence 7");
 		configInput(SEQ_OUT_1, "Sequence 8");
 
-		rootNode.fillToDepth(7);
+		rootNode.fillToDepth(3);
 		
 	}
 
@@ -114,11 +114,15 @@ struct Treequencer : Module {
 struct NodeDisplay : Widget {
 	Treequencer* module;
 
-	int xOffset = 0;
-	int yOffset = 0;
+	const float NODE_SIZE = 25;
 
-	int dragX = 0;
-	int dragY = 0;
+	float xOffset = 0;
+	float yOffset = 0;
+
+	float dragX = 0;
+	float dragY = 0;
+
+	float screenScale = 1.f;
 
 	NodeDisplay() {
 
@@ -147,12 +151,10 @@ struct NodeDisplay : Widget {
 
     }
 
-	int DEPTH_DIV = 8;
-
 	void drawNode(NVGcontext* vg, float x, float y,  float scale) {
 		
-		float xSize = 25 * scale;
-		float ySize = 25 * scale;
+		float xSize = NODE_SIZE * scale;
+		float ySize = NODE_SIZE * scale;
 
 		nvgFillColor(vg, nvgRGB(255,127,80));
         nvgBeginPath(vg);
@@ -168,10 +170,10 @@ struct NodeDisplay : Widget {
 		float cumulativeX = 50.f;
 		for (int d = 0; d < nodeBins.size(); d++) {
 			float scale = (1 - ((float)d/depth));
-			cumulativeX += (25*scale) + 5;
+			cumulativeX += ((NODE_SIZE + 1)*scale) + 5;
 			for(int i = 0; i < nodeBins[d].size(); i++) {
 				Node* node = nodeBins[d][i];
-				float y = (((26*scale) * i) - (((26*scale) * nodeBins[d].size()) / 2)) + 15;
+				float y = ((((NODE_SIZE + 1) *scale) * i) - (((26*scale) * nodeBins[d].size()) / 2)) + 15;
 
 				drawNode(vg, cumulativeX, y, scale);
 			}
@@ -231,7 +233,9 @@ struct NodeDisplay : Widget {
 		nvgSave(args.vg);
 		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
-		//if (xOffset > 0) nvgScale(args.vg, std::max(1.f, (float)abs(xOffset)/8), std::max(1.f, (float)abs(xOffset)/8));
+		screenScale = 1 - (xOffset / NODE_SIZE);
+
+		nvgScale(args.vg, screenScale, screenScale);
 
 		if (layer == 1) {
 
