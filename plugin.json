@@ -1,14 +1,14 @@
 {
-  "slug": "nandomizer",
-  "name": "nandomizer",
+  "slug": "questionablemodules",
+  "name": "Questionable Modules",
   "version": "2.0.0",
   "license": "GPL-3.0-or-later",
   "brand": "isiaudio",
   "author": "John Iannandrea",
   "authorEmail": "jiannandrea@gmail.com",
   "authorUrl": "https://github.com/isivisi/",
-  "manualUrl": "https://github.com/isivisi/vcvrackmodules/blob/main/README.md",
-  "sourceUrl": "https://github.com/isivisi/vcvrackmodules",
+  "manualUrl": "https://github.com/isivisi/questionablemodules/blob/main/README.md",
+  "sourceUrl": "https://github.com/isivisi/questionablemodules",
   "donateUrl": "https://www.paypal.com/donate/?business=9KQFMHR3LT9CG&no_recurring=0&item_name=Funding+my+ongoing+vcv+rack+plugin+development+%3A%29&currency_code=CAD",
   "changelogUrl": "",
   "modules": [
