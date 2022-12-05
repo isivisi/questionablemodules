@@ -2,28 +2,27 @@
   "slug": "nandomizer",
   "name": "nandomizer",
   "version": "2.0.0",
-  "license": "proprietary",
+  "license": "GPL-3.0-or-later",
   "brand": "isiaudio",
   "author": "John Iannandrea",
-  "authorEmail": "",
-  "authorUrl": "",
-  "pluginUrl": "",
-  "manualUrl": "",
-  "sourceUrl": "",
-  "donateUrl": "",
+  "authorEmail": "jiannandrea@gmail.com",
+  "authorUrl": "https://github.com/isivisi/",
+  "manualUrl": "https://github.com/isivisi/vcvrackmodules/blob/main/README.md",
+  "sourceUrl": "https://github.com/isivisi/vcvrackmodules",
+  "donateUrl": "https://www.paypal.com/donate/?business=9KQFMHR3LT9CG&no_recurring=0&item_name=Funding+my+ongoing+vcv+rack+plugin+development+%3A%29&currency_code=CAD",
   "changelogUrl": "",
   "modules": [
     {
       "slug": "discombobulator",
-      "name": "discombobulator",
+      "name": "Discombobulator",
       "description": "Randomly switches inputs and outputs",
-      "tags": []
+      "tags": ["Random"]
     },
     {
       "slug": "nandomizer",
-      "name": "nandomizer",
-      "description": "Normalizes inputs and randomly selects one for output",
-      "tags": []
+      "name": "Nandomizer",
+      "description": "Randomly switches inputs",
+      "tags": ["Random"]
     }
   ]
 }
