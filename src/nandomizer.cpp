@@ -50,6 +50,8 @@ struct Nandomizer : Module {
 
 	int inputsUsed{8};
 
+	dsp::SchmittTrigger gateTrigger;
+
 	float history[MAX_INPUTS][MAX_HISTORY] {{0.f}};
 	int historyIterator[MAX_INPUTS] = {0};
 	float inputFades[MAX_INPUTS] = {0.f};
@@ -57,7 +59,6 @@ struct Nandomizer : Module {
 	bool hasLoadedImage{false};
 
 	int activeOutput = 0;
-	float lastTriggerValue = 0.0;
 
 	Nandomizer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -106,8 +107,8 @@ struct Nandomizer : Module {
 
 		std::vector<int> usableInputs;
 		float fadeAmnt = params[FADE_PARAM].getValue() + inputs[FADE_INPUT].getVoltage();
-		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
-		lastTriggerValue = inputs[8].getVoltage();
+
+		bool shouldRandomize = gateTrigger.process(inputs[8].getVoltage(), 0.1f, 2.f);
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			float voltage = inputs[i].getVoltage();
