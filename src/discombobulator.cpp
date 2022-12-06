@@ -60,11 +60,11 @@ struct Discombobulator : Module {
 
 	int inputsUsed{8};
 
+	dsp::SchmittTrigger gateTrigger;
+
 	int outputSwaps[MAX_INPUTS];
 	float fadingInputs[MAX_INPUTS][MAX_INPUTS] = {{0.f}};
 	float lastInput[MAX_INPUTS] = {0.f};
-
-	float lastTriggerValue = 0.0;
 
 	Discombobulator() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -108,8 +108,7 @@ struct Discombobulator : Module {
 		std::vector<int> usableInputs;
 		float fadeAmnt = params[FADE_PARAM].getValue() + inputs[FADE_INPUT].getVoltage();
 
-		bool shouldRandomize = fabs(lastTriggerValue - inputs[8].getVoltage()) > 0.1f;
-		lastTriggerValue = inputs[8].getVoltage();
+		bool shouldRandomize = gateTrigger.process(inputs[8].getVoltage(), 0.1f, 2.f);
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			float voltage = inputs[i].getVoltage();
