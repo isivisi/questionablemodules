@@ -175,7 +175,7 @@ struct NodeDisplay : Widget {
 	float dragX = 0;
 	float dragY = 0;
 
-	float screenScale = 1.f;
+	float screenScale = 4.5f;
 
 	NodeDisplay() {
 
@@ -207,7 +207,7 @@ struct NodeDisplay : Widget {
 	void onHoverScroll(const HoverScrollEvent& e) {
 
 		e.consume(this);
-		screenScale += e.scrollDelta.y / 256;
+		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
 	}
 
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
@@ -215,13 +215,15 @@ struct NodeDisplay : Widget {
 		float xVal = x + xOffset;
 		float yVal = y + yOffset;
 		float xSize = NODE_SIZE * scale;
-		float ySize = NODE_SIZE * scale;
+		float ySize = (NODE_SIZE) * scale;
 
+		// node bg
 		nvgFillColor(vg, node->enabled ? nvgRGB(124,252,0) : nvgRGB(255,127,80));
         nvgBeginPath(vg);
         nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
 
+		// grid
 		float gridStartX = xVal + (NODE_SIZE/4) * scale;
 		float gridStartY = yVal + (NODE_SIZE/4) * scale;
 
@@ -235,8 +237,17 @@ struct NodeDisplay : Widget {
 			nvgRect(vg, boxX, boxY, 4 * scale, 4 * scale);
 			nvgFill(vg);
 
-
 		}
+
+		// chance
+		nvgFillColor(vg, nvgRGB(240,240,240));
+        nvgBeginPath(vg);
+        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize);
+        nvgFill(vg);
+		nvgFillColor(vg, nvgRGB(44,44,44));
+        nvgBeginPath(vg);
+        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * node->chance);
+        nvgFill(vg);
 
 	}
 
@@ -244,14 +255,14 @@ struct NodeDisplay : Widget {
 
 		int depth = module->rootNode.maxDepth() + 2;
 		
-		float cumulativeX = 50.f;
+		float cumulativeX = -25.f;
 		for (int d = 0; d < nodeBins.size(); d++) {
 			float scale = (NODE_SIZE/nodeBins[d].size()) / NODE_SIZE; //(1 - ((float)d/depth));
 			float prevScale = (NODE_SIZE/nodeBins[std::max(0, d-1)].size()) / NODE_SIZE; //(1 - ((float)(d-1)/depth));
 			cumulativeX += ((NODE_SIZE+1)*prevScale);
 			for(int i = 0; i < nodeBins[d].size(); i++) {
 				Node* node = nodeBins[d][i];
-				float y = ((((NODE_SIZE /*+1*/) *scale) * i) - (((NODE_SIZE*scale) * nodeBins[d].size()) / 2));
+				float y = NODE_SIZE + ((((NODE_SIZE /*+1*/) *scale) * i) - (((NODE_SIZE*scale) * nodeBins[d].size()) / 2));
 
 				drawNode(vg, node, cumulativeX, y, scale);
 
@@ -357,6 +368,7 @@ struct NodeDisplay : Widget {
 struct TreequencerWidget : ModuleWidget {
 	ImagePanel *backdrop;
 	NodeDisplay *display;
+	ImagePanel *dirt;
 
 	TreequencerWidget(Treequencer* module) {
 		setModule(module);
@@ -364,7 +376,7 @@ struct TreequencerWidget : ModuleWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.png");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer.png");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 
@@ -372,9 +384,17 @@ struct TreequencerWidget : ModuleWidget {
 		display->box.pos = Vec(15, 50);
         display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) - 15, 200);
 		display->module = module;
+
+		dirt = new ImagePanel();
+		dirt->box.pos = Vec(15, 50);
+        dirt->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) - 15, 200);
+		dirt->imagePath = asset::plugin(pluginInstance, "res/dirt.png");
+		dirt->scalar = 3.5;
+		dirt->visible = true;
 		
 		setPanel(backdrop);
 		addChild(display);
+		addChild(dirt);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
