@@ -246,8 +246,8 @@ struct NodeDisplay : Widget {
 		
 		float cumulativeX = 50.f;
 		for (int d = 0; d < nodeBins.size(); d++) {
-			float scale = (1 - ((float)d/depth));
-			float prevScale = (1 - ((float)(d-1)/depth));
+			float scale = (NODE_SIZE/nodeBins[d].size()) / NODE_SIZE; //(1 - ((float)d/depth));
+			float prevScale = (NODE_SIZE/nodeBins[std::max(0, d-1)].size()) / NODE_SIZE; //(1 - ((float)(d-1)/depth));
 			cumulativeX += ((NODE_SIZE)*prevScale) + 1;
 			for(int i = 0; i < nodeBins[d].size(); i++) {
 				Node* node = nodeBins[d][i];
