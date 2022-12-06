@@ -148,7 +148,7 @@ struct Treequencer : Module {
 			if (!activeNode->children.size()) activeNode = &rootNode;
 			else {
 				float r = randFloat();
-				activeNode = &activeNode->children[r < 0.5 ? 0 : 1];
+				activeNode = &activeNode->children[r < activeNode->chance ? 0 : 1];
 			}
 			activeNode->enabled = true;
 		}
