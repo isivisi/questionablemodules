@@ -248,12 +248,19 @@ struct NodeDisplay : Widget {
 		for (int d = 0; d < nodeBins.size(); d++) {
 			float scale = (NODE_SIZE/nodeBins[d].size()) / NODE_SIZE; //(1 - ((float)d/depth));
 			float prevScale = (NODE_SIZE/nodeBins[std::max(0, d-1)].size()) / NODE_SIZE; //(1 - ((float)(d-1)/depth));
-			cumulativeX += ((NODE_SIZE)*prevScale) + 1;
+			cumulativeX += ((NODE_SIZE+1)*prevScale);
 			for(int i = 0; i < nodeBins[d].size(); i++) {
 				Node* node = nodeBins[d][i];
-				float y = ((((NODE_SIZE + 1) *scale) * i) - (((NODE_SIZE*scale) * nodeBins[d].size()) / 2)) + 15;
+				float y = ((((NODE_SIZE /*+1*/) *scale) * i) - (((NODE_SIZE*scale) * nodeBins[d].size()) / 2));
 
 				drawNode(vg, node, cumulativeX, y, scale);
+
+				/*if (node == module->activeNode) {
+					xOffset = -cumulativeX;
+					yOffset = -y;
+					scale = 6 * ((1-scale)*100);
+				}*/
+				
 			}
 		}
 
