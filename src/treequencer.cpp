@@ -17,6 +17,19 @@ Vec lerp(Vec& point1, Vec& point2, float t) {
 	return point1 + diff * t;
 }
 
+float randFloat(float max = 1.f) {
+	std::uniform_real_distribution<float> distribution(0, max);
+	std::random_device rd;
+	return distribution(rd);
+}
+
+int randomInteger(int min, int max) {
+	std::random_device rd; // obtain a random number from hardware
+	std::mt19937 gen(rd()); // seed the generator
+	std::uniform_int_distribution<> distr(min, max); // define the range
+	return distr(gen);
+}
+
 // A node in the tree
 struct Node {
   	int output = 0;
@@ -33,7 +46,11 @@ struct Node {
 		Node child1 = Node();
 		Node child2 = Node();
 		child1.parent = this;
+		child1.chance = randFloat(0.9f);
+		child1.output = randomInteger(-1, 7);
 		child2.parent = this;
+		child2.chance = randFloat(0.9f);
+		child2.output = randomInteger(-1, 7);
 		child1.fillToDepth(desiredDepth-1);
 		child2.fillToDepth(desiredDepth-1);
 		children.push_back(child1);
@@ -73,6 +90,7 @@ struct Treequencer : Module {
 		SEQ_OUT_6,
 		SEQ_OUT_7,
 		SEQ_OUT_8,
+		ALL_OUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -80,6 +98,9 @@ struct Treequencer : Module {
 		BLINK_LIGHT,
 		LIGHTS_LEN
 	};
+
+	dsp::SchmittTrigger gateTrigger;
+	dsp::SchmittTrigger resetTrigger;
 
 	Node rootNode;
 
@@ -94,16 +115,19 @@ struct Treequencer : Module {
 		//configOutput(SINE_OUTPUT, "");
 		//configInput(TRIGGER, "Gate");
 
-		configInput(SEQ_OUT_1, "Sequence 1");
-		configInput(SEQ_OUT_1, "Sequence 2");
-		configInput(SEQ_OUT_1, "Sequence 3");
-		configInput(SEQ_OUT_1, "Sequence 4");
-		configInput(SEQ_OUT_1, "Sequence 5");
-		configInput(SEQ_OUT_1, "Sequence 6");
-		configInput(SEQ_OUT_1, "Sequence 7");
-		configInput(SEQ_OUT_1, "Sequence 8");
+		configOutput(SEQ_OUT_1, "Sequence 1");
+		configOutput(SEQ_OUT_1, "Sequence 2");
+		configOutput(SEQ_OUT_1, "Sequence 3");
+		configOutput(SEQ_OUT_1, "Sequence 4");
+		configOutput(SEQ_OUT_1, "Sequence 5");
+		configOutput(SEQ_OUT_1, "Sequence 6");
+		configOutput(SEQ_OUT_1, "Sequence 7");
+		configOutput(SEQ_OUT_1, "Sequence 8");
 
-		rootNode.fillToDepth(3);
+		configOutput(ALL_OUT, "Pitch");
+		
+
+		rootNode.fillToDepth(7);
 		
 		rootNode.enabled = true;
 		activeNode = &rootNode;
@@ -116,23 +140,26 @@ struct Treequencer : Module {
 
 	void process(const ProcessArgs& args) override {
 
-		bool shouldIterate = fabs(lastTriggerValue - inputs[GATE_IN_1].getVoltage()) > 0.1f;
-		lastTriggerValue = inputs[GATE_IN_1].getVoltage();
+		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
 
 		if (shouldIterate) {
 			activeNode->enabled = false;
 			outputs[activeNode->output].setVoltage(0.f); 
 			if (!activeNode->children.size()) activeNode = &rootNode;
 			else {
-				std::uniform_real_distribution<float> distribution(0, 1);
-				std::random_device rd;
-				float r = distribution(rd);
+				float r = randFloat();
 				activeNode = &activeNode->children[r < 0.5 ? 0 : 1];
 			}
 			activeNode->enabled = true;
 		}
 
-		outputs[activeNode->output].setVoltage(1.f); 
+		if (activeNode->output < 0) {
+			outputs[activeNode->output].setVoltage(0.f); 
+			outputs[ALL_OUT].setVoltage(0.f);
+		} else {
+			outputs[activeNode->output].setVoltage(10.f); 
+			outputs[ALL_OUT].setVoltage((float)activeNode->output/8);
+		}
 
 	}
 };
@@ -185,13 +212,31 @@ struct NodeDisplay : Widget {
 
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
 		
+		float xVal = x + xOffset;
+		float yVal = y + yOffset;
 		float xSize = NODE_SIZE * scale;
 		float ySize = NODE_SIZE * scale;
 
 		nvgFillColor(vg, node->enabled ? nvgRGB(124,252,0) : nvgRGB(255,127,80));
         nvgBeginPath(vg);
-        nvgRect(vg, x + xOffset, y + yOffset, xSize, ySize);
+        nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
+
+		float gridStartX = xVal + (NODE_SIZE/4) * scale;
+		float gridStartY = yVal + (NODE_SIZE/4) * scale;
+
+		for (int i = 0; i < node->output+1; i++) {
+
+			float boxX = gridStartX + ((5*scale) * (i%3));
+			float boxY = gridStartY + ((5*scale) * floor(i/3));
+
+			nvgFillColor(vg, nvgRGB(44,44,44));
+			nvgBeginPath(vg);
+			nvgRect(vg, boxX, boxY, 4 * scale, 4 * scale);
+			nvgFill(vg);
+
+
+		}
 
 	}
 
@@ -330,6 +375,8 @@ struct TreequencerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, 10)), module, Treequencer::GATE_IN_1));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.f, 10.f)), module, Treequencer::ALL_OUT));
 
 		for (int i = 0; i < MAX_OUTPUTS; i++) {
 			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.f + (10.0*float(i)), 113.f)), module, i));
