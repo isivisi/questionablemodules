@@ -205,9 +205,17 @@ struct NodeDisplay : Widget {
     }
 
 	void onHoverScroll(const HoverScrollEvent& e) {
-
 		e.consume(this);
+		float posX = APP->scene->rack->getMousePos().x;
+        float posY = APP->scene->rack->getMousePos().y;
+		float oldScreenScale = screenScale;
+
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
+
+		//xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
+		//yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
+
+
 	}
 
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
@@ -246,7 +254,7 @@ struct NodeDisplay : Widget {
         nvgFill(vg);
 		nvgFillColor(vg, nvgRGB(44,44,44));
         nvgBeginPath(vg);
-        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * node->chance);
+        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * (1.f-node->chance));
         nvgFill(vg);
 
 	}
