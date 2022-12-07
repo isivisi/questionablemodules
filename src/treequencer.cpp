@@ -38,6 +38,7 @@ struct Node {
 	Node* parent;
   	std::vector<Node> children;
 
+	Rect box;
 
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
@@ -181,9 +182,47 @@ struct NodeDisplay : Widget {
 
 	}
 
+	// AABB
+	bool isInsideBox(Vec pos, Rect box){
+		// Check if the point is inside the x-bounds of the box
+		if (pos.x < box.pos.x || pos.x > box.pos.x + box.size.x)
+		{
+			return false;
+		}
+
+		// Check if the point is inside the y-bounds of the box
+		if (pos.y < box.pos.y || pos.y > box.pos.y + box.size.y)
+		{
+			return false;
+		}
+
+		// If the point is inside both the x and y bounds of the box, it is inside the box
+		return true;
+	}
+
+	Node* findNodeClicked(Vec mp, Node* node) {
+		if (!node) return nullptr;
+
+		if (isInsideBox(mp, node->box)) return node;
+
+		for (int i = 0; i < node->children.size(); i++)
+    	{
+			Node* found = findNodeClicked(mp, &node->children[i]);
+			if (found) return found;
+    	}
+
+		return nullptr;
+	}
+
 	void onButton(const event::Button &e) override {
         if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
             e.consume(this);
+			Vec mousePos = (e.pos * Vec(xOffset, yOffset)) / screenScale;
+
+			Node* foundNode = findNodeClicked(mousePos, &module->rootNode);
+
+			if (foundNode) foundNode->enabled = true;
+			
 		}
 	}
 
@@ -230,6 +269,10 @@ struct NodeDisplay : Widget {
         nvgBeginPath(vg);
         nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
+
+		// update pos for buttonclicking
+		node->box.pos = Vec(xVal, yVal);
+		node->box.size = Vec(xSize, ySize);
 
 		// grid
 		float gridStartX = xVal + (NODE_SIZE/4) * scale;
