@@ -176,7 +176,7 @@ struct NodeDisplay : Widget {
 	float dragX = 0;
 	float dragY = 0;
 
-	float screenScale = 4.5f;
+	float screenScale = 1.f;// 4.5f;
 
 	NodeDisplay() {
 
@@ -217,7 +217,7 @@ struct NodeDisplay : Widget {
 	void onButton(const event::Button &e) override {
         if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
             e.consume(this);
-			Vec mousePos = (e.pos * Vec(xOffset, yOffset)) / screenScale;
+			Vec mousePos = e.pos / screenScale;
 
 			Node* foundNode = findNodeClicked(mousePos, &module->rootNode);
 
