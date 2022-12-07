@@ -58,6 +58,18 @@ struct Node {
 		children.push_back(child2);
   	}
 
+	Node* addChild() {
+
+		Node child = Node();
+		child.parent = this;
+		child.chance = randFloat(0.9f);
+		child.output = randomInteger(-1, 7);
+		children.push_back(child);
+
+		return &child;
+
+	}
+
 	int maxDepth() {
 		if (children.size() == 0) return 0;
 
@@ -128,7 +140,7 @@ struct Treequencer : Module {
 		configOutput(ALL_OUT, "Pitch");
 		
 
-		rootNode.fillToDepth(7);
+		rootNode.fillToDepth(3);
 		
 		rootNode.enabled = true;
 		activeNode = &rootNode;
@@ -215,13 +227,15 @@ struct NodeDisplay : Widget {
 	}
 
 	void onButton(const event::Button &e) override {
-        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (e.action == GLFW_PRESS) {
             e.consume(this);
 			Vec mousePos = e.pos / screenScale;
 
 			Node* foundNode = findNodeClicked(mousePos, &module->rootNode);
 
-			if (foundNode) foundNode->enabled = true;
+			if (foundNode) {
+				if (e.button == GLFW_MOUSE_BUTTON_LEFT) foundNode->enabled = true;
+			}
 			
 		}
 	}
@@ -275,8 +289,8 @@ struct NodeDisplay : Widget {
 		node->box.size = Vec(xSize, ySize);
 
 		// grid
-		float gridStartX = xVal + (NODE_SIZE/4) * scale;
-		float gridStartY = yVal + (NODE_SIZE/4) * scale;
+		float gridStartX = xVal + (xSize/8);
+		float gridStartY = yVal + (xSize/8);
 
 		for (int i = 0; i < node->output+1; i++) {
 
@@ -297,10 +311,14 @@ struct NodeDisplay : Widget {
         nvgFill(vg);
 		nvgFillColor(vg, nvgRGB(44,44,44));
         nvgBeginPath(vg);
-        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * (1.f-node->chance));
+        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * node->chance);
         nvgFill(vg);
 
 	}
+
+	inline float calcNodeScale(int nodeCount) { return (NODE_SIZE/nodeCount) / NODE_SIZE; }
+
+	inline float calcNodeYHeight(float scale, int nodePos, int nodeCount) { return NODE_SIZE+(((NODE_SIZE*scale)*nodePos)-(((NODE_SIZE*scale)*nodeCount)/2)); }
 
 	void drawNodes(NVGcontext* vg) {
 
@@ -308,14 +326,27 @@ struct NodeDisplay : Widget {
 		
 		float cumulativeX = -25.f;
 		for (int d = 0; d < nodeBins.size(); d++) {
-			float scale = (NODE_SIZE/nodeBins[d].size()) / NODE_SIZE; //(1 - ((float)d/depth));
-			float prevScale = (NODE_SIZE/nodeBins[std::max(0, d-1)].size()) / NODE_SIZE; //(1 - ((float)(d-1)/depth));
+			int binLen = nodeBins[d].size();
+			float scale = calcNodeScale(binLen);
+			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size()); //(1 - ((float)(d-1)/depth));
 			cumulativeX += ((NODE_SIZE+1)*prevScale);
-			for(int i = 0; i < nodeBins[d].size(); i++) {
+			for(int i = 0; i < binLen; i++) {
 				Node* node = nodeBins[d][i];
-				float y = NODE_SIZE + ((((NODE_SIZE /*+1*/) *scale) * i) - (((NODE_SIZE*scale) * nodeBins[d].size()) / 2));
+				float y = calcNodeYHeight(scale, i, binLen);
 
 				drawNode(vg, node, cumulativeX, y, scale);
+
+				// + button
+				if (node->children.size() < 1) {
+					float xVal = (cumulativeX + ((NODE_SIZE+1)*scale)) + xOffset;
+					float yVal = calcNodeYHeight(calcNodeScale(binLen*2), i*2, binLen*2) + yOffset;
+					float xSize = NODE_SIZE * calcNodeScale(binLen*2);
+					float ySize = NODE_SIZE * calcNodeScale(binLen*2);
+					nvgFillColor(vg, nvgRGB(255,255,255));
+					nvgBeginPath(vg);
+					nvgRect(vg, xVal, yVal, xSize, ySize);
+					nvgFill(vg);
+				}
 
 				/*if (node == module->activeNode) {
 					xOffset = -cumulativeX;
@@ -325,35 +356,6 @@ struct NodeDisplay : Widget {
 				
 			}
 		}
-
-		/*for (int i = 0; i < node.children.size(); i++) {
-
-			int newX = x + 45;
-			int newY = (y + (dx/2)) + (i - node.children.size() / 2) * dx;
-
-			// draw path to child
-			Vec startPos = Vec(x + xOffset + 25, y + yOffset + 7.5);
-			Vec endPos = Vec(newX + xOffset, newY +yOffset + 7.5);
-
-			Vec QuadMod1 = Vec(startPos.x + 7.5, startPos.y);
-			Vec End1 = lerp(startPos, endPos, 0.50);
-			Vec QuadMod2 = Vec(endPos.x - 7.5, endPos.y);
-
-			nvgBeginPath(vg);
-			nvgMoveTo(vg, startPos.x, startPos.y);
-			nvgQuadTo(vg, QuadMod1.x, QuadMod1.y, End1.x, End1.y);
-			nvgQuadTo(vg, QuadMod2.x, QuadMod2.y, endPos.x, endPos.y);
-			nvgStrokeColor(vg, nvgRGB(255,127,80));
-			nvgStrokeWidth(vg, 2);
-			nvgStroke(vg);
-			nvgClosePath(vg);
-
-			// recursive draw child node
-			drawNodes(vg, node.children[i], newX, newY, depth+1);
-		}*/
-
-		//nvgRestore(vg);
-
 	}
 
 	void draw(const DrawArgs &args) override {
