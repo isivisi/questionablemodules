@@ -187,15 +187,15 @@ struct Treequencer : Module {
 struct NodeDisplay : Widget {
 	Treequencer* module;
 
-	const float NODE_SIZE = 25;
+	const float NODE_SIZE = 10000;
 
-	float xOffset = 25;
-	float yOffset = 0;
+	float xOffset = -3500;
+	float yOffset = -3000;
 
 	float dragX = 0;
 	float dragY = 0;
 
-	float screenScale = 4.5f;
+	float screenScale = 0.02f;
 
 	NodeDisplay() {
 
@@ -261,14 +261,16 @@ struct NodeDisplay : Widget {
 	}
 
 	void onButton(const event::Button &e) override {
-        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (e.action == GLFW_PRESS) {
             e.consume(this);
 			Vec mousePos = e.pos / screenScale;
 
-			Node* foundNode = findNodeClicked(mousePos, &module->rootNode);
+			if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
+				Node* foundNode = findNodeClicked(mousePos, &module->rootNode);
 
-			if (foundNode) {
-				createContextMenuForNode(foundNode);
+				if (foundNode) {
+					createContextMenuForNode(foundNode);
+				}
 			}
 			
 		}
@@ -310,7 +312,7 @@ struct NodeDisplay : Widget {
 		float xVal = x + xOffset;
 		float yVal = y + yOffset;
 		float xSize = NODE_SIZE * scale;
-		float ySize = (NODE_SIZE) * scale;
+		float ySize = NODE_SIZE * scale;
 
 		// node bg
 		nvgFillColor(vg, node->enabled ? nvgRGB(124,252,0) : nvgRGB(255,127,80));
@@ -328,12 +330,12 @@ struct NodeDisplay : Widget {
 
 		for (int i = 0; i < node->output+1; i++) {
 
-			float boxX = gridStartX + ((5*scale) * (i%3));
-			float boxY = gridStartY + ((5*scale) * floor(i/3));
+			float boxX = gridStartX + (((NODE_SIZE/7)*scale) * (i%3));
+			float boxY = gridStartY + (((NODE_SIZE/7)*scale) * floor(i/3));
 
 			nvgFillColor(vg, nvgRGB(44,44,44));
 			nvgBeginPath(vg);
-			nvgRect(vg, boxX, boxY, 4 * scale, 4 * scale);
+			nvgRect(vg, boxX, boxY, (NODE_SIZE/8) * scale, (NODE_SIZE/8) * scale);
 			nvgFill(vg);
 
 		}
