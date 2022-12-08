@@ -218,7 +218,13 @@ struct NodeDisplay : Widget {
 		if (!node) return;
 
 		auto menu = rack::createMenu();
-		menu->addChild(rack::createMenuLabel("Node"));
+		menu->addChild(rack::createMenuLabel("Node Chance:"));
+
+		ui::TextField* param = new ui::TextField();
+		param->box.size.x = 100;
+		param->text = std::to_string(node->chance);
+		menu->addChild(param);
+
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { node->addChild(); }));
 
 		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() { node->children.erase(node->children.begin()); }));
@@ -318,15 +324,17 @@ struct NodeDisplay : Widget {
 
 		}
 
-		// chance
-		nvgFillColor(vg, nvgRGB(240,240,240));
-        nvgBeginPath(vg);
-        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize);
-        nvgFill(vg);
-		nvgFillColor(vg, nvgRGB(44,44,44));
-        nvgBeginPath(vg);
-        nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * node->chance);
-        nvgFill(vg);
+		if (node->children.size() > 1) {
+			// chance
+			nvgFillColor(vg, nvgRGB(240,240,240));
+			nvgBeginPath(vg);
+			nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize);
+			nvgFill(vg);
+			nvgFillColor(vg, nvgRGB(44,44,44));
+			nvgBeginPath(vg);
+			nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * node->chance);
+			nvgFill(vg);
+		}
 
 	}
 
@@ -402,7 +410,7 @@ struct NodeDisplay : Widget {
 				nodeBins.push_back(std::vector<Node*>());
 
 				// allocate a full array with nullptrs to help with visuals later
-				nodeBins[i].resize(iterDepth*2);
+				//nodeBins[i].resize(iterDepth*2);
 			}
 
 			gatherNodesForBins(module->rootNode);
@@ -416,7 +424,10 @@ struct NodeDisplay : Widget {
 
 	void gatherNodesForBins(Node& node, int position = 0, int depth = 0) {
 
-		nodeBins[depth][position] = &node;
+		//nodeBins[depth][position] = &node;
+
+		nodeBins[depth].push_back(&node);
+
 
 		for (int i = 0; i < node.children.size(); i++) {
 			gatherNodesForBins(node.children[i], (position*2)+i, depth+1);
