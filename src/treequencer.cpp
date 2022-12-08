@@ -58,15 +58,13 @@ struct Node {
 		children.push_back(child2);
   	}
 
-	Node* addChild() {
+	void addChild() {
 
 		Node child = Node();
 		child.parent = this;
 		child.chance = randFloat(0.9f);
 		child.output = randomInteger(-1, 7);
 		children.push_back(child);
-
-		return &child;
 
 	}
 
@@ -212,6 +210,18 @@ struct NodeDisplay : Widget {
 		return true;
 	}
 
+	void createContextMenuForNode(Node* node) {
+		if (!node) return;
+
+		auto menu = rack::createMenu();
+		menu->addChild(rack::createMenuLabel("Node"));
+		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { node->addChild(); }));
+
+		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() { node->children.erase(node->children.begin()); }));
+		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { node->children.pop_back(); }));
+		
+	}
+
 	Node* findNodeClicked(Vec mp, Node* node) {
 		if (!node) return nullptr;
 
@@ -227,14 +237,14 @@ struct NodeDisplay : Widget {
 	}
 
 	void onButton(const event::Button &e) override {
-        if (e.action == GLFW_PRESS) {
+        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT) {
             e.consume(this);
 			Vec mousePos = e.pos / screenScale;
 
 			Node* foundNode = findNodeClicked(mousePos, &module->rootNode);
 
 			if (foundNode) {
-				if (e.button == GLFW_MOUSE_BUTTON_LEFT) foundNode->enabled = true;
+				createContextMenuForNode(foundNode);
 			}
 			
 		}
@@ -336,18 +346,6 @@ struct NodeDisplay : Widget {
 
 				drawNode(vg, node, cumulativeX, y, scale);
 
-				// + button
-				if (node->children.size() < 1) {
-					float xVal = (cumulativeX + ((NODE_SIZE+1)*scale)) + xOffset;
-					float yVal = calcNodeYHeight(calcNodeScale(binLen*2), i*2, binLen*2) + yOffset;
-					float xSize = NODE_SIZE * calcNodeScale(binLen*2);
-					float ySize = NODE_SIZE * calcNodeScale(binLen*2);
-					nvgFillColor(vg, nvgRGB(255,255,255));
-					nvgBeginPath(vg);
-					nvgRect(vg, xVal, yVal, xSize, ySize);
-					nvgFill(vg);
-				}
-
 				/*if (node == module->activeNode) {
 					xOffset = -cumulativeX;
 					yOffset = -y;
@@ -394,7 +392,12 @@ struct NodeDisplay : Widget {
 			// Initialize bins
 			nodeBins.clear();
 			for (int i = 0; i < depth+1; i++) {
+				int iterDepth = i+1;
 				nodeBins.push_back(std::vector<Node*>());
+
+				// allocate a full array
+				nodeBins[i].reserve(iterDepth*2);
+				for (int x = 0; x < iterDepth*2; x++) nodeBins[i].push_back(nullptr);
 			}
 
 			gatherNodesForBins(module->rootNode);
