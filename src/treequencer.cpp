@@ -238,7 +238,7 @@ struct NodeDisplay : Widget {
 			mod->resetActiveNode();
 			node->children.erase(node->children.begin()); 
 		}));
-		
+
 		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 
 			mod->resetActiveNode();
 			node->children.pop_back(); 
@@ -261,7 +261,7 @@ struct NodeDisplay : Widget {
 	}
 
 	void onButton(const event::Button &e) override {
-        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
             e.consume(this);
 			Vec mousePos = e.pos / screenScale;
 
