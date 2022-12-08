@@ -13,6 +13,7 @@ struct QTextField : ui::TextField {
     }
 
     void onSelectKey(const SelectKeyEvent& e) override {
+        TextField::onSelectKey(e);
 		if (e.action == GLFW_PRESS && (e.key == GLFW_KEY_ENTER || e.key == GLFW_KEY_KP_ENTER)) {
             functionPtr(text);
             e.consume(this);
