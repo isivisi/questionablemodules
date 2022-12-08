@@ -149,6 +149,11 @@ struct Treequencer : Module {
 		return std::min(min, std::max(max, value));
 	}
 
+	void resetActiveNode() {
+		activeNode->enabled = false;
+		activeNode = &rootNode;
+	}
+
 	void process(const ProcessArgs& args) override {
 
 		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
@@ -184,13 +189,13 @@ struct NodeDisplay : Widget {
 
 	const float NODE_SIZE = 25;
 
-	float xOffset = 0;
+	float xOffset = 25;
 	float yOffset = 0;
 
 	float dragX = 0;
 	float dragY = 0;
 
-	float screenScale = 1.f;// 4.5f;
+	float screenScale = 4.5f;
 
 	NodeDisplay() {
 
@@ -217,6 +222,8 @@ struct NodeDisplay : Widget {
 	void createContextMenuForNode(Node* node) {
 		if (!node) return;
 
+		Treequencer* mod = module;
+
 		auto menu = rack::createMenu();
 		menu->addChild(rack::createMenuLabel("Node Chance:"));
 
@@ -227,8 +234,15 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { node->addChild(); }));
 
-		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() { node->children.erase(node->children.begin()); }));
-		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { node->children.pop_back(); }));
+		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() {
+			mod->resetActiveNode();
+			node->children.erase(node->children.begin()); 
+		}));
+		
+		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 
+			mod->resetActiveNode();
+			node->children.pop_back(); 
+		}));
 		
 	}
 
@@ -405,12 +419,13 @@ struct NodeDisplay : Widget {
 
 			// Initialize bins
 			nodeBins.clear();
+			int amnt = 1;
 			for (int i = 0; i < depth+1; i++) {
-				int iterDepth = i+1;
 				nodeBins.push_back(std::vector<Node*>());
 
 				// allocate a full array with nullptrs to help with visuals later
-				//nodeBins[i].resize(iterDepth*2);
+				amnt *= 2;
+				nodeBins[i].resize(amnt);
 			}
 
 			gatherNodesForBins(module->rootNode);
@@ -424,10 +439,9 @@ struct NodeDisplay : Widget {
 
 	void gatherNodesForBins(Node& node, int position = 0, int depth = 0) {
 
-		//nodeBins[depth][position] = &node;
+		nodeBins[depth][position] = &node;
 
-		nodeBins[depth].push_back(&node);
-
+		//nodeBins[depth].push_back(&node);
 
 		for (int i = 0; i < node.children.size(); i++) {
 			gatherNodesForBins(node.children[i], (position*2)+i, depth+1);
