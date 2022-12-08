@@ -103,7 +103,7 @@ struct Node {
 	void fromJson(json_t* json) {
 
 		if (json_t* out = json_object_get(json, "output")) output = json_integer_value(out);
-		if (json_t* c = json_object_get(json, "chance")) output = json_integer_value(c);
+		if (json_t* c = json_object_get(json, "chance")) chance = json_real_value(c);
 
 		if (json_t* arr = json_object_get(json, "children")) {
 
@@ -196,7 +196,7 @@ struct Treequencer : Module {
 
 		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
 
-		if (shouldIterate) {
+		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
 			outputs[activeNode->output].setVoltage(0.f); 
 			if (!activeNode->children.size()) activeNode = &rootNode;
@@ -221,10 +221,10 @@ struct Treequencer : Module {
 
 	}
 
-	json_t* dataToJson() const {
+	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
 
-		json_object_set_new(rootJ, "rootNode", (const_cast <Node&>(rootNode)).toJson());
+		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
 	}
@@ -234,6 +234,7 @@ struct Treequencer : Module {
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
 			rootNode.children.clear();
+			activeNode = &rootNode;
 			rootNode.fromJson(rn);
 		}
 
