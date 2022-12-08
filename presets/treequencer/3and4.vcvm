@@ -1,0 +1,42 @@
+{
+  "plugin": "questionablemodules",
+  "model": "treequencer",
+  "version": "2.0.0",
+  "params": [],
+  "data": {
+    "rootNode": {
+      value: 1,
+      chance: 0.75,
+      children: [
+        {
+            value: 2,
+            chance: 0.5,
+            children: [
+                {
+                    value: 5,
+                    chance: 0.5,
+                },
+                {
+                    value: 3,
+                    chance: 0.5,
+                }
+            ]
+        },
+         {
+            value: 4,
+            chance: 0.25,
+            children: [
+                {
+                    value: 7,
+                    chance: 0.5,
+                },
+                {
+                    value: 0,
+                    chance: 0.5,
+                }
+            ]
+        }
+      ]
+    }
+  }
+}

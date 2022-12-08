@@ -40,18 +40,24 @@ struct Node {
 
 	Rect box;
 
+	Node(Node* p = nullptr, int out = randomInteger(-1, 7), float c = randFloat(0.9f)) {
+
+		output = out;
+		chance = c;
+		parent = p;
+
+	}
+
+	Node(json_t* json) {
+		fromJson(json);
+	}
+
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
   	void fillToDepth(int desiredDepth) {
 		if (desiredDepth <= 0) return;
-		Node child1 = Node();
-		Node child2 = Node();
-		child1.parent = this;
-		child1.chance = randFloat(0.9f);
-		child1.output = randomInteger(-1, 7);
-		child2.parent = this;
-		child2.chance = randFloat(0.9f);
-		child2.output = randomInteger(-1, 7);
+		Node child1 = Node(this);
+		Node child2 = Node(this);
 		child1.fillToDepth(desiredDepth-1);
 		child2.fillToDepth(desiredDepth-1);
 		children.push_back(child1);
@@ -60,7 +66,7 @@ struct Node {
 
 	void addChild() {
 
-		Node child = Node();
+		Node child = Node(this);
 		child.parent = this;
 		child.chance = randFloat(0.9f);
 		child.output = randomInteger(-1, 7);
@@ -77,6 +83,38 @@ struct Node {
 		}
 		return *std::max_element(sizes.begin(), sizes.end());
 	}
+
+	json_t* const toJson() {
+		json_t* nodeJ = json_object();
+
+		json_object_set_new(nodeJ, "output", json_integer(output));
+		json_object_set_new(nodeJ, "chance", json_real(chance));
+		
+		json_t *childrenArray = json_array();
+		json_object_set_new(nodeJ, "children", childrenArray);
+
+		for (int i = 0; i < children.size(); i++) {
+			json_array_append_new(childrenArray, children[i].toJson());
+		}
+
+		return nodeJ;
+	}
+
+	void fromJson(json_t* json) {
+
+		if (json_t* out = json_object_get(json, "output")) output = json_integer_value(out);
+		if (json_t* c = json_object_get(json, "chance")) output = json_integer_value(c);
+
+		if (json_t* arr = json_object_get(json, "children")) {
+
+			for (int i = 0; i < json_array_size(arr); i++) {
+				children.push_back(Node(json_array_get(arr, i)));
+			}
+
+		}
+
+	}
+
 };
 
 /*for (const auto& child : node->children) {
@@ -182,6 +220,26 @@ struct Treequencer : Module {
 		}
 
 	}
+
+	json_t* dataToJson() const {
+		json_t* rootJ = json_object();
+
+		json_object_set_new(rootJ, "rootNode", (const_cast <Node&>(rootNode)).toJson());
+
+		return rootJ;
+	}
+
+
+	void dataFromJson(json_t* rootJ) override {
+
+		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
+			rootNode.children.clear();
+			rootNode.fromJson(rn);
+		}
+
+	}
+
+
 };
 
 struct NodeDisplay : Widget {
@@ -195,7 +253,7 @@ struct NodeDisplay : Widget {
 	float dragX = 0;
 	float dragY = 0;
 
-	float screenScale = 1.f;
+	float screenScale = 3.5f;
 
 	NodeDisplay() {
 
