@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "textfield.cpp"
 #include <iostream>
 #include <map>
 #include <string>
@@ -28,6 +29,40 @@ int randomInteger(int min, int max) {
 	std::mt19937 gen(rd()); // seed the generator
 	std::uniform_int_distribution<> distr(min, max); // define the range
 	return distr(gen);
+}
+
+inline bool isInteger(const std::string& s)
+{
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
+
+   char * p;
+   strtol(s.c_str(), &p, 10);
+
+   return (*p == 0);
+}
+
+bool isNumber(std::string s)
+{
+	std::size_t char_pos(0);
+	// skip the whilespaces 
+	char_pos = s.find_first_not_of(' ');
+	if (char_pos == s.size()) return false;
+	// check the significand 
+	if (s[char_pos] == '+' || s[char_pos] == '-') 
+		++char_pos; // skip the sign if exist 
+	int n_nm, n_pt;
+	for (n_nm = 0, n_pt = 0;
+		std::isdigit(s[char_pos]) || s[char_pos] == '.';
+		++char_pos) {
+		s[char_pos] == '.' ? ++n_pt : ++n_nm;
+	}
+	if (n_pt>1 || n_nm<1) // no more than one point, at least one digit 
+		return false;
+	// skip the trailing whitespaces 
+	while (s[char_pos] == ' ') {
+		++ char_pos;
+	}
+	return char_pos == s.size(); // must reach the ending 0 of the string 
 }
 
 // A node in the tree
@@ -284,12 +319,26 @@ struct NodeDisplay : Widget {
 		Treequencer* mod = module;
 
 		auto menu = rack::createMenu();
+
+		menu->addChild(rack::createMenuLabel("Node Output:"));
+
+		ui::TextField* outparam = new QTextField([=](std::string text) { 
+			if (isInteger(text)) node->output = std::min(8, std::max(0, std::stoi(text))) - 1; 
+		});
+		outparam->box.size.x = 100;
+		outparam->text = std::to_string(node->output + 1);
+		menu->addChild(outparam);
+
 		menu->addChild(rack::createMenuLabel("Node Chance:"));
 
-		ui::TextField* param = new ui::TextField();
+		ui::TextField* param = new QTextField([=](std::string text) { 
+			if (isNumber(text)) node->chance = std::min(0.9f, std::max(0.1f, (float)::atof(text.c_str()))); 
+		});
 		param->box.size.x = 100;
 		param->text = std::to_string(node->chance);
 		menu->addChild(param);
+
+		menu->addChild(rack::createMenuLabel(""));
 
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { node->addChild(); }));
 
