@@ -187,15 +187,15 @@ struct Treequencer : Module {
 struct NodeDisplay : Widget {
 	Treequencer* module;
 
-	const float NODE_SIZE = 10000;
+	const float NODE_SIZE = 25;
 
-	float xOffset = -3500;
-	float yOffset = -3000;
+	float xOffset = 25;
+	float yOffset = 0;
 
 	float dragX = 0;
 	float dragY = 0;
 
-	float screenScale = 0.02f;
+	float screenScale = 1.f;
 
 	NodeDisplay() {
 
