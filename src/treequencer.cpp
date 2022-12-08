@@ -291,8 +291,18 @@ struct NodeDisplay : Widget {
 
 	float screenScale = 3.5f;
 
+	bool dirtyRender = true;
+
 	NodeDisplay() {
 
+	}
+
+	void renderStateDirty() {
+		dirtyRender = true;
+	}
+
+	void renderStateClean() {
+		dirtyRender = false;
 	}
 
 	// AABB
@@ -340,16 +350,22 @@ struct NodeDisplay : Widget {
 
 		menu->addChild(rack::createMenuLabel(""));
 
-		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { node->addChild(); }));
+		// TODO: depth 22 MAX
+		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { 
+			node->addChild(); 
+			renderStateDirty();
+		}));
 
 		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() {
 			mod->resetActiveNode();
 			node->children.erase(node->children.begin()); 
+			renderStateDirty();
 		}));
 
 		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 
 			mod->resetActiveNode();
 			node->children.pop_back(); 
+			renderStateDirty();
 		}));
 		
 	}
@@ -524,21 +540,24 @@ struct NodeDisplay : Widget {
 
 		if (layer == 1) {
 
-			int depth = module->rootNode.maxDepth();
-			if (!depth) return;
+			if (dirtyRender) {
+				int depth = module->rootNode.maxDepth();
+				if (!depth) return;
 
-			// Initialize bins
-			nodeBins.clear();
-			int amnt = 1;
-			for (int i = 0; i < depth+1; i++) {
-				nodeBins.push_back(std::vector<Node*>());
+				// Initialize bins
+				nodeBins.clear();
+				int amnt = 1;
+				for (int i = 0; i < depth+1; i++) {
+					nodeBins.push_back(std::vector<Node*>());
 
-				// allocate a full array with nullptrs to help with visuals later
-				amnt *= 2;
-				nodeBins[i].resize(amnt);
+					// allocate a full array with nullptrs to help with visuals later
+					amnt *= 2;
+					nodeBins[i].resize(amnt);
+				}
+
+				gatherNodesForBins(module->rootNode);
+				renderStateClean();
 			}
-
-			gatherNodesForBins(module->rootNode);
 			drawNodes(args.vg);
 
 		}
