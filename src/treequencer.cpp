@@ -158,8 +158,12 @@ struct Treequencer : Module {
 			outputs[activeNode->output].setVoltage(0.f); 
 			if (!activeNode->children.size()) activeNode = &rootNode;
 			else {
-				float r = randFloat();
-				activeNode = &activeNode->children[r < activeNode->chance ? 0 : 1];
+				if (activeNode->children.size() > 1) {
+					float r = randFloat();
+					activeNode = &activeNode->children[r < activeNode->chance ? 0 : 1];
+				} else {
+					activeNode = &activeNode->children[0];
+				}
 			}
 			activeNode->enabled = true;
 		}
@@ -342,9 +346,11 @@ struct NodeDisplay : Widget {
 			cumulativeX += ((NODE_SIZE+1)*prevScale);
 			for(int i = 0; i < binLen; i++) {
 				Node* node = nodeBins[d][i];
-				float y = calcNodeYHeight(scale, i, binLen);
 
-				drawNode(vg, node, cumulativeX, y, scale);
+				if (node) {
+					float y = calcNodeYHeight(scale, i, binLen);
+					drawNode(vg, node, cumulativeX, y, scale);
+				}
 
 				/*if (node == module->activeNode) {
 					xOffset = -cumulativeX;
@@ -395,9 +401,8 @@ struct NodeDisplay : Widget {
 				int iterDepth = i+1;
 				nodeBins.push_back(std::vector<Node*>());
 
-				// allocate a full array
-				nodeBins[i].reserve(iterDepth*2);
-				for (int x = 0; x < iterDepth*2; x++) nodeBins[i].push_back(nullptr);
+				// allocate a full array with nullptrs to help with visuals later
+				nodeBins[i].resize(iterDepth*2);
 			}
 
 			gatherNodesForBins(module->rootNode);
@@ -409,12 +414,12 @@ struct NodeDisplay : Widget {
 
 	}
 
-	void gatherNodesForBins(Node& node, int depth = 0) {
+	void gatherNodesForBins(Node& node, int position = 0, int depth = 0) {
 
-		nodeBins[depth].push_back(&node);
+		nodeBins[depth][position] = &node;
 
 		for (int i = 0; i < node.children.size(); i++) {
-			gatherNodesForBins(node.children[i], depth+1);
+			gatherNodesForBins(node.children[i], (position*2)+i, depth+1);
 		}
 
 	}
