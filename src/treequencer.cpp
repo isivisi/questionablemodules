@@ -211,7 +211,7 @@ struct Treequencer : Module {
 		configOutput(ALL_OUT, "Pitch");
 		
 
-		rootNode.fillToDepth(3);
+		rootNode.fillToDepth(1);
 		
 		rootNode.enabled = true;
 		activeNode = &rootNode;
@@ -290,6 +290,7 @@ struct NodeDisplay : Widget {
 	float dragY = 0;
 
 	float screenScale = 3.5f;
+	bool followNodes = false;
 
 	bool dirtyRender = true;
 
@@ -498,13 +499,13 @@ struct NodeDisplay : Widget {
 				if (node) {
 					float y = calcNodeYHeight(scale, i, binLen);
 					drawNode(vg, node, cumulativeX, y, scale);
-				}
 
-				/*if (node == module->activeNode) {
-					xOffset = -cumulativeX;
-					yOffset = -y;
-					scale = 6 * ((1-scale)*100);
-				}*/
+					if (followNodes && node == module->activeNode) {
+						xOffset = -cumulativeX;
+						yOffset = -y;
+						screenScale = ((1-(scale*2))*25);
+					}
+				}
 				
 			}
 		}
