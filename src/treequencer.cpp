@@ -94,6 +94,7 @@ struct Node {
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
   	void fillToDepth(int desiredDepth) {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 		if (desiredDepth <= 0) return;
 
 		Node child1 = Node(this);
@@ -101,7 +102,6 @@ struct Node {
 		child1.fillToDepth(desiredDepth-1);
 		child2.fillToDepth(desiredDepth-1);
 
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 		children.push_back(child1);
 		children.push_back(child2);
   	}
