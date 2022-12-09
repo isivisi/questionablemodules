@@ -183,6 +183,8 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
+	bool isDirty = true;
+
 	dsp::SchmittTrigger gateTrigger;
 	dsp::SchmittTrigger resetTrigger;
 
@@ -271,6 +273,8 @@ struct Treequencer : Module {
 			rootNode.children.clear();
 			activeNode = &rootNode;
 			rootNode.fromJson(rn);
+
+			isDirty = true;
 		}
 
 	}
@@ -304,6 +308,11 @@ struct NodeDisplay : Widget {
 
 	void renderStateClean() {
 		dirtyRender = false;
+		module->isDirty = false;
+	}
+
+	bool isRenderStateDirty() {
+		return dirtyRender || module->isDirty;
 	}
 
 	// AABB
@@ -541,7 +550,7 @@ struct NodeDisplay : Widget {
 
 		if (layer == 1) {
 
-			if (dirtyRender) {
+			if (isRenderStateDirty()) {
 				int depth = module->rootNode.maxDepth();
 				if (!depth) return;
 
