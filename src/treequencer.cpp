@@ -99,7 +99,7 @@ struct Node {
 
 	void setOutput(int out) {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
-		output = std::min(8, std::max(0, out));
+		output = std::min(8, std::max(-1, out));
 	}
 
 	void setChance(float ch) {
