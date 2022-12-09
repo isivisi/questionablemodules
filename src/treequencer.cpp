@@ -97,6 +97,10 @@ struct Node {
 		fromJson(json);
 	}
 
+	~Node() {
+		for (int i = 0; i < children.size(); i++) delete children[i];
+	}
+
 	void setOutput(int out) {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		output = std::min(8, std::max(-1, out));
