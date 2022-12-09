@@ -14,7 +14,7 @@ const int MODULE_SIZE = 18;
 
 const int DEFAULT_NODE_DEPTH = 3;
 
-// make sure only module thread and widget threads cooperate
+// make sure module thread and widget threads cooperate :)
 std::recursive_mutex treeMutex;
 
 Vec lerp(Vec& point1, Vec& point2, float t) {
@@ -80,6 +80,7 @@ struct Node {
 	Rect box;
 
 	Node(Node* p = nullptr, int out = randomInteger(-1, 7), float c = randFloat(0.9f)) {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 
 		output = out;
 		chance = c;
