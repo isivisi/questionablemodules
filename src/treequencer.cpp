@@ -16,7 +16,7 @@ const int MODULE_SIZE = 18;
 const int DEFAULT_NODE_DEPTH = 3;
 
 // make sure module thread and widget threads cooperate :)
-std::recursive_mutex treeMutex;
+//std::recursive_mutex treeMutex;
 
 Vec lerp(Vec& point1, Vec& point2, float t) {
 	Vec diff = point2 - point1;
@@ -249,6 +249,7 @@ struct Treequencer : Module {
 
 	dsp::SchmittTrigger gateTrigger;
 	dsp::SchmittTrigger resetTrigger;
+	dsp::PulseGenerator pulse;
 
 	Node rootNode;
 
@@ -308,13 +309,16 @@ struct Treequencer : Module {
 				}
 			}
 			activeNode->enabled = true;
+			pulse.trigger(1e-3f);
 		}
+
+		bool activeP = pulse.process(args.sampleTime);
 
 		if (activeNode->output < 0) {
 			outputs[activeNode->output].setVoltage(0.f); 
 			outputs[ALL_OUT].setVoltage(0.f);
 		} else {
-			outputs[activeNode->output].setVoltage(10.f); 
+			outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
 			outputs[ALL_OUT].setVoltage((float)activeNode->output/8);
 		}
 
@@ -332,7 +336,7 @@ struct Treequencer : Module {
 	void dataFromJson(json_t* rootJ) override {
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
-			std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
+			//std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 
 			rootNode.children.clear();
 			activeNode = &rootNode;
