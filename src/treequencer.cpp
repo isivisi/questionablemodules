@@ -6,12 +6,16 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <mutex>
 #include <algorithm>
 
 const int MAX_OUTPUTS = 8;
 const int MODULE_SIZE = 18;
 
 const int DEFAULT_NODE_DEPTH = 3;
+
+// make sure only module thread and widget threads cooperate
+std::recursive_mutex treeMutex;
 
 Vec lerp(Vec& point1, Vec& point2, float t) {
 	Vec diff = point2 - point1;
@@ -91,15 +95,19 @@ struct Node {
 	// assumes EMPTY
   	void fillToDepth(int desiredDepth) {
 		if (desiredDepth <= 0) return;
+
 		Node child1 = Node(this);
 		Node child2 = Node(this);
 		child1.fillToDepth(desiredDepth-1);
 		child2.fillToDepth(desiredDepth-1);
+
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 		children.push_back(child1);
 		children.push_back(child2);
   	}
 
 	void addChild() {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 
 		Node child = Node(this);
 		child.parent = this;
@@ -110,6 +118,7 @@ struct Node {
 	}
 
 	int maxDepth() {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 		if (children.size() == 0) return 0;
 
 		std::vector<int> sizes;
@@ -120,6 +129,7 @@ struct Node {
 	}
 
 	json_t* const toJson() {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 		json_t* nodeJ = json_object();
 
 		json_object_set_new(nodeJ, "output", json_integer(output));
@@ -136,6 +146,7 @@ struct Node {
 	}
 
 	void fromJson(json_t* json) {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 
 		if (json_t* out = json_object_get(json, "output")) output = json_integer_value(out);
 		if (json_t* c = json_object_get(json, "chance")) chance = json_real_value(c);
@@ -270,6 +281,8 @@ struct Treequencer : Module {
 	void dataFromJson(json_t* rootJ) override {
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
+			std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
+
 			rootNode.children.clear();
 			activeNode = &rootNode;
 			rootNode.fromJson(rn);
@@ -362,17 +375,23 @@ struct NodeDisplay : Widget {
 
 		// TODO: depth 22 MAX
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { 
+			std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
+
 			node->addChild(); 
 			renderStateDirty();
 		}));
 
 		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() {
+			std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
+
 			mod->resetActiveNode();
 			node->children.erase(node->children.begin()); 
 			renderStateDirty();
 		}));
 
 		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 
+			std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
+			
 			mod->resetActiveNode();
 			node->children.pop_back(); 
 			renderStateDirty();
@@ -549,6 +568,7 @@ struct NodeDisplay : Widget {
 		nvgScale(args.vg, screenScale, screenScale);
 
 		if (layer == 1) {
+			std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 
 			if (isRenderStateDirty()) {
 				int depth = module->rootNode.maxDepth();
