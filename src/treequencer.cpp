@@ -76,7 +76,7 @@ struct Node {
 	bool enabled = false;
 	float chance = 0.5;
 	Node* parent;
-  	std::vector<Node> children;
+  	std::vector<Node*> children;
 
 	Rect box;
 
@@ -127,9 +127,9 @@ struct Node {
 		return enabled; 
 	}
 
-	std::vector<Node>* getChildren() {
+	std::vector<Node*> getChildren() {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
-		return &children;
+		return children;
 	}
 
 	// Fill each Node with 2 other nodes until depth is met
@@ -138,10 +138,10 @@ struct Node {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		if (desiredDepth <= 0) return;
 
-		Node child1 = Node(this);
-		Node child2 = Node(this);
-		child1.fillToDepth(desiredDepth-1);
-		child2.fillToDepth(desiredDepth-1);
+		Node* child1 = new Node(this);
+		Node* child2 = new Node(this);
+		child1->fillToDepth(desiredDepth-1);
+		child2->fillToDepth(desiredDepth-1);
 
 		children.push_back(child1);
 		children.push_back(child2);
@@ -150,21 +150,23 @@ struct Node {
 	void addChild() {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 
-		Node child = Node(this);
-		child.parent = this;
-		child.chance = randFloat(0.9f);
-		child.output = randomInteger(-1, 7);
+		Node* child = new Node(this);
+		child->parent = this;
+		child->chance = randFloat(0.9f);
+		child->output = randomInteger(-1, 7);
 		children.push_back(child);
 
 	}
 
 	void removeTopChild() {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		delete children[0];
 		children.erase(children.begin()); 
 	}
 
 	void removeBottomChild() {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		delete children[1];
 		children.pop_back(); 
 	}
 
@@ -174,7 +176,7 @@ struct Node {
 
 		std::vector<int> sizes;
 		for (int i = 0; i < children.size(); i++) {
-			sizes.push_back(children[i].maxDepth() + 1);
+			sizes.push_back(children[i]->maxDepth() + 1);
 		}
 		return *std::max_element(sizes.begin(), sizes.end());
 	}
@@ -190,7 +192,7 @@ struct Node {
 		json_object_set_new(nodeJ, "children", childrenArray);
 
 		for (int i = 0; i < children.size(); i++) {
-			json_array_append_new(childrenArray, children[i].toJson());
+			json_array_append_new(childrenArray, children[i]->toJson());
 		}
 
 		return nodeJ;
@@ -205,7 +207,7 @@ struct Node {
 		if (json_t* arr = json_object_get(json, "children")) {
 
 			for (int i = 0; i < json_array_size(arr); i++) {
-				children.push_back(Node(json_array_get(arr, i)));
+				children.push_back(new Node(json_array_get(arr, i)));
 			}
 
 		}
@@ -303,9 +305,9 @@ struct Treequencer : Module {
 			else {
 				if (activeNode->children.size() > 1) {
 					float r = randFloat();
-					activeNode = &activeNode->children[r < activeNode->chance ? 0 : 1];
+					activeNode = activeNode->children[r < activeNode->chance ? 0 : 1];
 				} else {
-					activeNode = &activeNode->children[0];
+					activeNode = activeNode->children[0];
 				}
 			}
 			activeNode->enabled = true;
@@ -455,7 +457,7 @@ struct NodeDisplay : Widget {
 
 		for (int i = 0; i < node->children.size(); i++)
     	{
-			Node* found = findNodeClicked(mp, &node->children[i]);
+			Node* found = findNodeClicked(mp, node->children[i]);
 			if (found) return found;
     	}
 
@@ -634,7 +636,7 @@ struct NodeDisplay : Widget {
 					nodeBins[i].resize(amnt);
 				}
 
-				gatherNodesForBins(module->rootNode);
+				gatherNodesForBins(&module->rootNode);
 				renderStateClean();
 			}
 			drawNodes(args.vg);
@@ -645,14 +647,14 @@ struct NodeDisplay : Widget {
 
 	}
 
-	void gatherNodesForBins(Node& node, int position = 0, int depth = 0) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*node.m);
-		nodeBins[depth][position] = &node;
+	void gatherNodesForBins(Node* node, int position = 0, int depth = 0) {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(*node->m);
+		nodeBins[depth][position] = node;
 
 		//nodeBins[depth].push_back(&node);
 
-		for (int i = 0; i < node.children.size(); i++) {
-			gatherNodesForBins(node.children[i], (position*2)+i, depth+1);
+		for (int i = 0; i < node->children.size(); i++) {
+			gatherNodesForBins(node->children[i], (position*2)+i, depth+1);
 		}
 
 	}
