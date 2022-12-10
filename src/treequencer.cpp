@@ -98,12 +98,13 @@ struct Node {
 	}
 
 	~Node() {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		for (int i = 0; i < children.size(); i++) delete children[i];
 	}
 
 	void setOutput(int out) {
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
-		output = std::min(8, std::max(-1, out));
+		output = std::max(-1, out);
 	}
 
 	void setChance(float ch) {
@@ -279,7 +280,7 @@ struct Treequencer : Module {
 		configOutput(SEQ_OUT_7, "Sequence 7");
 		configOutput(SEQ_OUT_8, "Sequence 8");
 
-		configOutput(ALL_OUT, "Pitch");
+		configOutput(ALL_OUT, "VOct");
 		
 
 		rootNode.fillToDepth(1);
@@ -304,7 +305,7 @@ struct Treequencer : Module {
 
 		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
-			outputs[activeNode->output].setVoltage(0.f); 
+			//if (activeNode->output < 8) outputs[activeNode->output].setVoltage(0.f); 
 			if (!activeNode->children.size()) activeNode = &rootNode;
 			else {
 				if (activeNode->children.size() > 1) {
@@ -321,11 +322,10 @@ struct Treequencer : Module {
 		bool activeP = pulse.process(args.sampleTime);
 
 		if (activeNode->output < 0) {
-			outputs[activeNode->output].setVoltage(0.f); 
 			outputs[ALL_OUT].setVoltage(0.f);
 		} else {
-			outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
-			outputs[ALL_OUT].setVoltage((float)activeNode->output/16);
+			if (activeNode->output < 8) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
+			outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
 		}
 
 	}
@@ -515,6 +515,14 @@ struct NodeDisplay : Widget {
 
 	}
 
+	const NVGcolor octColors[5] = {
+		nvgRGB(255,127,80),
+		nvgRGB(80,208,255),
+		nvgRGB(127,80,255),
+		nvgRGB(121,255,80),
+		nvgRGB(255,215,80)
+	};
+
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
 		
 		float xVal = x + xOffset;
@@ -522,8 +530,10 @@ struct NodeDisplay : Widget {
 		float xSize = NODE_SIZE * scale;
 		float ySize = NODE_SIZE * scale;
 
+		int octOffset = (node->output+1) / 12;
+
 		// node bg
-		nvgFillColor(vg, node->enabled ? nvgRGB(124,252,0) : nvgRGB(255,127,80));
+		nvgFillColor(vg, node->enabled ? nvgRGB(124,252,0) : octColors[octOffset%5]);
         nvgBeginPath(vg);
         nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
@@ -536,7 +546,7 @@ struct NodeDisplay : Widget {
 		float gridStartX = xVal + (xSize/8);
 		float gridStartY = yVal + (xSize/8);
 
-		for (int i = 0; i < node->output+1; i++) {
+		for (int i = 0; i < (node->output+1) % 12; i++) {
 
 			float boxX = gridStartX + (((NODE_SIZE/7)*scale) * (i%3));
 			float boxY = gridStartY + (((NODE_SIZE/7)*scale) * floor(i/3));
