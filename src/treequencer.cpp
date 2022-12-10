@@ -271,13 +271,13 @@ struct Treequencer : Module {
 		//configInput(TRIGGER, "Gate");
 
 		configOutput(SEQ_OUT_1, "Sequence 1");
-		configOutput(SEQ_OUT_1, "Sequence 2");
-		configOutput(SEQ_OUT_1, "Sequence 3");
-		configOutput(SEQ_OUT_1, "Sequence 4");
-		configOutput(SEQ_OUT_1, "Sequence 5");
-		configOutput(SEQ_OUT_1, "Sequence 6");
-		configOutput(SEQ_OUT_1, "Sequence 7");
-		configOutput(SEQ_OUT_1, "Sequence 8");
+		configOutput(SEQ_OUT_2, "Sequence 2");
+		configOutput(SEQ_OUT_3, "Sequence 3");
+		configOutput(SEQ_OUT_4, "Sequence 4");
+		configOutput(SEQ_OUT_5, "Sequence 5");
+		configOutput(SEQ_OUT_6, "Sequence 6");
+		configOutput(SEQ_OUT_7, "Sequence 7");
+		configOutput(SEQ_OUT_8, "Sequence 8");
 
 		configOutput(ALL_OUT, "Pitch");
 		
