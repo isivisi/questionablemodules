@@ -227,6 +227,8 @@ struct Node {
 struct Treequencer : Module {
 	enum ParamId {
 		FADE_PARAM,
+		TRIGGER_TYPE,
+		BOUNCE,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -265,11 +267,9 @@ struct Treequencer : Module {
 
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		//configParam(FADE_PARAM, 0.f, 1.f, 0.f, "Fade Amount");
 		configInput(GATE_IN_1, "Clock");
-		//configOutput(SINE_OUTPUT, "");
-		//configInput(TRIGGER, "Gate");
-
+		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 1.f, "Trigger Type", {"Step", "Sequence"});
+		configSwitch(BOUNCE, 0.f, 1.f, 1.f, "Bounce", {"Off", "On"});
 		configOutput(SEQ_OUT_1, "Sequence 1");
 		configOutput(SEQ_OUT_2, "Sequence 2");
 		configOutput(SEQ_OUT_3, "Sequence 3");
@@ -325,7 +325,7 @@ struct Treequencer : Module {
 			outputs[ALL_OUT].setVoltage(0.f);
 		} else {
 			outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
-			outputs[ALL_OUT].setVoltage((float)activeNode->output/8);
+			outputs[ALL_OUT].setVoltage((float)activeNode->output/16);
 		}
 
 	}
@@ -568,30 +568,8 @@ struct NodeDisplay : Widget {
 
 	void drawNodes(NVGcontext* vg) {
 
-		int depth = module->rootNode.maxDepth() + 2;
-		
-		float cumulativeX = -25.f;
-		for (int d = 0; d < nodeBins.size(); d++) {
-			int binLen = nodeBins[d].size();
-			float scale = calcNodeScale(binLen);
-			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size()); //(1 - ((float)(d-1)/depth));
-			cumulativeX += ((NODE_SIZE+1)*prevScale);
-			for(int i = 0; i < binLen; i++) {
-				Node* node = nodeBins[d][i];
-				//std::lock_guard<std::recursive_mutex> treeMutexGuard(*node->m);
-
-				if (node) {
-					float y = calcNodeYHeight(scale, i, binLen);
-					drawNode(vg, node, cumulativeX, y, scale);
-
-					if (followNodes && node == module->activeNode) {
-						xOffset = -cumulativeX;
-						yOffset = -y;
-						screenScale = ((1-(scale*2))*25);
-					}
-				}
-				
-			}
+		for (int i = 0; i < nodeCache.size(); i++) {
+			drawNode(vg, nodeCache[i].node, nodeCache[i].pos.x, nodeCache[i].pos.y, nodeCache[i].scale);
 		}
 	}
 
@@ -604,8 +582,6 @@ struct NodeDisplay : Widget {
         nvgFill(args.vg);
 
 	}
-
-	std::vector<std::vector<Node*>> nodeBins;
 
 	void drawLayer(const DrawArgs &args, int layer) override {
 		if (module == NULL) return;
@@ -640,7 +616,7 @@ struct NodeDisplay : Widget {
 					nodeBins[i].resize(amnt);
 				}
 
-				gatherNodesForBins(&module->rootNode);
+				cacheNodePositions();
 				renderStateClean();
 			}
 			drawNodes(args.vg);
@@ -648,6 +624,47 @@ struct NodeDisplay : Widget {
 		}
 
 		nvgRestore(args.vg);
+
+	}
+
+	std::vector<std::vector<Node*>> nodeBins;
+	struct NodePosCache {
+		Vec pos;
+		float scale;
+		Node* node;
+	};
+	
+	std::vector<NodePosCache> nodeCache;
+
+	void cacheNodePositions() {
+		
+		gatherNodesForBins(&module->rootNode);
+		nodeCache.clear();
+
+		int depth = module->rootNode.maxDepth() + 2;
+		
+		float cumulativeX = -25.f;
+		for (int d = 0; d < nodeBins.size(); d++) {
+			int binLen = nodeBins[d].size();
+			float scale = calcNodeScale(binLen);
+			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size()); //(1 - ((float)(d-1)/depth));
+			cumulativeX += ((NODE_SIZE+1)*prevScale);
+			for(int i = 0; i < binLen; i++) {
+				Node* node = nodeBins[d][i];
+				float y = calcNodeYHeight(scale, i, binLen);
+
+				if (node) {
+					nodeCache.push_back(NodePosCache{Vec(cumulativeX, y), calcNodeScale(binLen), node});
+
+					if (followNodes && node == module->activeNode) {
+						xOffset = -cumulativeX;
+						yOffset = -y;
+						screenScale = ((1-(scale*2))*25);
+					}
+				}
+				
+			}
+		}
 
 	}
 
