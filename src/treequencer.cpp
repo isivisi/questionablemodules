@@ -455,7 +455,7 @@ struct NodeDisplay : Widget {
 		menu->addChild(rack::createMenuLabel("Node Output:"));
 
 		ui::TextField* outparam = new QTextField([=](std::string text) {
-			mod->onAudioThread([=](){ if (isInteger(text)) node->setOutput(std::stoi(text)-1); });
+			if (isInteger(text)) mod->onAudioThread([=](){ node->setOutput(std::stoi(text)-1); });
 		});
 		outparam->box.size.x = 100;
 		outparam->text = std::to_string(node->output + 1);
@@ -464,7 +464,7 @@ struct NodeDisplay : Widget {
 		menu->addChild(rack::createMenuLabel("Node Chance:"));
 
 		ui::TextField* param = new QTextField([=](std::string text) { 
-			mod->onAudioThread([=](){ if (isNumber(text)) node->setChance((float)::atof(text.c_str())); });
+			if (isNumber(text)) mod->onAudioThread([=](){ node->setChance((float)::atof(text.c_str())); });
 		});
 		param->box.size.x = 100;
 		param->text = std::to_string(node->chance);
