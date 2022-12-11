@@ -156,14 +156,9 @@ struct Node {
 
 	}
 
-	void removeTopChild() {
-		delete children[0];
-		children.erase(children.begin()); 
-	}
-
-	void removeBottomChild() {
-		delete children[1];
-		children.pop_back(); 
+	void remove() {
+		if (!parent) return;
+		parent->children.erase(std::find(parent->children.begin(), parent->children.end(), this));
 	}
 
 	int maxDepth() {
@@ -226,6 +221,9 @@ struct Treequencer : Module {
 		GATE_IN_1,
 		RESET,
 		CHANCE_MOD_INPUT,
+		HOLD_INPUT,
+		TTYPE_GATE,
+		BOUNCE_GATE,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -262,6 +260,9 @@ struct Treequencer : Module {
 
 	dsp::SchmittTrigger gateTrigger;
 	dsp::SchmittTrigger resetTrigger;
+	dsp::SchmittTrigger holdTrigger;
+	dsp::SchmittTrigger typeTrigger;
+	dsp::SchmittTrigger bounceTrigger;
 	dsp::PulseGenerator pulse;
 	dsp::PulseGenerator sequencePulse;
 
@@ -283,7 +284,10 @@ struct Treequencer : Module {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Clock");
 		configInput(RESET, "Reset");
-		configInput(CHANCE_MOD_INPUT, "Chance Inversion VC");
+		configInput(CHANCE_MOD_INPUT, "Chance Mod VC");
+		configInput(BOUNCE_GATE, "Bounce Gate");
+		configInput(HOLD_INPUT, "Hold Gate");
+		configInput(TTYPE_GATE, "Trigger Type Gate");
 		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 0.f, "Trigger Type", {"Step", "Sequence"});
 		configSwitch(BOUNCE, 0.f, 1.f, 0.f, "Bounce", {"Off", "On"});
 		configSwitch(CHANCE_MOD, -1.f, 1.f, 0.0f, "Chance Mod");
@@ -296,6 +300,7 @@ struct Treequencer : Module {
 		configOutput(SEQ_OUT_6, "Sequence 6");
 		configOutput(SEQ_OUT_7, "Sequence 7");
 		configOutput(SEQ_OUT_8, "Sequence 8");
+		configOutput(SEQUENCE_COMPLETE, "Sequence Complete");
 
 		configOutput(ALL_OUT, "VOct");
 		
@@ -313,6 +318,11 @@ struct Treequencer : Module {
 	void resetActiveNode() {
 		activeNode->enabled = false;
 		activeNode = &rootNode;
+		activeNode->enabled = true;
+	}
+
+	float getChanceMod() {
+		return params[CHANCE_MOD].getValue() + inputs[CHANCE_MOD_INPUT].getVoltage();
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -321,9 +331,22 @@ struct Treequencer : Module {
 
 		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		bool shouldIterate = !params[HOLD].getValue() && gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
+		bool holdSwap = holdTrigger.process(inputs[HOLD_INPUT].getVoltage(), 0.1, 2.f);
+		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
+		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
 
 		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
 		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
+		lights[HOLD_LIGHT].setBrightness(params[HOLD].getValue());
+
+		if (holdSwap) params[HOLD].setValue(!params[HOLD].getValue());
+		if (ttypeSwap) params[TRIGGER_TYPE].setValue(!params[TRIGGER_TYPE].getValue());
+		if (bounceSwap) params[BOUNCE].setValue(!params[BOUNCE].getValue());
+
+		if (reset) {
+			resetActiveNode();
+			shouldIterate = false;
+		}
 
 		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
@@ -336,7 +359,7 @@ struct Treequencer : Module {
 			else {
 				if (activeNode->children.size() > 1) {
 					float r = randFloat();
-					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - params[CHANCE_MOD].getValue()));
+					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
 					activeNode = activeNode->children[r < chance ? 0 : 1];
 				} else {
 					activeNode = activeNode->children[0];
@@ -473,8 +496,6 @@ struct NodeDisplay : Widget {
 		param->text = std::to_string(node->chance);
 		menu->addChild(param);
 
-		menu->addChild(rack::createMenuLabel(""));
-
 		menu->addChild(createMenuItem("Preview", "", [=]() { 
 			mod->onAudioThread([=](){
 				node->enabled = true;
@@ -484,8 +505,6 @@ struct NodeDisplay : Widget {
 			});
 		}));
 
-		menu->addChild(rack::createMenuLabel(""));
-
 		// TODO: depth 22 MAX
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
@@ -494,18 +513,10 @@ struct NodeDisplay : Widget {
 			});
 		}));
 
-		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() {
+		menu->addChild(createMenuItem("Remove", "", [=]() {
 			mod->onAudioThread([=](){
 				mod->resetActiveNode();
-				node->removeTopChild();
-				renderStateDirty();
-			});
-		}));
-
-		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 	
-			mod->onAudioThread([=](){
-				mod->resetActiveNode();
-				node->removeBottomChild();
+				node->remove();
 				renderStateDirty();
 			});
 		}));
@@ -621,7 +632,7 @@ struct NodeDisplay : Widget {
 		}
 
 		if (node->children.size() > 1) {
-			float chance = std::min(1.f, std::max(0.f, node->chance - module->params[Treequencer::CHANCE_MOD].getValue()));
+			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
 
 			nvgFillColor(vg, nvgRGB(240,240,240));
 			nvgBeginPath(vg);
@@ -796,18 +807,26 @@ struct TreequencerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, 10)), module, Treequencer::GATE_IN_1));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.f, 10)), module, Treequencer::RESET));
 
 		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(80.f, 90.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(72.f, 90.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(64.f, 90.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(80.f, 100.f)), module, Treequencer::TTYPE_GATE));
 
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(70.f, 90.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(70.f, 100.f)), module, Treequencer::BOUNCE_GATE));
+
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(60.f, 90.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.f, 100.f)), module, Treequencer::HOLD_INPUT));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(70.f, 10.f)), module, Treequencer::SEQUENCE_COMPLETE));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.f, 10.f)), module, Treequencer::ALL_OUT));
 
 		for (int i = 0; i < MAX_OUTPUTS; i++) {
 			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.f + (10.0*float(i)), 113.f)), module, i));
 		}
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(15.f, 90.f)), module, Treequencer::CHANCE_MOD));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10.f, 90.f)), module, Treequencer::CHANCE_MOD));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, 100.f)), module, Treequencer::CHANCE_MOD_INPUT));
 
 		//addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
 		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
