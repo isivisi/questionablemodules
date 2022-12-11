@@ -748,9 +748,11 @@ struct TreequencerWidget : ModuleWidget {
 		display->box.pos = Vec(15, 50);
         display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) - 15, 200);
 		display->module = module;
-		display->screenScale = module->startScreenScale;
-		display->xOffset = module->startOffsetX;
-		display->yOffset = module->startOffsetY;
+		if (module) {
+			display->screenScale = module->startScreenScale;
+			display->xOffset = module->startOffsetX;
+			display->yOffset = module->startOffsetY;
+		}
 
 		dirt = new ImagePanel();
 		dirt->box.pos = Vec(15, 50);
