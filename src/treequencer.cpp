@@ -464,7 +464,7 @@ struct NodeDisplay : Widget {
 		menu->addChild(rack::createMenuLabel("Node Chance:"));
 
 		ui::TextField* param = new QTextField([=](std::string text) { 
-			mod->onAudioThread([=](){ if (isNumber(text)) node->chance = std::min(0.9f, std::max(0.1f, (float)::atof(text.c_str()))); });
+			mod->onAudioThread([=](){ if (isNumber(text)) node->setChance((float)::atof(text.c_str())); });
 		});
 		param->box.size.x = 100;
 		param->text = std::to_string(node->chance);
@@ -539,7 +539,7 @@ struct NodeDisplay : Widget {
 
 		xOffset += (newDragX - dragX) / screenScale;
 		yOffset += (newDragY - dragY) / screenScale;
-
+		
 		module->startOffsetX = xOffset;
 		module->startOffsetY = yOffset;
 
