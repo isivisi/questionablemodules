@@ -16,19 +16,19 @@
       "slug": "discombobulator",
       "name": "Discombobulator",
       "description": "Randomly switches inputs and outputs",
-      "tags": ["Random"]
+      "tags": ["Random", "Utility"]
     },
     {
       "slug": "nandomizer",
       "name": "Nandomizer",
       "description": "Randomly switches inputs",
-      "tags": ["Random"]
+      "tags": ["Random", "Utility"]
     },
     {
       "slug": "treequencer",
       "name": "Treequencer",
       "description": "Sequences using a tree algorithm",
-      "tags": ["sequencer", "random", "tree"]
+      "tags": ["Sequencer", "Random"]
     }
   ]
 }
