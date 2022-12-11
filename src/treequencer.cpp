@@ -272,8 +272,7 @@ struct Treequencer : Module {
 
 	void processOffThreadQueue() {
 		while (!audioThreadQueue.empty()) {
-			std::function<void()> func = audioThreadQueue.front();
-			func();
+			audioThreadQueue.front()();
 			audioThreadQueue.pop();
 		}
 	}
