@@ -20,4 +20,4 @@ DISTRIBUTABLES += $(wildcard LICENSE*)
 DISTRIBUTABLES += $(wildcard presets)
 
 # Include the Rack plugin Makefile framework
-include ../Rack-SDK-Linux/plugin.mk
+include $(RACK_DIR)plugin.mk
