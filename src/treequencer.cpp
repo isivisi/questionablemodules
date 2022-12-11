@@ -235,6 +235,7 @@ struct Treequencer : Module {
 	};
 	enum InputId {
 		GATE_IN_1,
+		RESET,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -247,6 +248,7 @@ struct Treequencer : Module {
 		SEQ_OUT_7,
 		SEQ_OUT_8,
 		ALL_OUT,
+		SEQUENCE_COMPLETE,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -257,18 +259,21 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
+	// json data for screen
+	float startScreenScale = 3.5f;
+	float startOffsetX = 25.f;
+	float startOffsetY = 0.f;
+
 	bool isDirty = true;
 	bool bouncing = false;
 
 	dsp::SchmittTrigger gateTrigger;
 	dsp::SchmittTrigger resetTrigger;
 	dsp::PulseGenerator pulse;
+	dsp::PulseGenerator sequencePulse;
 
 	Node rootNode;
-
 	Node* activeNode;
-
-	float lastTriggerValue = 0.f;
 
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -298,17 +303,18 @@ struct Treequencer : Module {
 	}
 
 	void resetActiveNode() {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(*activeNode->m);
 		activeNode->enabled = false;
 		activeNode = &rootNode;
 	}
 
 	void process(const ProcessArgs& args) override {
+		std::lock_guard<std::recursive_mutex> treeMutexGuard(*activeNode->m);
+		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
+		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
 
 		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
 		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
-
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*activeNode->m);
-		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
 
 		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
@@ -317,6 +323,7 @@ struct Treequencer : Module {
 			if (!bouncing && !activeNode->children.size()) {
 				if (params[BOUNCE].getValue()) bouncing = true;
 				else activeNode = &rootNode;
+				sequencePulse.trigger(1e-3f); // signal sequence completed
 			}
 			else {
 				if (activeNode->children.size() > 1) {
@@ -337,6 +344,9 @@ struct Treequencer : Module {
 		}
 
 		bool activeP = pulse.process(args.sampleTime);
+		bool sequenceP = sequencePulse.process(args.sampleTime);
+
+		outputs[SEQUENCE_COMPLETE].setVoltage(sequenceP ? 10.f : 0.0f);
 
 		if (activeNode->output < 0) {
 			outputs[ALL_OUT].setVoltage(0.f);
@@ -349,7 +359,9 @@ struct Treequencer : Module {
 
 	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
-
+		json_object_set_new(rootJ, "startScreenScale", json_real(startScreenScale));
+		json_object_set_new(rootJ, "startOffsetX", json_real(startOffsetX));
+		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -357,6 +369,10 @@ struct Treequencer : Module {
 
 
 	void dataFromJson(json_t* rootJ) override {
+
+		if (json_t* sss = json_object_get(rootJ, "startScreenScale")) startScreenScale = json_real_value(sss);
+		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
+		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
 			//std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
@@ -513,6 +529,9 @@ struct NodeDisplay : Widget {
 		xOffset += (newDragX - dragX) / screenScale;
 		yOffset += (newDragY - dragY) / screenScale;
 
+		module->startOffsetX = xOffset;
+		module->startOffsetY = yOffset;
+
 		dragX = newDragX;
 		dragY = newDragY;
 
@@ -525,6 +544,7 @@ struct NodeDisplay : Widget {
 		float oldScreenScale = screenScale;
 
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
+		module->startScreenScale = screenScale;
 
 		//xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
 		//yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
@@ -728,6 +748,9 @@ struct TreequencerWidget : ModuleWidget {
 		display->box.pos = Vec(15, 50);
         display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) - 15, 200);
 		display->module = module;
+		display->screenScale = module->startScreenScale;
+		display->xOffset = module->startOffsetX;
+		display->yOffset = module->startOffsetY;
 
 		dirt = new ImagePanel();
 		dirt->box.pos = Vec(15, 50);
