@@ -248,7 +248,7 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
-	std::queue<std::function<void()>> treequencerThreadQueue;
+	std::queue<std::function<void()>> audioThreadQueue;
 
 	// json data for screen
 	float startScreenScale = 3.5f;
@@ -266,15 +266,15 @@ struct Treequencer : Module {
 	Node rootNode;
 	Node* activeNode;
 
-	void onTreequencerThread(std::function<void()> func) {
-		treequencerThreadQueue.push(func);
+	void onAudioThread(std::function<void()> func) {
+		audioThreadQueue.push(func);
 	}
 
 	void processOffThreadQueue() {
-		while (!treequencerThreadQueue.empty()) {
-			std::function<void()> func = treequencerThreadQueue.front();
+		while (!audioThreadQueue.empty()) {
+			std::function<void()> func = audioThreadQueue.front();
 			func();
-			treequencerThreadQueue.pop();
+			audioThreadQueue.pop();
 		}
 	}
 
@@ -474,14 +474,14 @@ struct NodeDisplay : Widget {
 
 		// TODO: depth 22 MAX
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { 
-			mod->onTreequencerThread([=](){
+			mod->onAudioThread([=](){
 				node->addChild(); 
 				renderStateDirty();
 			});
 		}));
 
 		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() {
-			mod->onTreequencerThread([=](){
+			mod->onAudioThread([=](){
 				mod->resetActiveNode();
 				node->removeTopChild();
 				renderStateDirty();
@@ -489,7 +489,7 @@ struct NodeDisplay : Widget {
 		}));
 
 		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 	
-			mod->onTreequencerThread([=](){
+			mod->onAudioThread([=](){
 				mod->resetActiveNode();
 				node->removeBottomChild();
 				renderStateDirty();
