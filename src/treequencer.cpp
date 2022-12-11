@@ -92,8 +92,9 @@ struct Node {
 
 	}
 
-	Node(json_t* json) {
+	Node(json_t* json, Node* p=nullptr) {
 		m = new std::recursive_mutex();
+		parent = p;
 		fromJson(json);
 	}
 
@@ -212,7 +213,7 @@ struct Node {
 		if (json_t* arr = json_object_get(json, "children")) {
 
 			for (int i = 0; i < json_array_size(arr); i++) {
-				children.push_back(new Node(json_array_get(arr, i)));
+				children.push_back(new Node(json_array_get(arr, i), this));
 			}
 
 		}
@@ -251,10 +252,13 @@ struct Treequencer : Module {
 	enum LightId {
 		VOLTAGE_IN_LIGHT_1,
 		BLINK_LIGHT,
+		TRIGGER_LIGHT,
+		BOUNCE_LIGHT,
 		LIGHTS_LEN
 	};
 
 	bool isDirty = true;
+	bool bouncing = false;
 
 	dsp::SchmittTrigger gateTrigger;
 	dsp::SchmittTrigger resetTrigger;
@@ -269,8 +273,8 @@ struct Treequencer : Module {
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Clock");
-		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 1.f, "Trigger Type", {"Step", "Sequence"});
-		configSwitch(BOUNCE, 0.f, 1.f, 1.f, "Bounce", {"Off", "On"});
+		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 0.f, "Trigger Type", {"Step", "Sequence"});
+		configSwitch(BOUNCE, 0.f, 1.f, 0.f, "Bounce", {"Off", "On"});
 		configOutput(SEQ_OUT_1, "Sequence 1");
 		configOutput(SEQ_OUT_2, "Sequence 2");
 		configOutput(SEQ_OUT_3, "Sequence 3");
@@ -282,7 +286,6 @@ struct Treequencer : Module {
 
 		configOutput(ALL_OUT, "VOct");
 		
-
 		rootNode.fillToDepth(1);
 		
 		rootNode.enabled = true;
@@ -300,13 +303,21 @@ struct Treequencer : Module {
 	}
 
 	void process(const ProcessArgs& args) override {
+
+		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
+		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
+
 		std::lock_guard<std::recursive_mutex> treeMutexGuard(*activeNode->m);
 		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
 
 		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
-			//if (activeNode->output < 8) outputs[activeNode->output].setVoltage(0.f); 
-			if (!activeNode->children.size()) activeNode = &rootNode;
+			//if (activeNode->output < 0 && activeNode->output < 8) outputs[activeNode->output].setVoltage(0.f); 
+
+			if (!bouncing && !activeNode->children.size()) {
+				if (params[BOUNCE].getValue()) bouncing = true;
+				else activeNode = &rootNode;
+			}
 			else {
 				if (activeNode->children.size() > 1) {
 					float r = randFloat();
@@ -315,6 +326,12 @@ struct Treequencer : Module {
 					activeNode = activeNode->children[0];
 				}
 			}
+
+			if (bouncing) {
+				if (activeNode->parent) activeNode = activeNode->parent;
+				else bouncing = false;
+			}
+
 			activeNode->enabled = true;
 			pulse.trigger(1e-3f);
 		}
@@ -729,6 +746,9 @@ struct TreequencerWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.f, 10)), module, Treequencer::GATE_IN_1));
+
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(80.f, 90.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
+		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(72.f, 90.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(80.f, 10.f)), module, Treequencer::ALL_OUT));
 
