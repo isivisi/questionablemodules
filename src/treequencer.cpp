@@ -8,6 +8,7 @@
 #include <random>
 #include <mutex>
 #include <memory>
+#include <queue>
 #include <algorithm>
 
 const int MAX_OUTPUTS = 8;
@@ -80,68 +81,60 @@ struct Node {
 
 	Rect box;
 
-	std::recursive_mutex*  m;
-
 	Node(Node* p = nullptr, int out = randomInteger(-1, 7), float c = randFloat(0.9f)) {
-		m = new std::recursive_mutex();
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
-
 		output = out;
 		chance = c;
 		parent = p;
-
 	}
 
 	Node(json_t* json, Node* p=nullptr) {
-		m = new std::recursive_mutex();
 		parent = p;
 		fromJson(json);
 	}
 
 	~Node() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		for (int i = 0; i < children.size(); i++) delete children[i];
 	}
 
 	void setOutput(int out) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		output = std::max(-1, out);
 	}
 
 	void setChance(float ch) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		chance = std::min(0.9f, std::max(0.1f, ch)); 
 	}
 
 	void setenabled(bool en) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		enabled = en;
 	}
 
 	int getOutput() { 
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		return output; 
 	}
 
 	float getChance() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		return chance; 
 	}
 
 	bool getEnabled() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		return enabled; 
 	}
 
 	std::vector<Node*> getChildren() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
+		
 		return children;
 	}
 
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
   	void fillToDepth(int desiredDepth) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		if (desiredDepth <= 0) return;
 
 		Node* child1 = new Node(this);
@@ -154,7 +147,6 @@ struct Node {
   	}
 
 	void addChild() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 
 		Node* child = new Node(this);
 		child->parent = this;
@@ -165,19 +157,16 @@ struct Node {
 	}
 
 	void removeTopChild() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		delete children[0];
 		children.erase(children.begin()); 
 	}
 
 	void removeBottomChild() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		delete children[1];
 		children.pop_back(); 
 	}
 
 	int maxDepth() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		if (children.size() == 0) return 0;
 
 		std::vector<int> sizes;
@@ -188,7 +177,6 @@ struct Node {
 	}
 
 	json_t* const toJson() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 		json_t* nodeJ = json_object();
 
 		json_object_set_new(nodeJ, "output", json_integer(output));
@@ -205,7 +193,6 @@ struct Node {
 	}
 
 	void fromJson(json_t* json) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*m);
 
 		if (json_t* out = json_object_get(json, "output")) output = json_integer_value(out);
 		if (json_t* c = json_object_get(json, "chance")) chance = json_real_value(c);
@@ -231,11 +218,13 @@ struct Treequencer : Module {
 		FADE_PARAM,
 		TRIGGER_TYPE,
 		BOUNCE,
+		CHANCE_INVERSION,
 		PARAMS_LEN
 	};
 	enum InputId {
 		GATE_IN_1,
 		RESET,
+		CHANCE_INVERSION_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -259,6 +248,8 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
+	std::queue<std::function<void()>> treequencerThreadQueue;
+
 	// json data for screen
 	float startScreenScale = 3.5f;
 	float startOffsetX = 25.f;
@@ -275,11 +266,26 @@ struct Treequencer : Module {
 	Node rootNode;
 	Node* activeNode;
 
+	void onTreequencerThread(std::function<void()> func) {
+		treequencerThreadQueue.push(func);
+	}
+
+	void processOffThreadQueue() {
+		while (!treequencerThreadQueue.empty()) {
+			std::function<void()> func = treequencerThreadQueue.front();
+			func();
+			treequencerThreadQueue.pop();
+		}
+	}
+
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Clock");
+		configInput(RESET, "Reset");
+		configInput(CHANCE_INVERSION_INPUT, "Chance Inversion VC");
 		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 0.f, "Trigger Type", {"Step", "Sequence"});
 		configSwitch(BOUNCE, 0.f, 1.f, 0.f, "Bounce", {"Off", "On"});
+		configSwitch(CHANCE_INVERSION, -1.f, 1.f, 0.0f, "Chance Inversion");
 		configOutput(SEQ_OUT_1, "Sequence 1");
 		configOutput(SEQ_OUT_2, "Sequence 2");
 		configOutput(SEQ_OUT_3, "Sequence 3");
@@ -303,13 +309,14 @@ struct Treequencer : Module {
 	}
 
 	void resetActiveNode() {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*activeNode->m);
 		activeNode->enabled = false;
 		activeNode = &rootNode;
 	}
 
 	void process(const ProcessArgs& args) override {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*activeNode->m);
+
+		processOffThreadQueue();
+
 		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		bool shouldIterate = gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
 
@@ -318,7 +325,6 @@ struct Treequencer : Module {
 
 		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
-			//if (activeNode->output < 0 && activeNode->output < 8) outputs[activeNode->output].setVoltage(0.f); 
 
 			if (!bouncing && !activeNode->children.size()) {
 				if (params[BOUNCE].getValue()) bouncing = true;
@@ -375,7 +381,6 @@ struct Treequencer : Module {
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
-			//std::lock_guard<std::recursive_mutex> treeMutexGuard(treeMutex);
 
 			rootNode.children.clear();
 			activeNode = &rootNode;
@@ -469,20 +474,26 @@ struct NodeDisplay : Widget {
 
 		// TODO: depth 22 MAX
 		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { 
-			node->addChild(); 
-			renderStateDirty();
+			mod->onTreequencerThread([=](){
+				node->addChild(); 
+				renderStateDirty();
+			});
 		}));
 
 		if (node->children.size() > 0) menu->addChild(createMenuItem("Remove Top Child", "", [=]() {
-			mod->resetActiveNode();
-			node->removeTopChild();
-			renderStateDirty();
+			mod->onTreequencerThread([=](){
+				mod->resetActiveNode();
+				node->removeTopChild();
+				renderStateDirty();
+			});
 		}));
 
 		if (node->children.size() > 1) menu->addChild(createMenuItem("Remove Bottom Child", "", [=]() { 	
-			mod->resetActiveNode();
-			node->removeBottomChild();
-			renderStateDirty();
+			mod->onTreequencerThread([=](){
+				mod->resetActiveNode();
+				node->removeBottomChild();
+				renderStateDirty();
+			});
 		}));
 		
 	}
@@ -716,7 +727,6 @@ struct NodeDisplay : Widget {
 	}
 
 	void gatherNodesForBins(Node* node, int position = 0, int depth = 0) {
-		std::lock_guard<std::recursive_mutex> treeMutexGuard(*node->m);
 		nodeBins[depth][position] = node;
 
 		//nodeBins[depth].push_back(&node);
