@@ -254,9 +254,9 @@ struct Treequencer : Module {
 	std::queue<std::function<void()>> audioThreadQueue;
 
 	// json data for screen
-	float startScreenScale = 3.5f;
-	float startOffsetX = 25.f;
-	float startOffsetY = 0.f;
+	float startScreenScale = 12.9f;
+	float startOffsetX = 12.5f;
+	float startOffsetY = -11.f;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -784,8 +784,8 @@ struct TreequencerWidget : ModuleWidget {
 		backdrop->visible = true;
 
 		display = new NodeDisplay();
-		display->box.pos = Vec(15, 50);
-        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) - 15, 200);
+		display->box.pos = Vec(2, 50);
+        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 9, 200);
 		display->module = module;
 		if (module) {
 			display->screenScale = module->startScreenScale;
@@ -794,8 +794,8 @@ struct TreequencerWidget : ModuleWidget {
 		}
 
 		dirt = new ImagePanel();
-		dirt->box.pos = Vec(15, 50);
-        dirt->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) - 15, 200);
+		dirt->box.pos = Vec(2, 50);
+        dirt->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 11, 200);
 		dirt->imagePath = asset::plugin(pluginInstance, "res/dirt.png");
 		dirt->scalar = 3.5;
 		dirt->visible = true;
