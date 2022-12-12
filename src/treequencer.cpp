@@ -417,6 +417,7 @@ struct Treequencer : Module {
 
 		if (reset) {
 			resetActiveNode();
+			sequencePos = 0;
 			isGateTriggered = false;
 		}
 
