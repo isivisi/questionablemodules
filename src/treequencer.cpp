@@ -77,6 +77,7 @@ struct Node {
 	bool enabled = false;
 	float chance = 0.5;
 	Node* parent;
+	int depth = 0;
   	std::vector<Node*> children;
 
 	Rect box;
@@ -85,10 +86,12 @@ struct Node {
 		output = out;
 		chance = c;
 		parent = p;
+		if (parent) depth = parent->depth + 1;
 	}
 
 	Node(json_t* json, Node* p=nullptr) {
 		parent = p;
+		if (parent) depth = parent->depth + 1;
 		fromJson(json);
 	}
 
@@ -506,15 +509,14 @@ struct NodeDisplay : Widget {
 			});
 		}));
 
-		// TODO: depth 22 MAX
-		if (node->children.size() < 2) menu->addChild(createMenuItem("Add Child", "", [=]() { 
+		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
 				node->addChild(); 
 				renderStateDirty();
 			});
 		}));
 
-		menu->addChild(createMenuItem("Remove", "", [=]() {
+		if (node != &module->rootNode) menu->addChild(createMenuItem("Remove", "", [=]() {
 			mod->onAudioThread([=](){
 				mod->resetActiveNode();
 				node->remove();
