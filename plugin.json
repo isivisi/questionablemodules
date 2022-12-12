@@ -1,7 +1,7 @@
 {
   "slug": "questionablemodules",
   "name": "Questionable Modules",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "license": "GPL-3.0-or-later",
   "brand": "isiaudio",
   "author": "John Iannandrea",
@@ -16,13 +16,19 @@
       "slug": "discombobulator",
       "name": "Discombobulator",
       "description": "Randomly switches inputs and outputs",
-      "tags": ["Random"]
+      "tags": ["Random", "Utility"]
     },
     {
       "slug": "nandomizer",
       "name": "Nandomizer",
       "description": "Randomly switches inputs",
-      "tags": ["Random"]
+      "tags": ["Random", "Utility"]
+    },
+    {
+      "slug": "treequencer",
+      "name": "Treequencer",
+      "description": "Sequences using a tree algorithm",
+      "tags": ["Sequencer", "Random"]
     }
   ]
 }

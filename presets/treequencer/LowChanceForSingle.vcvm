@@ -1,0 +1,110 @@
+{
+  "plugin": "questionablemodules",
+  "model": "treequencer",
+  "version": "2.0.0",
+  "params": [
+    {
+      "value": 0.77790576219558716,
+      "id": 0
+    }
+  ],
+  "data": {
+    "rootNode": {
+      "output": 2,
+      "chance": 0.27736097574234009,
+      "children": [
+        {
+          "output": 7,
+          "chance": 0.19922259449958801,
+          "children": [
+            {
+              "output": 1,
+              "chance": 0.45420387387275696,
+              "children": [
+                {
+                  "output": 1,
+                  "chance": 0.50409978628158569,
+                  "children": [
+                    {
+                      "output": 5,
+                      "chance": 0.79975950717926025,
+                      "children": [
+                        {
+                          "output": 3,
+                          "chance": 0.73148262500762939,
+                          "children": [
+                            {
+                              "output": 2,
+                              "chance": 0.29266980290412903,
+                              "children": [
+                                {
+                                  "output": 6,
+                                  "chance": 0.2869391143321991,
+                                  "children": [
+                                    {
+                                      "output": -1,
+                                      "chance": 0.27930787205696106,
+                                      "children": [
+                                        {
+                                          "output": 4,
+                                          "chance": 0.15487705171108246,
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "output": 6,
+          "chance": 0.6084587574005127,
+          "children": [
+            {
+              "output": 4,
+              "chance": 0.70651119947433472,
+              "children": [
+                {
+                  "output": 1,
+                  "chance": 0.29347199201583862,
+                  "children": []
+                },
+                {
+                  "output": 5,
+                  "chance": 0.85698544979095459,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "output": 2,
+              "chance": 0.11943542212247849,
+              "children": [
+                {
+                  "output": 5,
+                  "chance": 0.48338994383811951,
+                  "children": []
+                },
+                {
+                  "output": 3,
+                  "chance": 0.48335915803909302,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
