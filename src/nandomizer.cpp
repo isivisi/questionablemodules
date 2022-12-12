@@ -151,7 +151,7 @@ struct NandomizerWidget : ModuleWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(6 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.png");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 		

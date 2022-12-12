@@ -845,7 +845,7 @@ struct TreequencerWidget : ModuleWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer.png");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 
