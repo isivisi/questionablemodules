@@ -273,6 +273,7 @@ struct Treequencer : Module {
 
 	Node rootNode;
 	Node* activeNode;
+	std::vector<Node*> activeSequence;
 
 	void onAudioThread(std::function<void()> func) {
 		audioThreadQueue.push(func);
@@ -346,6 +347,54 @@ struct Treequencer : Module {
 		return params[CHANCE_MOD].getValue() + inputs[CHANCE_MOD_INPUT].getVoltage();
 	}
 
+	void processGateStep() {
+		if (!bouncing) {
+			if (!activeNode->children.size()) {
+				if (params[BOUNCE].getValue()) bouncing = true;
+				else activeNode = &rootNode;
+				sequencePulse.trigger(1e-3f); // signal sequence completed
+			}
+			else {
+				if (activeNode->children.size() > 1) {
+					float r = randFloat();
+					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
+					activeNode = activeNode->children[r < chance ? 0 : 1];
+				} else {
+					activeNode = activeNode->children[0];
+				}
+			}
+		} else {
+			if (activeNode->parent) activeNode = activeNode->parent;
+			else bouncing = false;
+		}
+	}
+
+	int sequencePos = 0;
+	void processSequence(bool newSequence = false) {
+		if (newSequence) {
+			activeSequence = getWholeSequence(&rootNode);
+			activeNode = &rootNode;
+			sequencePos = 0;
+		} else {
+			if (!activeSequence.size()) processSequence(true);
+			activeNode->enabled = false;
+			sequencePos += bouncing ? -1 : 1;
+			if (sequencePos <= 0) {
+				if (bouncing) sequencePulse.trigger(1e-3f); // signal sequence completed
+				bouncing = false;
+				sequencePos = 0;
+			} else if (sequencePos >= activeSequence.size()) {
+				if (params[BOUNCE].getValue()) {
+					bouncing = true;
+					sequencePos--;
+				} else sequencePos = 0;
+				if (!bouncing) sequencePulse.trigger(1e-3f); // signal sequence completed
+			}
+			activeNode = activeSequence[sequencePos];
+			activeNode->enabled = true;
+		}
+	}
+
 	void process(const ProcessArgs& args) override {
 
 		processOffThreadQueue();
@@ -371,15 +420,18 @@ struct Treequencer : Module {
 			isGateTriggered = false;
 		}
 
+		if (!params[TRIGGER_TYPE].getValue() && activeSequence.size()) activeSequence.clear();
+
 		if (isGateTriggered && activeNode) {
 			activeNode->enabled = false;
 
-			if (params[TRIGGER_TYPE].getValue()) processSequenceStep();
+			if (params[TRIGGER_TYPE].getValue()) processSequence(true);
 			else processGateStep();
 
 			activeNode->enabled = true;
 			pulse.trigger(1e-3f);
 		}
+		if (isClockTriggered && params[TRIGGER_TYPE].getValue()) processSequence();
 
 		bool activeP = pulse.process(args.sampleTime);
 		bool sequenceP = sequencePulse.process(args.sampleTime);
@@ -393,32 +445,6 @@ struct Treequencer : Module {
 			outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
 		}
 
-	}
-
-	inline void processGateStep() {
-		if (!bouncing) {
-			if (!activeNode->children.size()) {
-				if (params[BOUNCE].getValue()) bouncing = true;
-				else activeNode = &rootNode;
-				sequencePulse.trigger(1e-3f); // signal sequence completed
-			}
-			else {
-				if (activeNode->children.size() > 1) {
-					float r = randFloat();
-					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
-					activeNode = activeNode->children[r < chance ? 0 : 1];
-				} else {
-					activeNode = activeNode->children[0];
-				}
-			}
-		} else {
-			if (activeNode->parent) activeNode = activeNode->parent;
-			else bouncing = false;
-		}
-	}
-
-	inline void processSequenceStep() {
-		
 	}
 
 	json_t* dataToJson() override {
