@@ -757,8 +757,7 @@ struct NodeDisplay : Widget {
 
 			if (isRenderStateDirty()) {
 				int depth = module->rootNode.maxDepth();
-				if (!depth) return;
-
+				
 				// Initialize bins
 				nodeBins.clear();
 				int amnt = 1;
@@ -801,7 +800,7 @@ struct NodeDisplay : Widget {
 		for (int d = 0; d < nodeBins.size(); d++) {
 			int binLen = nodeBins[d].size();
 			float scale = calcNodeScale(binLen);
-			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size()); //(1 - ((float)(d-1)/depth));
+			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size());
 			cumulativeX += ((NODE_SIZE+1)*prevScale);
 			for(int i = 0; i < binLen; i++) {
 				Node* node = nodeBins[d][i];
