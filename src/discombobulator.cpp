@@ -160,7 +160,7 @@ struct DiscombobulatorWidget : ModuleWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(9 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.png");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 		
