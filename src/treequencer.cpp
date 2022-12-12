@@ -668,6 +668,13 @@ struct NodeDisplay : Widget {
         nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
 
+		if (std::find(module->activeSequence.begin(), module->activeSequence.end(), node) != module->activeSequence.end()) {
+			nvgFillColor(vg, nvgRGB(124,252,0));
+			nvgBeginPath(vg);
+			nvgCircle(vg, xVal + (xSize/2), yVal + (ySize/2), 3 * scale);
+			nvgFill(vg);
+		}
+
 		// update pos for buttonclicking
 		node->box.pos = Vec(xVal, yVal);
 		node->box.size = Vec(xSize, ySize);
