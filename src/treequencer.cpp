@@ -263,6 +263,7 @@ struct Treequencer : Module {
 	bool bouncing = false;
 
 	dsp::SchmittTrigger gateTrigger;
+	dsp::SchmittTrigger clockTrigger;
 	dsp::SchmittTrigger resetTrigger;
 	dsp::SchmittTrigger holdTrigger;
 	dsp::SchmittTrigger typeTrigger;
@@ -351,7 +352,7 @@ struct Treequencer : Module {
 
 		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		bool isGateTriggered = !params[HOLD].getValue() && gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
-		bool isClockTriggered = !params[HOLD].getValue() && gateTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f);
+		bool isClockTriggered = !params[HOLD].getValue() && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f);
 		bool holdSwap = holdTrigger.process(inputs[HOLD_INPUT].getVoltage(), 0.1, 2.f);
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
