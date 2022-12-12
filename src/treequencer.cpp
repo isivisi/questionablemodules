@@ -342,6 +342,7 @@ struct Treequencer : Module {
 		if (holdSwap) params[HOLD].setValue(!params[HOLD].getValue());
 		if (ttypeSwap) params[TRIGGER_TYPE].setValue(!params[TRIGGER_TYPE].getValue());
 		if (bounceSwap) params[BOUNCE].setValue(!params[BOUNCE].getValue());
+		if (!params[BOUNCE].getValue()) bouncing = false;
 
 		if (reset) {
 			resetActiveNode();
@@ -350,23 +351,23 @@ struct Treequencer : Module {
 
 		if (shouldIterate && activeNode) {
 			activeNode->enabled = false;
-
-			if (!bouncing && !activeNode->children.size()) {
-				if (params[BOUNCE].getValue()) bouncing = true;
-				else activeNode = &rootNode;
-				sequencePulse.trigger(1e-3f); // signal sequence completed
-			}
-			else {
-				if (activeNode->children.size() > 1) {
-					float r = randFloat();
-					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
-					activeNode = activeNode->children[r < chance ? 0 : 1];
-				} else {
-					activeNode = activeNode->children[0];
+			
+			if (!bouncing) {
+				if (!activeNode->children.size()) {
+					if (params[BOUNCE].getValue()) bouncing = true;
+					else activeNode = &rootNode;
+					sequencePulse.trigger(1e-3f); // signal sequence completed
 				}
-			}
-
-			if (bouncing) {
+				else {
+					if (activeNode->children.size() > 1) {
+						float r = randFloat();
+						float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
+						activeNode = activeNode->children[r < chance ? 0 : 1];
+					} else {
+						activeNode = activeNode->children[0];
+					}
+				}
+			} else {
 				if (activeNode->parent) activeNode = activeNode->parent;
 				else bouncing = false;
 			}
