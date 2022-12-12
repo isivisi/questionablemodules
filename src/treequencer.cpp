@@ -415,13 +415,17 @@ struct Treequencer : Module {
 		if (bounceSwap) params[BOUNCE].setValue(!params[BOUNCE].getValue());
 		if (!params[BOUNCE].getValue()) bouncing = false;
 
+		bool seqTrigger = params[TRIGGER_TYPE].getValue();
+
 		if (reset) {
 			resetActiveNode();
 			sequencePos = 0;
 			isGateTriggered = false;
 		}
 
-		if (!params[TRIGGER_TYPE].getValue() && activeSequence.size()) activeSequence.clear();
+		if (!seqTrigger && activeSequence.size()) activeSequence.clear();
+
+		if (!seqTrigger) isGateTriggered = isGateTriggered || isClockTriggered;
 
 		if (isGateTriggered && activeNode) {
 			activeNode->enabled = false;
@@ -432,7 +436,7 @@ struct Treequencer : Module {
 			activeNode->enabled = true;
 			pulse.trigger(1e-3f);
 		}
-		if (isClockTriggered && params[TRIGGER_TYPE].getValue()) processSequence();
+		if (isClockTriggered && seqTrigger) processSequence();
 
 		bool activeP = pulse.process(args.sampleTime);
 		bool sequenceP = sequencePulse.process(args.sampleTime);
