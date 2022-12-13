@@ -458,7 +458,7 @@ struct Treequencer : Module {
 		json_object_set_new(rootJ, "startScreenScale", json_real(startScreenScale));
 		json_object_set_new(rootJ, "startOffsetX", json_real(startOffsetX));
 		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
-		json_object_set_new(rootJ, "colorMode", json_integer(colorMode)); // TODO: make this a "global module setting" somehow so presets dont change it
+		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -470,7 +470,7 @@ struct Treequencer : Module {
 		if (json_t* sss = json_object_get(rootJ, "startScreenScale")) startScreenScale = json_real_value(sss);
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
-		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_real_value(cbm);
+		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
 
@@ -656,27 +656,34 @@ struct NodeDisplay : Widget {
 	}
 
 	// https://personal.sron.nl/~pault/
-	const NVGcolor octColors[2][5] = {
-		{ // tol light
+	const NVGcolor octColors[3][5] = {
+		{ // Tol Light
 			nvgRGB(238,136,102), // orange
 			nvgRGB(153,221,255), // cyan
 			nvgRGB(119,170,221), // blue
 			nvgRGB(255,170,187), // pink
 			nvgRGB(170,170,0) // olive
 		},
-		{ // tol Vibrant
+		{ // Tol Vibrant
 			nvgRGB(238,119,51), // orange
 			nvgRGB(51,187,338), // cyan
 			nvgRGB(0,119,187), // blue
 			nvgRGB(238,51,119), // magenta
 			nvgRGB(187,187,187) // grey
-
+		},
+		{ // Tol Muted
+			nvgRGB(204,102,119), // rose
+			nvgRGB(136,204,238), // cyan
+			nvgRGB(170,68,153), // purple
+			nvgRGB(136,34,85), // wine
+			nvgRGB(221,204,119) // sand
 		}
 	};
 
-	const NVGcolor activeColor[2] = {
+	const NVGcolor activeColor[3] = {
 		nvgRGB(68,187,153),
-		nvgRGB(0,153,136)
+		nvgRGB(0,153,136),
+		nvgRGB(68,170,153)
 	};
 
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
@@ -935,11 +942,14 @@ struct TreequencerWidget : ModuleWidget {
 		Treequencer* mod = (Treequencer*)module;
 		menu->addChild(new MenuSeparator);
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("light", "",[=]() {
+			menu->addChild(createMenuItem("Light", "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 0; });
 			}));
 			menu->addChild(createMenuItem("Vibrant", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 1; });
+			}));
+			menu->addChild(createMenuItem("Muted", "", [=]() {
+				mod->onAudioThread([=]() { mod->colorMode = 2; });
 			}));
 		}));
 	}
