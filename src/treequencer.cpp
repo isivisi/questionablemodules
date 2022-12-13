@@ -258,6 +258,7 @@ struct Treequencer : Module {
 	float startScreenScale = 12.9f;
 	float startOffsetX = 12.5f;
 	float startOffsetY = -11.f;
+	int colorBlindMode = 0;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -457,6 +458,7 @@ struct Treequencer : Module {
 		json_object_set_new(rootJ, "startScreenScale", json_real(startScreenScale));
 		json_object_set_new(rootJ, "startOffsetX", json_real(startOffsetX));
 		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
+		json_object_set_new(rootJ, "colorBlindMode", json_integer(colorBlindMode)); // TODO: make this a "global module setting" somehow so presets dont change it
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -468,6 +470,7 @@ struct Treequencer : Module {
 		if (json_t* sss = json_object_get(rootJ, "startScreenScale")) startScreenScale = json_real_value(sss);
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
+		if (json_t* cbm = json_object_get(rootJ, "colorBlindMode")) colorBlindMode = json_real_value(cbm);
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
 
@@ -567,6 +570,8 @@ struct NodeDisplay : Widget {
 				mod->params[Treequencer::HOLD].setValue(1.f);
 			});
 		}));
+
+		menu->addChild(new MenuSeparator);
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
@@ -907,6 +912,26 @@ struct TreequencerWidget : ModuleWidget {
 		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Treequencer::TRIGGER));
 
 		//addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Treequencer::BLINK_LIGHT));
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		Treequencer* mod = (Treequencer*)module;
+		menu->addChild(new MenuSeparator);
+		menu->addChild(rack::createSubmenuItem("Colorblind Mode", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("None", "", [=]() {
+				mod->onAudioThread([=]() { mod->colorBlindMode = 0; });
+			}));
+			menu->addChild(createMenuItem("Deuteranomaly/Deuteranopia", "", [=]() { // low / no green
+				mod->onAudioThread([=]() { mod->colorBlindMode = 1; });
+			}));
+			menu->addChild(createMenuItem("Protanomaly/Protanopia", "", [=]() { // low / no red
+				mod->onAudioThread([=]() { mod->colorBlindMode = 2; });
+			}));
+			menu->addChild(createMenuItem("Tritanomaly/Tritanopia", "",[=]() { // low / no blue
+				mod->onAudioThread([=]() { mod->colorBlindMode = 3; });
+			}));
+		}));
 	}
 };
 
