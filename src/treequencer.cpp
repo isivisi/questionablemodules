@@ -351,7 +351,10 @@ struct Treequencer : Module {
 	void processGateStep() {
 		if (!bouncing) {
 			if (!activeNode->children.size()) {
-				if (params[BOUNCE].getValue()) bouncing = true;
+				if (params[BOUNCE].getValue()) {
+					bouncing = true;
+					if (activeNode->parent) activeNode = activeNode->parent;
+				}
 				else activeNode = &rootNode;
 				sequencePulse.trigger(1e-3f); // signal sequence completed
 			}
@@ -366,12 +369,16 @@ struct Treequencer : Module {
 			}
 		} else {
 			if (activeNode->parent) activeNode = activeNode->parent;
-			else bouncing = false;
+			else {
+				bouncing = false;
+				if (activeNode->children.size()) processGateStep();
+			}
 		}
 	}
 
 	int sequencePos = 0;
 	void processSequence(bool newSequence = false) {
+		bool lastBounce = bouncing;
 		if (newSequence) {
 			activeSequence = getWholeSequence(&rootNode);
 			activeNode = &rootNode;
@@ -394,6 +401,8 @@ struct Treequencer : Module {
 			activeNode = activeSequence[sequencePos];
 			activeNode->enabled = true;
 		}
+
+		if (!lastBounce && (lastBounce != bouncing)) processSequence();
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -879,7 +888,7 @@ struct TreequencerWidget : ModuleWidget {
 
 		display = new NodeDisplay();
 		display->box.pos = Vec(2, 50);
-        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 9, 200);
+        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 200);
 		display->module = module;
 		if (module) {
 			display->screenScale = module->startScreenScale;
