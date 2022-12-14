@@ -27,7 +27,7 @@
     {
       "slug": "treequencer",
       "name": "Treequencer",
-      "description": "Sequences using a tree algorithm",
+      "description": "Sequences using a binary tree algorithm",
       "tags": ["Sequencer", "Random"]
     }
   ]
