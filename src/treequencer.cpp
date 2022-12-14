@@ -351,7 +351,10 @@ struct Treequencer : Module {
 	void processGateStep() {
 		if (!bouncing) {
 			if (!activeNode->children.size()) {
-				if (params[BOUNCE].getValue()) bouncing = true;
+				if (params[BOUNCE].getValue()) {
+					bouncing = true;
+					if (activeNode->parent) activeNode = activeNode->parent;
+				}
 				else activeNode = &rootNode;
 				sequencePulse.trigger(1e-3f); // signal sequence completed
 			}
@@ -366,7 +369,10 @@ struct Treequencer : Module {
 			}
 		} else {
 			if (activeNode->parent) activeNode = activeNode->parent;
-			else bouncing = false;
+			else {
+				bouncing = false;
+				if (activeNode->children.size()) processGateStep();
+			}
 		}
 	}
 
