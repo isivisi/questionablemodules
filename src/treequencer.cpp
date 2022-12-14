@@ -378,6 +378,7 @@ struct Treequencer : Module {
 
 	int sequencePos = 0;
 	void processSequence(bool newSequence = false) {
+		bool lastBounce = bouncing;
 		if (newSequence) {
 			activeSequence = getWholeSequence(&rootNode);
 			activeNode = &rootNode;
@@ -400,6 +401,8 @@ struct Treequencer : Module {
 			activeNode = activeSequence[sequencePos];
 			activeNode->enabled = true;
 		}
+
+		if (!lastBounce && (lastBounce != bouncing)) processSequence();
 	}
 
 	void process(const ProcessArgs& args) override {
