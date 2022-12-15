@@ -49,6 +49,8 @@ jobs:
       matrix:
         platform: [win, linux]
     steps:
+      - name: LFS
+        run: git lfs install
       - uses: actions/checkout@v3
         with:
           submodules: recursive
