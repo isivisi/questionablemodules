@@ -883,7 +883,7 @@ struct TreequencerWidget : ModuleWidget {
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer.jpg");
-		backdrop->scalar = 3.5;
+		backdrop->scalar = 3.49;
 		backdrop->visible = true;
 
 		display = new NodeDisplay();
@@ -932,8 +932,8 @@ struct TreequencerWidget : ModuleWidget {
 			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
 		}
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD_INPUT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
 
 		//addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
 		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
