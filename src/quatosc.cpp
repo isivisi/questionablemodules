@@ -92,7 +92,7 @@ struct QuatOSC : Module {
 
 		//gmtl::Vec3f angleVec = gmtl::normalize(gmtl::Vec3f(0.f, 1.f, 0.f));
 
-		float freq = dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
+		float freq = dsp::FREQ_C4 * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
 
 		lfo1Phase += (params[X_FLO_F_PARAM].getValue() + freq) * args.sampleTime;
 		lfo2Phase += (params[Y_FLO_F_PARAM].getValue() + freq) * args.sampleTime;
