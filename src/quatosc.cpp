@@ -32,7 +32,7 @@ struct QuatOSC : Module {
 		PARAMS_LEN
 	};
 	enum InputId {
-		VOLTAGE_IN_1,
+		VOCT,
 		VOLTAGE_IN_2,
 		VOLTAGE_IN_3,
 		TRIGGER,
@@ -71,9 +71,7 @@ struct QuatOSC : Module {
 		configParam(X_POS_I_PARAM, 0.f, 1.f, 1.f, "X Position Influence");
 		configParam(Y_POS_I_PARAM, 0.f, 1.f, 0.f, "Y Position Influence");
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 0.f, "Z Position Influence");
-		configInput(VOLTAGE_IN_1, "Euler X");
-		configInput(VOLTAGE_IN_1, "Euler Y");
-		configInput(VOLTAGE_IN_1, "Euler Z");
+		configInput(VOCT, "VOct");
 		configInput(FADE_INPUT, "Fade");
 		configOutput(SINE_OUTPUT, "");
 		configInput(TRIGGER, "Gate");
@@ -94,22 +92,26 @@ struct QuatOSC : Module {
 
 		//gmtl::Vec3f angleVec = gmtl::normalize(gmtl::Vec3f(0.f, 1.f, 0.f));
 
-		lfo1Phase += params[X_FLO_F_PARAM].getValue() * args.sampleTime;
-		lfo2Phase += params[Y_FLO_F_PARAM].getValue() * args.sampleTime;
-		lfo3Phase += params[Z_FLO_F_PARAM].getValue() * args.sampleTime;
+		float freq = dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
+
+		lfo1Phase += (params[X_FLO_F_PARAM].getValue() + freq) * args.sampleTime;
+		lfo2Phase += (params[Y_FLO_F_PARAM].getValue() + freq) * args.sampleTime;
+		lfo3Phase += (params[Z_FLO_F_PARAM].getValue() + freq) * args.sampleTime;
+		lfo1Phase -= trunc(lfo1Phase);
+		lfo2Phase -= trunc(lfo2Phase);
+		lfo3Phase -= trunc(lfo3Phase);
 		float flo1Val = params[X_FLO_I_PARAM].getValue() * sin(2.f * M_PI * lfo1Phase);
 		float flo2Val = params[Y_FLO_I_PARAM].getValue() * sin(2.f * M_PI * lfo2Phase);
 		float flo3Val = params[Z_FLO_I_PARAM].getValue() * sin(2.f * M_PI * lfo3Phase);
 
-		gmtl::Vec3f angle = gmtl::Vec3f(params[X_FLO_I_PARAM].getValue() + flo1Val, params[Y_FLO_I_PARAM].getValue() + flo2Val, params[Z_FLO_I_PARAM].getValue() + flo3Val);
-		gmtl::normalize(angle);
+		gmtl::Vec3f angle = gmtl::Vec3f(flo1Val, flo2Val, flo3Val);
+		//gmtl::normalize(angle);
 
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
-		gmtl::Quatf newRotTo =  sphereQuat + (rotOffset * sphereQuat);
-		gmtl::normalize(newRotTo);
-		gmtl::lerp(newRot, args.sampleTime * dsp::FREQ_C4 * 3, sphereQuat, newRotTo);
-
-		sphereQuat += rotOffset;
+		//gmtl::Quatf newRotTo =  sphereQuat + (rotOffset * sphereQuat);
+		//gmtl::normalize(newRotTo);
+		//gmtl::lerp(newRot, args.sampleTime * dsp::FREQ_C4 * 3, sphereQuat, newRotTo);
+		sphereQuat = rotOffset;
 		gmtl::normalize(sphereQuat);
 
 		gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
@@ -120,7 +122,7 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		outputs[SINE_OUTPUT].setVoltage(((xRotated[1] * params[X_POS_I_PARAM].getValue()) + (yRotated[1] * params[Y_POS_I_PARAM].getValue()) + (zRotated[1] * params[Z_POS_I_PARAM].getValue())) * 3.f);
+		outputs[SINE_OUTPUT].setVoltage(((xRotated[1] * params[X_POS_I_PARAM].getValue()) + (yRotated[1] * params[Y_POS_I_PARAM].getValue()) + (zRotated[1] * params[Z_POS_I_PARAM].getValue())));
 
 	}
 };
@@ -214,9 +216,7 @@ struct QuatOSCWidget : ModuleWidget {
 
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, QuatOSC::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 90)), module, QuatOSC::VOLTAGE_IN_1));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20, 90)), module, QuatOSC::VOLTAGE_IN_2));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30, 90)), module, QuatOSC::VOLTAGE_IN_3));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 90)), module, QuatOSC::VOCT));
 		
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 70)), module, QuatOSC::X_FLO_F_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 70)), module, QuatOSC::Y_FLO_F_PARAM));
