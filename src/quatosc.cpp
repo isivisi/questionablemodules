@@ -49,9 +49,9 @@ struct QuatOSC : Module {
 
 	QuatOSC() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(X_PARAM, 0.f, 10.f, 1.f, "X Rot");
-		configParam(Y_PARAM, 0.f, 10.f, 0.f, "Y Rot");
-		configParam(Z_PARAM, 0.f, 10.f, 0.f, "Z Rot");
+		configParam(X_PARAM, 0.f, 1.f, 0.f, "X Rot");
+		configParam(Y_PARAM, 0.f, 1.f, 0.f, "Y Rot");
+		configParam(Z_PARAM, 0.f, 1.f, 0.f, "Z Rot");
 		configInput(VOLTAGE_IN_1, "Euler X");
 		configInput(VOLTAGE_IN_1, "Euler Y");
 		configInput(VOLTAGE_IN_1, "Euler Z");
@@ -74,21 +74,24 @@ struct QuatOSC : Module {
 		//gmtl::Vec3f angleVec = gmtl::normalize(gmtl::Vec3f(0.f, 1.f, 0.f));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(params[X_PARAM].getValue() + inputs[VOLTAGE_IN_1].getVoltage(), params[Y_PARAM].getValue() + inputs[VOLTAGE_IN_2].getVoltage(), params[Z_PARAM].getValue() + inputs[VOLTAGE_IN_3].getVoltage());
-		gmtl::normalize(angle);
+		//gmtl::normalize(angle);
+
+		//angle *= 44000;
 
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
-		gmtl::Quatf newRotTo = rotOffset + sphereQuat;
+		gmtl::Quatf newRotTo =  sphereQuat + (rotOffset * sphereQuat);
 		gmtl::normalize(newRotTo);
 
-		gmtl::lerp(newRot, args.sampleTime * 1, sphereQuat, newRotTo);
-		sphereQuat = rotOffset;
+		gmtl::lerp(newRot, args.sampleTime * 44, sphereQuat, newRotTo);
+		sphereQuat = newRot;
+		gmtl::normalize(sphereQuat);
 
 		pointOnSphereRotated = sphereQuat * pointOnSphere;
 
 		gmtl::Vec3f norm = pointOnSphereRotated;
 		gmtl::normalize(norm);
 
-		outputs[SINE_OUTPUT].setVoltage(norm[1] * 12.f);
+		outputs[SINE_OUTPUT].setVoltage((norm[1]) * 2.f);
 
 	}
 };
