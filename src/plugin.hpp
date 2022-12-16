@@ -11,3 +11,4 @@ extern Plugin* pluginInstance;
 extern Model* modelNandomizer;
 extern Model* modelDiscombobulator;
 extern Model* modelTreequencer;
+extern Model* modelQuatOSC;

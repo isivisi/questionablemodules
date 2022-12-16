@@ -29,6 +29,12 @@
       "name": "Treequencer",
       "description": "Sequences using a binary tree algorithm",
       "tags": ["Sequencer", "Random"]
+    },
+    {
+      "slug": "quatosc",
+      "name": "Quat Oscillator",
+      "description": "Uses quaternion rotation to oscillate",
+      "tags": ["Oscillator"]
     }
   ]
 }
