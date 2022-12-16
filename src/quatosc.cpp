@@ -71,6 +71,8 @@ struct QuatOSC : Module {
 
 		pointOnSphereRotated = sphereQuat * pointOnSphere;
 
+		outputs[SINE_OUTPUT].setVoltage(pointOnSphereRotated[1]);
+
 	}
 };
 
@@ -142,13 +144,9 @@ struct QuatOSCWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 90)), module, QuatOSC::FADE_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 100)), module, QuatOSC::FADE_INPUT));
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, QuatOSC::SINE_OUTPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 113)), module, QuatOSC::TRIGGER));
-
-		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, QuatOSC::BLINK_LIGHT));
 	}
 };
 
