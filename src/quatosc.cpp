@@ -19,11 +19,15 @@ int MODULE_SIZE = 12;
 
 struct QuatOSC : Module {
 	enum ParamId {
-		FADE_PARAM,
+		X_PARAM,
+		Y_PARAM,
+		Z_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
 		VOLTAGE_IN_1,
+		VOLTAGE_IN_2,
+		VOLTAGE_IN_3,
 		TRIGGER,
 		FADE_INPUT,
 		INPUTS_LEN
@@ -45,13 +49,17 @@ struct QuatOSC : Module {
 
 	QuatOSC() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(FADE_PARAM, 0.f, 1.f, 0.f, "Fade Amount");
-		configInput(VOLTAGE_IN_1, "1");
+		configParam(X_PARAM, 0.f, 10.f, 1.f, "X Rot");
+		configParam(Y_PARAM, 0.f, 10.f, 0.f, "Y Rot");
+		configParam(Z_PARAM, 0.f, 10.f, 0.f, "Z Rot");
+		configInput(VOLTAGE_IN_1, "Euler X");
+		configInput(VOLTAGE_IN_1, "Euler Y");
+		configInput(VOLTAGE_IN_1, "Euler Z");
 		configInput(FADE_INPUT, "Fade");
 		configOutput(SINE_OUTPUT, "");
 		configInput(TRIGGER, "Gate");
 
-		pointOnSphere = gmtl::Vec3f(25.f, 0.f, 0.f);
+		pointOnSphere = gmtl::Vec3f(50.f, 0.f, 0.f);
 		
 	}
 
@@ -61,17 +69,26 @@ struct QuatOSC : Module {
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
+		gmtl::Quatf visualRot;
 
 		//gmtl::Vec3f angleVec = gmtl::normalize(gmtl::Vec3f(0.f, 1.f, 0.f));
 
-		gmtl::EulerAngleXYZf angle = gmtl::EulerAngleXYZf(0.f, -0.1f, -0.3f);
+		gmtl::Vec3f angle = gmtl::Vec3f(params[X_PARAM].getValue() + inputs[VOLTAGE_IN_1].getVoltage(), params[Y_PARAM].getValue() + inputs[VOLTAGE_IN_2].getVoltage(), params[Z_PARAM].getValue() + inputs[VOLTAGE_IN_3].getVoltage());
+		gmtl::normalize(angle);
 
-		gmtl::lerp(newRot, args.sampleTime * 44, sphereQuat, sphereQuat * gmtl::make<gmtl::Quatf>(angle));
-		sphereQuat = newRot;
+		gmtl::Quatf rotOffset = gmtl::makePure(angle);
+		gmtl::Quatf newRotTo = rotOffset + sphereQuat;
+		gmtl::normalize(newRotTo);
+
+		gmtl::lerp(newRot, args.sampleTime * 1, sphereQuat, newRotTo);
+		sphereQuat = rotOffset;
 
 		pointOnSphereRotated = sphereQuat * pointOnSphere;
 
-		outputs[SINE_OUTPUT].setVoltage(pointOnSphereRotated[1]);
+		gmtl::Vec3f norm = pointOnSphereRotated;
+		gmtl::normalize(norm);
+
+		outputs[SINE_OUTPUT].setVoltage(norm[1] * 12.f);
 
 	}
 };
@@ -102,14 +119,30 @@ struct QuatDisplay : Widget {
 		// nvgCreateFont
 		// nvgText(0, 0 )
 
-		nvgFillColor(args.vg, nvgRGB(17, 17, 17));
+		nvgFillColor(args.vg, nvgRGB(25, 25, 25));
         nvgBeginPath(args.vg);
-        nvgCircle(args.vg, 25.f, 25.f, 25);
+        nvgCircle(args.vg, 100.f, 50.f, 50);
         nvgFill(args.vg);
+
+		gmtl::Vec3f yPoint = gmtl::Vec3f(0.f, 50.f, 0.f);
+		gmtl::Vec3f zPoint = gmtl::Vec3f(0.f, 0.f, 50.f);
+
+		yPoint = module->sphereQuat * yPoint;
+		zPoint = module->sphereQuat * zPoint;
 
 		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
         nvgBeginPath(args.vg);
-        nvgCircle(args.vg, 25.f + module->pointOnSphereRotated[0], 25.f + module->pointOnSphereRotated[1], 5);
+        nvgCircle(args.vg, 100.f + module->pointOnSphereRotated[0], 50.f + module->pointOnSphereRotated[1], 3);
+        nvgFill(args.vg);
+
+		nvgFillColor(args.vg, nvgRGB(250, 250, 15));
+        nvgBeginPath(args.vg);
+        nvgCircle(args.vg, 100.f + yPoint[0], 50.f + yPoint[1], 3);
+        nvgFill(args.vg);
+
+		nvgFillColor(args.vg, nvgRGB(15, 15, 250));
+        nvgBeginPath(args.vg);
+        nvgCircle(args.vg, 100.f + zPoint[0], 50.f + zPoint[1], 3);
         nvgFill(args.vg);
 
 	
@@ -146,7 +179,13 @@ struct QuatOSCWidget : ModuleWidget {
 
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, QuatOSC::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 113)), module, QuatOSC::TRIGGER));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 90)), module, QuatOSC::VOLTAGE_IN_1));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20, 90)), module, QuatOSC::VOLTAGE_IN_2));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30, 90)), module, QuatOSC::VOLTAGE_IN_3));
+		
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 80)), module, QuatOSC::X_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 80)), module, QuatOSC::Y_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 80)), module, QuatOSC::Z_PARAM));
 	}
 };
 
