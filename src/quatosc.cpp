@@ -96,30 +96,36 @@ struct QuatOSC : Module {
 	}
 
 	float VecCombine(gmtl::Vec3f vector) {
-		return vector[0];// + vector[1] + vector[2];
+		return vector[1];// + vector[1] + vector[2];
 	}
 
 	float processLFO(float &phase, float frequency, float deltaTime, bool voct = true) {
 
-		float voctFreq = (dsp::FREQ_C4/2) * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
+		float voctFreq = (dsp::FREQ_C4/8) * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
 
-		phase += (frequency + (voct ? voctFreq : 0.f)) * deltaTime;
+		phase += ((frequency*0.25) + (voct ? voctFreq : 0.f)) * deltaTime;
 		phase -= trunc(phase);
 
 		return sin(2.f * M_PI * phase);
 	}
 
-	float prevFreq;
+	gmtl::Quatf rotation;
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
 
-		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((0.01f * params[X_LFO_PHASE].getValue()) + (processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime)));
-		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((0.01f * params[Y_LFO_PHASE].getValue()) + (processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime)));
-		float lfo3Val = params[Z_FLO_I_PARAM].getValue()  * ((0.01f * params[Z_LFO_PHASE].getValue()) + (processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime)));
+		float voctFreq = (dsp::FREQ_C4) * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
+
+		float lfo1Val = (voctFreq*args.sampleTime) + params[X_FLO_I_PARAM].getValue()  * ((0.25f * params[X_LFO_PHASE].getValue()) + (processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, false)));
+		float lfo2Val = (voctFreq*args.sampleTime) + params[Y_FLO_I_PARAM].getValue()  * ((0.25f * params[Y_LFO_PHASE].getValue()) + (processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, false)));
+		float lfo3Val = (voctFreq*args.sampleTime) + params[Z_FLO_I_PARAM].getValue()  * ((0.25f * params[Z_LFO_PHASE].getValue()) + (processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, false)));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
+
+		gmtl::Vec3f movement = gmtl::Vec3f((voctFreq*args.sampleTime) * (params[X_FLO_I_PARAM].getValue()+(0.25f * params[Z_LFO_PHASE].getValue())), (voctFreq*args.sampleTime) * params[Y_FLO_I_PARAM].getValue(), (voctFreq*args.sampleTime) * params[Z_FLO_I_PARAM].getValue());
+		gmtl::Quatf moveRot = gmtl::makePure(movement);
+		rotation *= moveRot;
 		
 		gmtl::Quatf newRotTo =  sphereQuat + (sphereQuat * rotOffset);
 		gmtl::normalize(newRotTo);
@@ -131,18 +137,19 @@ struct QuatOSC : Module {
 
 		gmtl::normalize(sphereQuat);
 
-		gmtl::lerp(visualQuat, args.sampleTime * 44000, visualQuat, sphereQuat);
+		gmtl::Quatf visualRotTo =  visualQuat + (visualQuat * rotOffset);
+		gmtl::lerp(visualQuat, args.sampleTime * 300, visualQuat, visualRotTo);
 		gmtl::normalize(visualQuat);
 
 		gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
-		gmtl::Vec3f yRotated = sphereQuat * xPointOnSphere;
-		gmtl::Vec3f zRotated = sphereQuat * xPointOnSphere;
+		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
+		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
 		gmtl::normalize(xRotated);
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		outputs[SINE_OUTPUT].setVoltage(((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue())));
+		outputs[SINE_OUTPUT].setVoltage((((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue()))));
 
 	}
 
@@ -172,6 +179,8 @@ struct QuatOSC : Module {
 
 };
 
+const int MAX_HISTORY = 100;
+
 struct QuatDisplay : Widget {
 	QuatOSC* module;
 
@@ -189,15 +198,28 @@ struct QuatDisplay : Widget {
 
 	}
 
+	struct pointHistory {
+		gmtl::Vec3f point;
+		NVGcolor color;
+	};
+
+	pointHistory xhistory[MAX_HISTORY];
+	int xhistoryCursor = 0;
+	pointHistory yhistory[MAX_HISTORY];
+	int yhistoryCursor = 0;
+	pointHistory zhistory[MAX_HISTORY];
+	int zhistoryCursor = 0;
+
+	void addToHistory(gmtl::Vec3f vec, NVGcolor color, pointHistory* history, int &cursor) {
+		history[cursor] = pointHistory{vec, color};
+		cursor = (cursor + 1) % MAX_HISTORY;
+	}
 
 	void drawLayer(const DrawArgs &args, int layer) override {
 		if (module == NULL) return;
 
-		// nvgScale
-		// nvgText
-		// nvgFontSize
-		// nvgCreateFont
-		// nvgText(0, 0 )
+		nvgSave(args.vg);
+		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
 		nvgFillColor(args.vg, nvgRGB(25, 25, 25));
         nvgBeginPath(args.vg);
@@ -212,21 +234,47 @@ struct QuatDisplay : Widget {
 		yPoint = module->visualQuat * yPoint;
 		zPoint = module->visualQuat * zPoint;
 
-		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
-        nvgBeginPath(args.vg);
-        nvgCircle(args.vg, 100.f + xPoint[0], 50.f + xPoint[1], 3);
-        nvgFill(args.vg);
+		addToHistory(xPoint, nvgRGB(15, 250, 15), xhistory, xhistoryCursor);
+		addToHistory(yPoint, nvgRGB(250, 250, 15), yhistory, yhistoryCursor);
+		addToHistory(zPoint, nvgRGB(15, 15, 250), zhistory, zhistoryCursor);
 
-		nvgFillColor(args.vg, nvgRGB(250, 250, 15));
-        nvgBeginPath(args.vg);
-        nvgCircle(args.vg, 100.f + yPoint[0], 50.f + yPoint[1], 3);
-        nvgFill(args.vg);
+		nvgBeginPath(args.vg);
+		for (int i = (xhistoryCursor+1)%MAX_HISTORY; i != xhistoryCursor; i=(i+1)%MAX_HISTORY) {
+			//nvgFillColor(args.vg, history[i].color);
+			//nvgBeginPath(args.vg);
+			//nvgCircle(args.vg, 100.f + history[i].point[0], 50.f + history[i].point[1], 3);
+			//nvgFill(args.vg);
+			if (i == 0) nvgMoveTo(args.vg, 100.f + xhistory[i].point[0], 50.f + xhistory[i].point[1]);
+			else nvgQuadTo(args.vg, 100.f + xhistory[i].point[0], 50.f + xhistory[i].point[1], 100.f + xhistory[i].point[0], 50.f + xhistory[i].point[1]);
+			//else nvgLineTo(args.vg, 100.f + history[i].point[0], 50.f + history[i].point[1]);
 
-		nvgFillColor(args.vg, nvgRGB(15, 15, 250));
-        nvgBeginPath(args.vg);
-        nvgCircle(args.vg, 100.f + zPoint[0], 50.f + zPoint[1], 3);
-        nvgFill(args.vg);
+		}
+		nvgStrokeColor(args.vg, nvgRGB(15, 250, 15));
+		nvgStrokeWidth(args.vg, 1.f);
+		nvgStroke(args.vg);
+		nvgClosePath(args.vg);
 
+		nvgBeginPath(args.vg);
+		for (int i = (yhistoryCursor+1)%MAX_HISTORY; i != yhistoryCursor; i=(i+1)%MAX_HISTORY) {
+			if (i == 0) nvgMoveTo(args.vg, 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1]);
+			else nvgQuadTo(args.vg, 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1], 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1]);
+		}
+		nvgStrokeColor(args.vg, nvgRGB(250, 250, 15));
+		nvgStrokeWidth(args.vg, 1.f);
+		nvgStroke(args.vg);
+		nvgClosePath(args.vg);
+
+		nvgBeginPath(args.vg);
+		for (int i = (zhistoryCursor+1)%MAX_HISTORY; i != zhistoryCursor; i=(i+1)%MAX_HISTORY) {
+			if (i == 0) nvgMoveTo(args.vg, 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1]);
+			else nvgQuadTo(args.vg, 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1], 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1]);
+		}
+		nvgStrokeColor(args.vg, nvgRGB(15, 15, 250));
+		nvgStrokeWidth(args.vg, 1.f);
+		nvgStroke(args.vg);
+		nvgClosePath(args.vg);
+
+		nvgRestore(args.vg);
 	
 	}
 
