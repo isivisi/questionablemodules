@@ -103,42 +103,84 @@ struct QuatOSC : Module {
 
 		float voctFreq = (dsp::FREQ_C4/8) * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
 
-		phase += ((frequency*0.25) + (voct ? voctFreq : 0.f)) * deltaTime;
+		phase += ((frequency) + (voct ? voctFreq : 0.f)) * deltaTime;
 		phase -= trunc(phase);
 
 		return sin(2.f * M_PI * phase);
 	}
 
+	gmtl::Quatf AngleAxis(float angle, const gmtl::Vec3f& axis)
+	{
+		gmtl::Quatf quat;
+
+		// Normalize the axis of rotation
+		gmtl::Vec3f normalized_axis = axis;
+		gmtl::normalize(normalized_axis);
+
+		// Convert the angle to half-angle
+		float half_angle = angle * 0.5f;
+
+		// Compute the quaternion elements
+		quat[0] = std::cos(half_angle);
+		quat[1] = normalized_axis[0] * std::sin(half_angle);
+		quat[2] = normalized_axis[1] * std::sin(half_angle);
+		quat[3] = normalized_axis[2] * std::sin(half_angle);
+
+		return quat;
+	}
+
 	gmtl::Quatf rotation;
+
+	gmtl::Vec3f momentum;
+	gmtl::Vec3f lfoRotations;
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
 
 		float voctFreq = (dsp::FREQ_C4) * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
 
-		float lfo1Val = (voctFreq*args.sampleTime) + params[X_FLO_I_PARAM].getValue()  * ((0.25f * params[X_LFO_PHASE].getValue()) + (processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, false)));
-		float lfo2Val = (voctFreq*args.sampleTime) + params[Y_FLO_I_PARAM].getValue()  * ((0.25f * params[Y_LFO_PHASE].getValue()) + (processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, false)));
-		float lfo3Val = (voctFreq*args.sampleTime) + params[Z_FLO_I_PARAM].getValue()  * ((0.25f * params[Z_LFO_PHASE].getValue()) + (processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, false)));
+		//float lfo1Val = (voctFreq*args.sampleTime) + params[X_FLO_I_PARAM].getValue()  * ((0.25f * params[X_LFO_PHASE].getValue()) + (processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, false)));
+		//float lfo2Val = (voctFreq*args.sampleTime) + params[Y_FLO_I_PARAM].getValue()  * ((0.25f * params[Y_LFO_PHASE].getValue()) + (processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, false)));
+		//float lfo3Val = (voctFreq*args.sampleTime) + params[Z_FLO_I_PARAM].getValue()  * ((0.25f * params[Z_LFO_PHASE].getValue()) + (processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, false)));
 
-		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
-		gmtl::Quatf rotOffset = gmtl::makePure(angle);
+		//gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
+		//gmtl::Quatf rotOffset = gmtl::makePure(angle);
 
-		gmtl::Vec3f movement = gmtl::Vec3f((voctFreq*args.sampleTime) * (params[X_FLO_I_PARAM].getValue()+(0.25f * params[Z_LFO_PHASE].getValue())), (voctFreq*args.sampleTime) * params[Y_FLO_I_PARAM].getValue(), (voctFreq*args.sampleTime) * params[Z_FLO_I_PARAM].getValue());
-		gmtl::Quatf moveRot = gmtl::makePure(movement);
-		rotation *= moveRot;
-		
-		gmtl::Quatf newRotTo =  sphereQuat + (sphereQuat * rotOffset);
+		//gmtl::Vec3f movement = gmtl::Vec3f((voctFreq*args.sampleTime) * (params[X_FLO_I_PARAM].getValue()+(0.25f * params[Z_LFO_PHASE].getValue())), (voctFreq*args.sampleTime) * params[Y_FLO_I_PARAM].getValue(), (voctFreq*args.sampleTime) * params[Z_FLO_I_PARAM].getValue());
+		//gmtl::Quatf moveRot = gmtl::makePure(movement);
+		//rotation *= moveRot;
+
+		//gmtl::Quatf newRotTo = sphereQuat * rotOffset;
+		//gmtl::normalize(newRotTo);
+		//gmtl::lerp(newRot, args.sampleTime * (44000 * params[SMOOTH].getValue()), sphereQuat, newRotTo);
+
+		if (inputs[VOCT].isConnected()) {
+			momentum[0] = (voctFreq * args.sampleTime);
+			//momentum[1] = voctFreq * args.sampleTime;
+			//momentum[2] = voctFreq * args.sampleTime;
+		}
+
+		lfoRotations[0] += (params[X_FLO_I_PARAM].getValue() * params[X_FLO_F_PARAM].getValue()) * args.sampleTime;
+		lfoRotations[1] += (params[Y_FLO_I_PARAM].getValue() * params[Y_FLO_F_PARAM].getValue()) * args.sampleTime;
+		lfoRotations[2] += (params[Z_FLO_I_PARAM].getValue() * params[Z_FLO_F_PARAM].getValue()) * args.sampleTime;
+
+		// momentum based?
+		gmtl::Quatf lfoWorldRot = gmtl::makePure(lfoRotations);
+		gmtl::Quatf momentumRotation = gmtl::makePure(momentum);
+		gmtl::Quatf newRotTo =  sphereQuat + (sphereQuat * momentumRotation);
 		gmtl::normalize(newRotTo);
 		gmtl::lerp(newRot, args.sampleTime * (44000 * params[SMOOTH].getValue()), sphereQuat, newRotTo);
 		
 		//sphereQuat = rotOffset;
-		sphereQuat = newRot;
+		sphereQuat = newRotTo;
 		//sphereQuat += newRot;
+
+		momentum = momentum - (momentum * args.sampleTime);
 
 		gmtl::normalize(sphereQuat);
 
-		gmtl::Quatf visualRotTo =  visualQuat + (visualQuat * rotOffset);
-		gmtl::lerp(visualQuat, args.sampleTime * 300, visualQuat, visualRotTo);
+		gmtl::Quatf visualRotTo =  visualQuat * newRotTo;
+		gmtl::lerp(visualQuat, args.sampleTime * 50, visualQuat, visualRotTo);
 		gmtl::normalize(visualQuat);
 
 		gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
@@ -250,7 +292,7 @@ struct QuatDisplay : Widget {
 
 		}
 		nvgStrokeColor(args.vg, nvgRGB(15, 250, 15));
-		nvgStrokeWidth(args.vg, 1.f);
+		nvgStrokeWidth(args.vg, 2.f);
 		nvgStroke(args.vg);
 		nvgClosePath(args.vg);
 
@@ -260,7 +302,7 @@ struct QuatDisplay : Widget {
 			else nvgQuadTo(args.vg, 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1], 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1]);
 		}
 		nvgStrokeColor(args.vg, nvgRGB(250, 250, 15));
-		nvgStrokeWidth(args.vg, 1.f);
+		nvgStrokeWidth(args.vg, 2.f);
 		nvgStroke(args.vg);
 		nvgClosePath(args.vg);
 
@@ -270,7 +312,7 @@ struct QuatDisplay : Widget {
 			else nvgQuadTo(args.vg, 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1], 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1]);
 		}
 		nvgStrokeColor(args.vg, nvgRGB(15, 15, 250));
-		nvgStrokeWidth(args.vg, 1.f);
+		nvgStrokeWidth(args.vg, 2.f);
 		nvgStroke(args.vg);
 		nvgClosePath(args.vg);
 
