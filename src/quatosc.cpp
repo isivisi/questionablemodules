@@ -157,7 +157,7 @@ struct QuatOSC : Module {
 		if (json_t* jz = json_object_get(rootJ, "sphereQuatZ")) z = json_real_value(jz);
 		if (json_t* jw = json_object_get(rootJ, "sphereQuatW")) w = json_real_value(jw);
 
-		if (x && y && z && w) sphereQuat = gmtl::Quatf(x,y,z,w);
+		sphereQuat = gmtl::Quatf(x,y,z,w);
 
 	}
 
