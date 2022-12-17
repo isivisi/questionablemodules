@@ -104,16 +104,22 @@ struct QuatOSC : Module {
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
 
-		float lfo1Val = params[X_FLO_I_PARAM].getValue() * processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime);
-		float lfo2Val = params[Y_FLO_I_PARAM].getValue() * processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime);
-		float lfo3Val = params[Z_FLO_I_PARAM].getValue() * processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime);
+		float voctFreq = dsp::FREQ_C4 * dsp::approxExp2_taylor5(inputs[VOCT].getVoltage() + 30.f) / std::pow(2.f, 30.f);
+
+		float lfo1Val = args.sampleTime +  (params[X_FLO_I_PARAM].getValue() * processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime));
+		float lfo2Val = args.sampleTime - (params[Y_FLO_I_PARAM].getValue() * processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime));
+		float lfo3Val = args.sampleTime + (params[Z_FLO_I_PARAM].getValue() * processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
-		//gmtl::Quatf newRotTo =  sphereQuat + (rotOffset * sphereQuat);
-		//gmtl::normalize(newRotTo);
-		//gmtl::lerp(newRot, args.sampleTime, sphereQuat, newRotTo);
-		sphereQuat = rotOffset;
+		
+		gmtl::Quatf newRotTo =  sphereQuat + (rotOffset * sphereQuat);
+		gmtl::normalize(newRotTo);
+		gmtl::lerp(newRot, args.sampleTime * 5000, sphereQuat, newRotTo);
+		
+		//sphereQuat = rotOffset;
+		sphereQuat = newRot;
+
 		gmtl::normalize(sphereQuat);
 
 		gmtl::lerp(visualQuat, args.sampleTime * 50, visualQuat, sphereQuat);
@@ -130,6 +136,31 @@ struct QuatOSC : Module {
 		outputs[SINE_OUTPUT].setVoltage(((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue())));
 
 	}
+
+	json_t* dataToJson() override {
+		json_t* rootJ = json_object();
+		json_object_set_new(rootJ, "sphereQuatX", json_real(sphereQuat[0]));
+		json_object_set_new(rootJ, "sphereQuatY", json_real(sphereQuat[1]));
+		json_object_set_new(rootJ, "sphereQuatZ", json_real(sphereQuat[2]));
+		json_object_set_new(rootJ, "sphereQuatW", json_real(sphereQuat[3]));
+
+		return rootJ;
+	}
+
+
+	void dataFromJson(json_t* rootJ) override {
+
+		float x,y,z,w;
+
+		if (json_t* jx = json_object_get(rootJ, "sphereQuatX")) x = json_real_value(jx);
+		if (json_t* jy = json_object_get(rootJ, "sphereQuatY")) y = json_real_value(jy);
+		if (json_t* jz = json_object_get(rootJ, "sphereQuatZ")) z = json_real_value(jz);
+		if (json_t* jw = json_object_get(rootJ, "sphereQuatW")) w = json_real_value(jw);
+
+		if (x && y && z && w) sphereQuat = gmtl::Quatf(x,y,z,w);
+
+	}
+
 };
 
 struct QuatDisplay : Widget {
