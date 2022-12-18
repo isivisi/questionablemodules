@@ -42,6 +42,7 @@ struct QuatOSC : Module {
 		VOLTAGE_IN_3,
 		TRIGGER,
 		FADE_INPUT,
+		CLOCK_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -61,6 +62,10 @@ struct QuatOSC : Module {
 	gmtl::Vec3f pointOnSphereRotated;
 
 	dsp::SchmittTrigger gateTrigger;
+	dsp::SchmittTrigger clockTrigger;
+	dsp::Timer clockTimer;
+
+	float clockFreq = 2.f;
 
 	float lfo1Phase = 0.f;
 	float lfo2Phase = 0.f;
@@ -103,7 +108,7 @@ struct QuatOSC : Module {
 
 	float processLFO(float &phase, float frequency, float deltaTime, int voct = -1) {
 
-		float voctFreq = dsp::approxExp2_taylor5((inputs[voct].getVoltage() + std::round(params[voct].getValue())) + 30.f) / std::pow(2.f, 30.f);
+		float voctFreq = (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[voct].getVoltage() + std::round(params[voct].getValue())) + 30.f) / std::pow(2.f, 30.f);
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * deltaTime;
 		phase -= trunc(phase);
@@ -138,6 +143,17 @@ struct QuatOSC : Module {
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
+
+		if (inputs[CLOCK_INPUT].isConnected()) {
+			clockTimer.process(args.sampleTime);
+			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 2.f)) {
+				float clockFreq = 1.f / clockTimer.getTime();
+				clockTimer.reset();
+				if (0.001f <= clockFreq && clockFreq <= 1000.f) {
+					this->clockFreq = clockFreq;
+				}
+			}
+		} else clockFreq = 2.f;
 
 		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, VOCT)));
 		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, VOCT2)));
@@ -344,6 +360,8 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 100)), module, QuatOSC::VOCT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20, 100)), module, QuatOSC::VOCT2));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30, 100)), module, QuatOSC::VOCT3));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(50, 100)), module, QuatOSC::CLOCK_INPUT));
 
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
