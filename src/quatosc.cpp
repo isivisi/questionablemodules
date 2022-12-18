@@ -70,8 +70,12 @@ struct QuatOSC : Module {
 	float clockFreq = 2.f;
 
 	float lfo1Phase = 0.f;
-	float lfo2Phase = 0.f;
-	float lfo3Phase = 0.f;
+	float lfo2Phase = 0.33f;
+	float lfo3Phase = 0.83f;
+
+	float lastPhase1 = 0.f;
+	float lastPhase2 = 0.f;
+	float lastPhase3 = 0.f;
 
 	std::queue<gmtl::Vec3f> xPointSamples;
 	std::queue<gmtl::Vec3f> yPointSamples;
@@ -101,8 +105,6 @@ struct QuatOSC : Module {
 		xPointOnSphere = gmtl::Vec3f(50.f, 0.f, 0.f);
 		yPointOnSphere = gmtl::Vec3f(0.f, 50.f, 0.f);
 		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, 50.f);
-
-		sphereQuat = gmtl::makePure(gmtl::Vec3f(90.f, 90.f, 90.f));
 		
 	}
 
@@ -162,6 +164,28 @@ struct QuatOSC : Module {
 				}
 			}
 		} else clockFreq = 2.f;
+
+		if ((lastPhase1 - params[X_FLO_F_PARAM].getValue() > 0.01)) {
+			lfo1Phase = 0.f;
+			lfo2Phase = 0.33f;
+			lfo3Phase = 0.83f;
+			sphereQuat = gmtl::Quatf(0,0,0,1);
+			lastPhase1 = params[X_FLO_F_PARAM].getValue();
+		}
+		if ((lastPhase2 - params[Y_FLO_F_PARAM].getValue() > 0.01)) {
+			lfo1Phase = 0.f;
+			lfo2Phase = 0.33f;
+			lfo3Phase = 0.83f;
+			sphereQuat = gmtl::Quatf(0,0,0,1);
+			lastPhase2 = params[X_FLO_F_PARAM].getValue();
+		}
+		if ((lastPhase3 - params[Z_FLO_F_PARAM].getValue() > 0.01)) {
+			lfo1Phase = 0.f;
+			lfo2Phase = 0.33f;
+			lfo3Phase = 0.83f;
+			sphereQuat = gmtl::Quatf(0,0,0,1);
+			lastPhase3 = params[X_FLO_F_PARAM].getValue();
+		}
 
 		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, VOCT)));
 		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, VOCT2)));
