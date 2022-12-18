@@ -217,6 +217,8 @@ const int MAX_HISTORY = 100;
 struct QuatDisplay : Widget {
 	QuatOSC* module;
 
+	float rad = 65.f;
+
 	QuatDisplay() {
 
 	}
@@ -224,10 +226,10 @@ struct QuatDisplay : Widget {
 	void draw(const DrawArgs &args) override {
 		//if (module == NULL) return;
 
-		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
-        nvgBeginPath(args.vg);
-        nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
-        nvgFill(args.vg);
+		//nvgFillColor(args.vg, nvgRGB(15, 15, 15));
+        //nvgBeginPath(args.vg);
+        //nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+        //nvgFill(args.vg);
 
 	}
 
@@ -249,19 +251,23 @@ struct QuatDisplay : Widget {
 	}
 
 	void drawLayer(const DrawArgs &args, int layer) override {
-		if (module == NULL) return;
 
 		nvgSave(args.vg);
-		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
+		//nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
-		nvgFillColor(args.vg, nvgRGB(25, 25, 25));
+		float centerX = box.size.x/2;
+		float centerY = box.size.y/2;
+
+		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
         nvgBeginPath(args.vg);
-        nvgCircle(args.vg, 100.f, 50.f, 50);
+        nvgCircle(args.vg, centerX, centerY, rad);
         nvgFill(args.vg);
 
-		gmtl::Vec3f xPoint = gmtl::Vec3f(50.f, 0.f, 0.f);
-		gmtl::Vec3f yPoint = gmtl::Vec3f(0.f, 50.f, 0.f);
-		gmtl::Vec3f zPoint = gmtl::Vec3f(0.f, 0.f, 50.f);
+		if (module == NULL) return;
+
+		gmtl::Vec3f xPoint = gmtl::Vec3f(rad, 0.f, 0.f);
+		gmtl::Vec3f yPoint = gmtl::Vec3f(0.f, rad, 0.f);
+		gmtl::Vec3f zPoint = gmtl::Vec3f(0.f, 0.f, rad);
 
 		xPoint = module->visualQuat * xPoint;
 		yPoint = module->visualQuat * yPoint;
@@ -269,17 +275,17 @@ struct QuatDisplay : Widget {
 
 		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
 		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, 100.f + xPoint[0], 50.f + xPoint[1], 3);
+		nvgCircle(args.vg, centerX + xPoint[0], centerY + xPoint[1], 3);
 		nvgFill(args.vg);
 
 		nvgFillColor(args.vg, nvgRGB(250, 250, 15));
 		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, 100.f + yPoint[0], 50.f + yPoint[1], 3);
+		nvgCircle(args.vg, centerX + yPoint[0], centerY + yPoint[1], 3);
 		nvgFill(args.vg);
 
 		nvgFillColor(args.vg, nvgRGB(15, 15, 250));
 		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, 100.f + zPoint[0], 50.f + zPoint[1], 3);
+		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 3);
 		nvgFill(args.vg);
 
 		addToHistory(xPoint, nvgRGB(15, 250, 15), xhistory, xhistoryCursor);
@@ -292,8 +298,8 @@ struct QuatDisplay : Widget {
 			//nvgBeginPath(args.vg);
 			//nvgCircle(args.vg, 100.f + history[i].point[0], 50.f + history[i].point[1], 3);
 			//nvgFill(args.vg);
-			if (i == 0) nvgMoveTo(args.vg, 100.f + xhistory[i].point[0], 50.f + xhistory[i].point[1]);
-			else nvgQuadTo(args.vg, 100.f + xhistory[i].point[0], 50.f + xhistory[i].point[1], 100.f + xhistory[i].point[0], 50.f + xhistory[i].point[1]);
+			if (i == 0) nvgMoveTo(args.vg, centerX + xhistory[i].point[0], centerY + xhistory[i].point[1]);
+			else nvgQuadTo(args.vg, centerX + xhistory[i].point[0], centerY + xhistory[i].point[1], centerX + xhistory[i].point[0], centerY + xhistory[i].point[1]);
 			//else nvgLineTo(args.vg, 100.f + history[i].point[0], 50.f + history[i].point[1]);
 
 		}
@@ -304,8 +310,8 @@ struct QuatDisplay : Widget {
 
 		nvgBeginPath(args.vg);
 		for (int i = (yhistoryCursor+1)%MAX_HISTORY; i != yhistoryCursor; i=(i+1)%MAX_HISTORY) {
-			if (i == 0) nvgMoveTo(args.vg, 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1]);
-			else nvgQuadTo(args.vg, 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1], 100.f + yhistory[i].point[0], 50.f + yhistory[i].point[1]);
+			if (i == 0) nvgMoveTo(args.vg, centerX + yhistory[i].point[0], centerY + yhistory[i].point[1]);
+			else nvgQuadTo(args.vg, centerX + yhistory[i].point[0], centerY + yhistory[i].point[1], centerX + yhistory[i].point[0], centerY + yhistory[i].point[1]);
 		}
 		nvgStrokeColor(args.vg, nvgRGB(250, 250, 15));
 		nvgStrokeWidth(args.vg, 2.f);
@@ -314,8 +320,8 @@ struct QuatDisplay : Widget {
 
 		nvgBeginPath(args.vg);
 		for (int i = (zhistoryCursor+1)%MAX_HISTORY; i != zhistoryCursor; i=(i+1)%MAX_HISTORY) {
-			if (i == 0) nvgMoveTo(args.vg, 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1]);
-			else nvgQuadTo(args.vg, 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1], 100.f + zhistory[i].point[0], 50.f + zhistory[i].point[1]);
+			if (i == 0) nvgMoveTo(args.vg, centerX + zhistory[i].point[0], centerY + zhistory[i].point[1]);
+			else nvgQuadTo(args.vg, centerX + zhistory[i].point[0], centerY + zhistory[i].point[1], centerX + zhistory[i].point[0], centerY + zhistory[i].point[1]);
 		}
 		nvgStrokeColor(args.vg, nvgRGB(15, 15, 250));
 		nvgStrokeWidth(args.vg, 2.f);
@@ -338,13 +344,13 @@ struct QuatOSCWidget : ModuleWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.jpg");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/quatosc.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 
 		display = new QuatDisplay();
-		display->box.pos = Vec(2, 50);
-        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 100);
+		display->box.pos = Vec(2, 30);
+        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 125);
 		display->module = module;
 		
 		setPanel(backdrop);
@@ -356,32 +362,32 @@ struct QuatOSCWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, QuatOSC::SINE_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50, 113)), module, QuatOSC::SINE_OUTPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 100)), module, QuatOSC::VOCT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20, 100)), module, QuatOSC::VOCT2));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30, 100)), module, QuatOSC::VOCT3));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30, 100)), module, QuatOSC::VOCT2));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(50, 100)), module, QuatOSC::VOCT3));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(50, 100)), module, QuatOSC::CLOCK_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40, 113)), module, QuatOSC::CLOCK_INPUT));
 
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Z, Treequencer::SEND_VOCT_Z_LIGHT));
 		
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 70)), module, QuatOSC::X_FLO_F_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 70)), module, QuatOSC::Y_FLO_F_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 70)), module, QuatOSC::Z_FLO_F_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 70)), module, QuatOSC::Y_FLO_F_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 70)), module, QuatOSC::Z_FLO_F_PARAM));
 
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 90)), module, QuatOSC::X_FLO_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 90)), module, QuatOSC::Y_FLO_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 90)), module, QuatOSC::Z_FLO_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 90)), module, QuatOSC::Y_FLO_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 90)), module, QuatOSC::Z_FLO_I_PARAM));
 
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 80)), module, QuatOSC::VOCT1_OCT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 80)), module, QuatOSC::VOCT2_OCT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 80)), module, QuatOSC::VOCT3_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 80)), module, QuatOSC::VOCT2_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 80)), module, QuatOSC::VOCT3_OCT));
 
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 60)), module, QuatOSC::X_POS_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 60)), module, QuatOSC::Y_POS_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 60)), module, QuatOSC::Z_POS_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 60)), module, QuatOSC::Y_POS_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 60)), module, QuatOSC::Z_POS_I_PARAM));
 
 	}
 };
