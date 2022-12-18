@@ -18,7 +18,7 @@
 // https://ggt.sourceforge.net/html/gmtlfaq.html
 
 int MODULE_SIZE = 12;
-const int MAX_HISTORY = 200;
+const int MAX_HISTORY = 2000;
 
 struct QuatOSC : Module {
 	enum ParamId {
@@ -188,7 +188,7 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		if (args.frame % (int)(args.sampleRate/(MAX_HISTORY*4)) == 0) {
+		if (args.frame % (int)(args.sampleRate/(MAX_HISTORY)) == 0) {
 			xPointSamples.push(visualQuat * xPointOnSphere);
 			yPointSamples.push(visualQuat * yPointOnSphere);
 			zPointSamples.push(visualQuat * zPointOnSphere);
@@ -260,6 +260,26 @@ struct QuatDisplay : Widget {
 		cursor = (cursor + 1) % MAX_HISTORY;
 	}
 
+	void drawHistory(NVGcontext* vg, std::queue<gmtl::Vec3f> &history, NVGcolor color) {
+		float centerX = box.size.x/2;
+		float centerY = box.size.y/2;
+		bool f = true;
+
+		nvgBeginPath(vg);
+		while (history.size() > 2) {
+			gmtl::Vec3f point = history.front();
+			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
+			else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
+			history.pop();
+			f = false;
+		}
+		nvgStrokeColor(vg, color);
+		nvgStrokeWidth(vg, 3.f);
+		nvgStroke(vg);
+		nvgClosePath(vg);
+
+	}
+
 	void drawLayer(const DrawArgs &args, int layer) override {
 
 		nvgSave(args.vg);
@@ -275,13 +295,9 @@ struct QuatDisplay : Widget {
 
 		if (module == NULL) return;
 
-		gmtl::Vec3f xPoint = gmtl::Vec3f(rad, 0.f, 0.f);
-		gmtl::Vec3f yPoint = gmtl::Vec3f(0.f, rad, 0.f);
-		gmtl::Vec3f zPoint = gmtl::Vec3f(0.f, 0.f, rad);
-
-		xPoint = module->visualQuat * xPoint;
-		yPoint = module->visualQuat * yPoint;
-		zPoint = module->visualQuat * zPoint;
+		float xInf = module->params[QuatOSC::X_POS_I_PARAM].getValue();
+		float yInf = module->params[QuatOSC::Y_POS_I_PARAM].getValue();
+		float zInf = module->params[QuatOSC::Z_POS_I_PARAM].getValue();
 
 		/*nvgFillColor(args.vg, nvgRGB(15, 250, 15));
 		nvgBeginPath(args.vg);
@@ -298,54 +314,9 @@ struct QuatDisplay : Widget {
 		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 3);
 		nvgFill(args.vg);*/
 
-		while (module->xPointSamples.size()) {
-			addToHistory(module->xPointSamples.front(), nvgRGB(15, 250, 15), xhistory, xhistoryCursor); 
-			module->xPointSamples.pop();
-		}
-		while (module->yPointSamples.size()) {
-			addToHistory(module->yPointSamples.front(), nvgRGB(15, 250, 15), yhistory, yhistoryCursor); 
-			module->yPointSamples.pop();
-		}
-		while (module->zPointSamples.size()) {
-			addToHistory(module->zPointSamples.front(), nvgRGB(15, 250, 15), zhistory, zhistoryCursor); 
-			module->zPointSamples.pop();
-		}
-
-		nvgBeginPath(args.vg);
-		for (int i = (xhistoryCursor+1)%MAX_HISTORY; i != xhistoryCursor; i=(i+1)%MAX_HISTORY) {
-			//nvgFillColor(args.vg, history[i].color);
-			//nvgBeginPath(args.vg);
-			//nvgCircle(args.vg, 100.f + history[i].point[0], 50.f + history[i].point[1], 3);
-			//nvgFill(args.vg);
-			if (i == 0) nvgMoveTo(args.vg, centerX + xhistory[i].point[0], centerY + xhistory[i].point[1]);
-			else nvgQuadTo(args.vg, centerX + xhistory[i].point[0], centerY + xhistory[i].point[1], centerX + xhistory[i].point[0], centerY + xhistory[i].point[1]);
-			//else nvgLineTo(args.vg, 100.f + history[i].point[0], 50.f + history[i].point[1]);
-
-		}
-		nvgStrokeColor(args.vg, nvgRGB(15, 250, 15));
-		nvgStrokeWidth(args.vg, 3.f);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-
-		nvgBeginPath(args.vg);
-		for (int i = (yhistoryCursor+1)%MAX_HISTORY; i != yhistoryCursor; i=(i+1)%MAX_HISTORY) {
-			if (i == 0) nvgMoveTo(args.vg, centerX + yhistory[i].point[0], centerY + yhistory[i].point[1]);
-			else nvgQuadTo(args.vg, centerX + yhistory[i].point[0], centerY + yhistory[i].point[1], centerX + yhistory[i].point[0], centerY + yhistory[i].point[1]);
-		}
-		nvgStrokeColor(args.vg, nvgRGB(250, 250, 15));
-		nvgStrokeWidth(args.vg, 3.f);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-
-		nvgBeginPath(args.vg);
-		for (int i = (zhistoryCursor+1)%MAX_HISTORY; i != zhistoryCursor; i=(i+1)%MAX_HISTORY) {
-			if (i == 0) nvgMoveTo(args.vg, centerX + zhistory[i].point[0], centerY + zhistory[i].point[1]);
-			else nvgQuadTo(args.vg, centerX + zhistory[i].point[0], centerY + zhistory[i].point[1], centerX + zhistory[i].point[0], centerY + zhistory[i].point[1]);
-		}
-		nvgStrokeColor(args.vg, nvgRGB(15, 15, 250));
-		nvgStrokeWidth(args.vg, 3.f);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
+		drawHistory(args.vg, module->xPointSamples, nvgRGB(15 * xInf, 250 * xInf, 15 * xInf));
+		drawHistory(args.vg, module->yPointSamples, nvgRGB(250 * yInf, 250 * yInf, 15 * yInf));
+		drawHistory(args.vg, module->zPointSamples, nvgRGB(15 * zInf, 15 * zInf, 250 * zInf));
 
 		nvgRestore(args.vg);
 	
