@@ -101,6 +101,8 @@ struct QuatOSC : Module {
 		xPointOnSphere = gmtl::Vec3f(50.f, 0.f, 0.f);
 		yPointOnSphere = gmtl::Vec3f(0.f, 50.f, 0.f);
 		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, 50.f);
+
+		sphereQuat = gmtl::makePure(gmtl::Vec3f(90.f, 90.f, 90.f));
 		
 	}
 
@@ -274,7 +276,7 @@ struct QuatDisplay : Widget {
 			f = false;
 		}
 		nvgStrokeColor(vg, color);
-		nvgStrokeWidth(vg, 3.f);
+		nvgStrokeWidth(vg, 4.f);
 		nvgStroke(vg);
 		nvgClosePath(vg);
 
@@ -299,20 +301,45 @@ struct QuatDisplay : Widget {
 		float yInf = module->params[QuatOSC::Y_POS_I_PARAM].getValue();
 		float zInf = module->params[QuatOSC::Z_POS_I_PARAM].getValue();
 
-		/*nvgFillColor(args.vg, nvgRGB(15, 250, 15));
+		gmtl::Vec3f xPoint = module->xPointSamples.back();
+		gmtl::Vec3f yPoint = module->yPointSamples.back();
+		gmtl::Vec3f zPoint = module->zPointSamples.back();
+
+		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
+		nvgStrokeWidth(args.vg, 0.15f);
+
 		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + xPoint[0], centerY + xPoint[1], 3);
+		nvgMoveTo(args.vg, centerX, centerY);
+		nvgLineTo(args.vg, centerX + xPoint[0], centerY + xPoint[1]);
+		nvgStroke(args.vg);
+		nvgClosePath(args.vg);
+		
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, centerX, centerY);
+		nvgLineTo(args.vg, centerX + yPoint[0], centerY + yPoint[1]);
+		nvgStroke(args.vg);
+		nvgClosePath(args.vg);
+
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, centerX, centerY);
+		nvgLineTo(args.vg, centerX + zPoint[0], centerY + zPoint[1]);
+		nvgStroke(args.vg);
+		nvgClosePath(args.vg);
+
+		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, centerX + xPoint[0], centerY + xPoint[1], 1.5);
 		nvgFill(args.vg);
 
 		nvgFillColor(args.vg, nvgRGB(250, 250, 15));
 		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + yPoint[0], centerY + yPoint[1], 3);
+		nvgCircle(args.vg, centerX + yPoint[0], centerY + yPoint[1], 1.5);
 		nvgFill(args.vg);
 
-		nvgFillColor(args.vg, nvgRGB(15, 15, 250));
+		nvgFillColor(args.vg, nvgRGB(15, 255, 250));
 		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 3);
-		nvgFill(args.vg);*/
+		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
+		nvgFill(args.vg);
 
 		drawHistory(args.vg, module->xPointSamples, nvgRGB(15 * xInf, 250 * xInf, 15 * xInf));
 		drawHistory(args.vg, module->yPointSamples, nvgRGB(250 * yInf, 250 * yInf, 15 * yInf));
