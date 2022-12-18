@@ -316,7 +316,7 @@ struct QuatDisplay : Widget {
 
 		drawHistory(args.vg, module->xPointSamples, nvgRGB(15 * xInf, 250 * xInf, 15 * xInf));
 		drawHistory(args.vg, module->yPointSamples, nvgRGB(250 * yInf, 250 * yInf, 15 * yInf));
-		drawHistory(args.vg, module->zPointSamples, nvgRGB(15 * zInf, 15 * zInf, 250 * zInf));
+		drawHistory(args.vg, module->zPointSamples, nvgRGB(15 * zInf, 250 * zInf, 250 * zInf));
 
 		nvgRestore(args.vg);
 	
