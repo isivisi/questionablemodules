@@ -5,6 +5,7 @@
 #include <gmtl/Quat.h>
 #include <vector>
 #include <cmath>
+#include <queue>
 #include <algorithm>
 
 /*
@@ -17,6 +18,7 @@
 // https://ggt.sourceforge.net/html/gmtlfaq.html
 
 int MODULE_SIZE = 12;
+const int MAX_HISTORY = 200;
 
 struct QuatOSC : Module {
 	enum ParamId {
@@ -70,6 +72,10 @@ struct QuatOSC : Module {
 	float lfo1Phase = 0.f;
 	float lfo2Phase = 0.f;
 	float lfo3Phase = 0.f;
+
+	std::queue<gmtl::Vec3f> xPointSamples;
+	std::queue<gmtl::Vec3f> yPointSamples;
+	std::queue<gmtl::Vec3f> zPointSamples;
 
 	QuatOSC() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -182,6 +188,12 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
+		if (args.frame % (int)(args.sampleRate/(MAX_HISTORY*4)) == 0) {
+			xPointSamples.push(visualQuat * xPointOnSphere);
+			yPointSamples.push(visualQuat * yPointOnSphere);
+			zPointSamples.push(visualQuat * zPointOnSphere);
+		}
+
 		outputs[SINE_OUTPUT].setVoltage((((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue()))) * 3.f);
 
 	}
@@ -206,13 +218,11 @@ struct QuatOSC : Module {
 		if (json_t* jz = json_object_get(rootJ, "sphereQuatZ")) z = json_real_value(jz);
 		if (json_t* jw = json_object_get(rootJ, "sphereQuatW")) w = json_real_value(jw);
 
-		//sphereQuat = gmtl::Quatf(x,y,z,w);
+		sphereQuat = gmtl::Quatf(x,y,z,w);
 
 	}
 
 };
-
-const int MAX_HISTORY = 100;
 
 struct QuatDisplay : Widget {
 	QuatOSC* module;
@@ -273,7 +283,7 @@ struct QuatDisplay : Widget {
 		yPoint = module->visualQuat * yPoint;
 		zPoint = module->visualQuat * zPoint;
 
-		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
+		/*nvgFillColor(args.vg, nvgRGB(15, 250, 15));
 		nvgBeginPath(args.vg);
 		nvgCircle(args.vg, centerX + xPoint[0], centerY + xPoint[1], 3);
 		nvgFill(args.vg);
@@ -286,11 +296,20 @@ struct QuatDisplay : Widget {
 		nvgFillColor(args.vg, nvgRGB(15, 15, 250));
 		nvgBeginPath(args.vg);
 		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 3);
-		nvgFill(args.vg);
+		nvgFill(args.vg);*/
 
-		addToHistory(xPoint, nvgRGB(15, 250, 15), xhistory, xhistoryCursor);
-		addToHistory(yPoint, nvgRGB(250, 250, 15), yhistory, yhistoryCursor);
-		addToHistory(zPoint, nvgRGB(15, 15, 250), zhistory, zhistoryCursor);
+		while (module->xPointSamples.size()) {
+			addToHistory(module->xPointSamples.front(), nvgRGB(15, 250, 15), xhistory, xhistoryCursor); 
+			module->xPointSamples.pop();
+		}
+		while (module->yPointSamples.size()) {
+			addToHistory(module->yPointSamples.front(), nvgRGB(15, 250, 15), yhistory, yhistoryCursor); 
+			module->yPointSamples.pop();
+		}
+		while (module->zPointSamples.size()) {
+			addToHistory(module->zPointSamples.front(), nvgRGB(15, 250, 15), zhistory, zhistoryCursor); 
+			module->zPointSamples.pop();
+		}
 
 		nvgBeginPath(args.vg);
 		for (int i = (xhistoryCursor+1)%MAX_HISTORY; i != xhistoryCursor; i=(i+1)%MAX_HISTORY) {
@@ -304,7 +323,7 @@ struct QuatDisplay : Widget {
 
 		}
 		nvgStrokeColor(args.vg, nvgRGB(15, 250, 15));
-		nvgStrokeWidth(args.vg, 2.f);
+		nvgStrokeWidth(args.vg, 3.f);
 		nvgStroke(args.vg);
 		nvgClosePath(args.vg);
 
@@ -314,7 +333,7 @@ struct QuatDisplay : Widget {
 			else nvgQuadTo(args.vg, centerX + yhistory[i].point[0], centerY + yhistory[i].point[1], centerX + yhistory[i].point[0], centerY + yhistory[i].point[1]);
 		}
 		nvgStrokeColor(args.vg, nvgRGB(250, 250, 15));
-		nvgStrokeWidth(args.vg, 2.f);
+		nvgStrokeWidth(args.vg, 3.f);
 		nvgStroke(args.vg);
 		nvgClosePath(args.vg);
 
@@ -324,7 +343,7 @@ struct QuatDisplay : Widget {
 			else nvgQuadTo(args.vg, centerX + zhistory[i].point[0], centerY + zhistory[i].point[1], centerX + zhistory[i].point[0], centerY + zhistory[i].point[1]);
 		}
 		nvgStrokeColor(args.vg, nvgRGB(15, 15, 250));
-		nvgStrokeWidth(args.vg, 2.f);
+		nvgStrokeWidth(args.vg, 3.f);
 		nvgStroke(args.vg);
 		nvgClosePath(args.vg);
 
