@@ -20,6 +20,9 @@ int MODULE_SIZE = 12;
 
 struct QuatOSC : Module {
 	enum ParamId {
+		VOCT1_OCT,
+		VOCT2_OCT,
+		VOCT3_OCT,
 		X_FLO_I_PARAM,
 		Y_FLO_I_PARAM,
 		Z_FLO_I_PARAM,
@@ -29,20 +32,16 @@ struct QuatOSC : Module {
 		X_POS_I_PARAM,
 		Y_POS_I_PARAM,
 		Z_POS_I_PARAM,
-		X_LFO_PHASE,
-		Y_LFO_PHASE,
-		Z_LFO_PHASE,
-		SMOOTH,
 		PARAMS_LEN
 	};
 	enum InputId {
 		VOCT,
+		VOCT2,
+		VOCT3,
 		VOLTAGE_IN_2,
 		VOLTAGE_IN_3,
 		TRIGGER,
 		FADE_INPUT,
-		VOCT2,
-		VOCT3,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -75,13 +74,12 @@ struct QuatOSC : Module {
 		configParam(X_FLO_F_PARAM, 0.f, 100.f, 0.f, "X LFO Frequency");
 		configParam(Y_FLO_F_PARAM, 0.f, 100.f, 0.f, "Y LFO Frequency");
 		configParam(Z_FLO_F_PARAM, 0.f, 100.f, 0.f, "Z LFO Frequency");
-		configParam(X_LFO_PHASE, -1.f, 1.f, 0.f, "X LFO Phase");
-		configParam(Y_LFO_PHASE, -1.f, 1.f, 0.f, "Y LFO Phase");
-		configParam(Z_LFO_PHASE, -1.f, 1.f, 0.f, "Z LFO Phase");
 		configParam(X_POS_I_PARAM, 0.f, 1.f, 1.f, "X Position Influence");
 		configParam(Y_POS_I_PARAM, 0.f, 1.f, 0.f, "Y Position Influence");
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 0.f, "Z Position Influence");
-		configParam(SMOOTH, 0.f, 1.f, 0.5f, "Smooth");
+		configSwitch(VOCT1_OCT, 0.f, 8.f, 0.f, "VOct 1 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT2_OCT, 0.f, 8.f, 0.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT, "VOct 2");
 		configInput(VOCT, "VOct 3");
@@ -105,7 +103,7 @@ struct QuatOSC : Module {
 
 	float processLFO(float &phase, float frequency, float deltaTime, int voct = -1) {
 
-		float voctFreq = dsp::approxExp2_taylor5(inputs[voct].getVoltage() + 30.f) / std::pow(2.f, 30.f);
+		float voctFreq = dsp::approxExp2_taylor5((inputs[voct].getVoltage() + std::round(params[voct].getValue())) + 30.f) / std::pow(2.f, 30.f);
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * deltaTime;
 		phase -= trunc(phase);
@@ -141,9 +139,9 @@ struct QuatOSC : Module {
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
 
-		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((0.25f * params[X_LFO_PHASE].getValue()) + (processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, VOCT)));
-		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((0.25f * params[Y_LFO_PHASE].getValue()) + (processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, VOCT2)));
-		float lfo3Val = params[Z_FLO_I_PARAM].getValue()  * ((0.25f * params[Z_LFO_PHASE].getValue()) + (processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, VOCT3)));
+		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, VOCT)));
+		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, VOCT2)));
+		float lfo3Val = params[Z_FLO_I_PARAM].getValue()  * ((processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, VOCT3)));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
@@ -151,7 +149,6 @@ struct QuatOSC : Module {
 
 		gmtl::Quatf newRotTo = rotOffset;
 		gmtl::normalize(newRotTo);
-		gmtl::lerp(newRot, args.sampleTime * (44000 * params[SMOOTH].getValue()), sphereQuat, newRotTo);
 
 		sphereQuat = newRotTo;
 
@@ -360,9 +357,9 @@ struct QuatOSCWidget : ModuleWidget {
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 90)), module, QuatOSC::Y_FLO_I_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 90)), module, QuatOSC::Z_FLO_I_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 80)), module, QuatOSC::X_LFO_PHASE));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 80)), module, QuatOSC::Y_LFO_PHASE));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 80)), module, QuatOSC::Z_LFO_PHASE));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 80)), module, QuatOSC::VOCT1_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 80)), module, QuatOSC::VOCT2_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 80)), module, QuatOSC::VOCT3_OCT));
 
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 60)), module, QuatOSC::X_POS_I_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(20, 60)), module, QuatOSC::Y_POS_I_PARAM));
