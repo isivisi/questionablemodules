@@ -77,6 +77,10 @@ struct QuatOSC : Module {
 	float lastPhase2 = 0.f;
 	float lastPhase3 = 0.f;
 
+	float freqHistory1;
+	float freqHistory2;
+	float freqHistory3;
+
 	std::queue<gmtl::Vec3f> xPointSamples;
 	std::queue<gmtl::Vec3f> yPointSamples;
 	std::queue<gmtl::Vec3f> zPointSamples;
@@ -116,9 +120,14 @@ struct QuatOSC : Module {
 		return vector[0] + vector[1];// + vector[2];
 	}
 
-	float processLFO(float &phase, float frequency, float deltaTime, int voct = -1) {
+	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
 
 		float voctFreq = (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[voct].getVoltage() + std::round(params[voct].getValue())) + 30.f) / std::pow(2.f, 30.f);
+
+		if (voctFreq - freqHistory > 0.01) {
+			resetPhase(); 
+			freqHistory = voctFreq;
+		}
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * deltaTime;
 		phase -= trunc(phase);
@@ -151,6 +160,14 @@ struct QuatOSC : Module {
 	gmtl::Vec3f momentum;
 	gmtl::Vec3f lfoRotations;
 
+	void resetPhase() {
+		lfo1Phase = 0.f;
+		lfo2Phase = 0.33f;
+		lfo3Phase = 0.83f;
+		sphereQuat = gmtl::Quatf(0,0,0,1);
+		lastPhase1 = params[X_FLO_F_PARAM].getValue();
+	}
+
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
 
@@ -165,31 +182,9 @@ struct QuatOSC : Module {
 			}
 		} else clockFreq = 2.f;
 
-		if ((lastPhase1 - params[X_FLO_F_PARAM].getValue() > 0.01)) {
-			lfo1Phase = 0.f;
-			lfo2Phase = 0.33f;
-			lfo3Phase = 0.83f;
-			sphereQuat = gmtl::Quatf(0,0,0,1);
-			lastPhase1 = params[X_FLO_F_PARAM].getValue();
-		}
-		if ((lastPhase2 - params[Y_FLO_F_PARAM].getValue() > 0.01)) {
-			lfo1Phase = 0.f;
-			lfo2Phase = 0.33f;
-			lfo3Phase = 0.83f;
-			sphereQuat = gmtl::Quatf(0,0,0,1);
-			lastPhase2 = params[X_FLO_F_PARAM].getValue();
-		}
-		if ((lastPhase3 - params[Z_FLO_F_PARAM].getValue() > 0.01)) {
-			lfo1Phase = 0.f;
-			lfo2Phase = 0.33f;
-			lfo3Phase = 0.83f;
-			sphereQuat = gmtl::Quatf(0,0,0,1);
-			lastPhase3 = params[X_FLO_F_PARAM].getValue();
-		}
-
-		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, VOCT)));
-		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, VOCT2)));
-		float lfo3Val = params[Z_FLO_I_PARAM].getValue()  * ((processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, VOCT3)));
+		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, freqHistory1, VOCT)));
+		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, freqHistory2, VOCT2)));
+		float lfo3Val = params[Z_FLO_I_PARAM].getValue()  * ((processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, freqHistory3, VOCT3)));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
@@ -244,7 +239,7 @@ struct QuatOSC : Module {
 		if (json_t* jz = json_object_get(rootJ, "sphereQuatZ")) z = json_real_value(jz);
 		if (json_t* jw = json_object_get(rootJ, "sphereQuatW")) w = json_real_value(jw);
 
-		sphereQuat = gmtl::Quatf(x,y,z,w);
+		//sphereQuat = gmtl::Quatf(x,y,z,w);
 
 	}
 
