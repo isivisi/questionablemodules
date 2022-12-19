@@ -283,7 +283,7 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
-		while (history.size()) {
+		while (history.size() > 2) {
 			gmtl::Vec3f point = history.front();
 			addToHistory(point, localHistory);
 			history.pop();
