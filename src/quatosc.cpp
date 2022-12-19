@@ -120,7 +120,7 @@ struct QuatOSC : Module {
 
 		float voctFreq = (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[voct].getVoltage() + std::round(params[voct].getValue())) + 30.f) / std::pow(2.f, 30.f);
 
-		if (voctFreq - freqHistory > 0.01) {
+		if (!voctFreq - freqHistory > 0.001) {
 			resetPhase(); 
 			freqHistory = voctFreq;
 		}
@@ -171,6 +171,7 @@ struct QuatOSC : Module {
 			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 2.f)) {
 				float clockFreq = 1.f / clockTimer.getTime();
 				clockTimer.reset();
+
 				if (0.001f <= clockFreq && clockFreq <= 1000.f) {
 					this->clockFreq = clockFreq;
 				}
