@@ -70,12 +70,8 @@ struct QuatOSC : Module {
 	float clockFreq = 2.f;
 
 	float lfo1Phase = 0.f;
-	float lfo2Phase = 0.33f;
-	float lfo3Phase = 0.83f;
-
-	float lastPhase1 = 0.f;
-	float lastPhase2 = 0.f;
-	float lastPhase3 = 0.f;
+	float lfo2Phase = 0.24;
+	float lfo3Phase = 0.48f;
 
 	float freqHistory1;
 	float freqHistory2;
@@ -162,10 +158,9 @@ struct QuatOSC : Module {
 
 	void resetPhase() {
 		lfo1Phase = 0.f;
-		lfo2Phase = 0.33f;
-		lfo3Phase = 0.83f;
+		lfo2Phase = 0.24f;;
+		lfo3Phase = 0.48f;
 		sphereQuat = gmtl::Quatf(0,0,0,1);
-		lastPhase1 = params[X_FLO_F_PARAM].getValue();
 	}
 
 	void process(const ProcessArgs& args) override {
