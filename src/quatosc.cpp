@@ -18,7 +18,8 @@
 // https://ggt.sourceforge.net/html/gmtlfaq.html
 
 int MODULE_SIZE = 12;
-const int MAX_HISTORY = 2000;
+const int MAX_HISTORY = 300;
+const int SAMPLES_PER_SECOND = MAX_HISTORY*10;
 
 struct QuatOSC : Module {
 	enum ParamId {
@@ -205,7 +206,7 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		if (args.frame % (int)(args.sampleRate/(MAX_HISTORY)) == 0) {
+		if (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0) {
 			xPointSamples.push(visualQuat * xPointOnSphere);
 			yPointSamples.push(visualQuat * yPointOnSphere);
 			zPointSamples.push(visualQuat * zPointOnSphere);
@@ -260,38 +261,40 @@ struct QuatDisplay : Widget {
 
 	}
 
-	struct pointHistory {
-		gmtl::Vec3f point;
-		NVGcolor color;
+	struct vecHistory {
+		gmtl::Vec3f history[MAX_HISTORY];
+		int cursor = 0;
 	};
 
-	pointHistory xhistory[MAX_HISTORY];
-	int xhistoryCursor = 0;
-	pointHistory yhistory[MAX_HISTORY];
-	int yhistoryCursor = 0;
-	pointHistory zhistory[MAX_HISTORY];
-	int zhistoryCursor = 0;
+	vecHistory xhistory;
+	vecHistory yhistory;
+	vecHistory zhistory;
 
-	void addToHistory(gmtl::Vec3f vec, NVGcolor color, pointHistory* history, int &cursor) {
-		history[cursor] = pointHistory{vec, color};
-		cursor = (cursor + 1) % MAX_HISTORY;
+	void addToHistory(gmtl::Vec3f vec, vecHistory& h) {
+		h.history[h.cursor] = vec;
+		h.cursor = (h.cursor + 1) % MAX_HISTORY;
 	}
 
-	void drawHistory(NVGcontext* vg, std::queue<gmtl::Vec3f> &history, NVGcolor color) {
+	void drawHistory(NVGcontext* vg, std::queue<gmtl::Vec3f> &history, NVGcolor color, vecHistory& localHistory) {
 		float centerX = box.size.x/2;
 		float centerY = box.size.y/2;
 		bool f = true;
 
-		nvgBeginPath(vg);
 		while (history.size() > 2) {
 			gmtl::Vec3f point = history.front();
+			addToHistory(point, localHistory);
+			history.pop();
+		}
+
+		nvgBeginPath(vg);
+		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
+			gmtl::Vec3f point = localHistory.history[i];
 			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
 			else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
-			history.pop();
 			f = false;
 		}
 		nvgStrokeColor(vg, color);
-		nvgStrokeWidth(vg, 4.f);
+		nvgStrokeWidth(vg, 2.5f);
 		nvgStroke(vg);
 		nvgClosePath(vg);
 
@@ -356,9 +359,9 @@ struct QuatDisplay : Widget {
 		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
 		nvgFill(args.vg);
 
-		drawHistory(args.vg, module->xPointSamples, nvgRGB(15 * xInf, 250 * xInf, 15 * xInf));
-		drawHistory(args.vg, module->yPointSamples, nvgRGB(250 * yInf, 250 * yInf, 15 * yInf));
-		drawHistory(args.vg, module->zPointSamples, nvgRGB(15 * zInf, 250 * zInf, 250 * zInf));
+		drawHistory(args.vg, module->xPointSamples, nvgRGB(15 * xInf, 250 * xInf, 15 * xInf), xhistory);
+		drawHistory(args.vg, module->yPointSamples, nvgRGB(250 * yInf, 250 * yInf, 15 * yInf), yhistory);
+		drawHistory(args.vg, module->zPointSamples, nvgRGB(15 * zInf, 250 * zInf, 250 * zInf), zhistory);
 
 		nvgRestore(args.vg);
 	
