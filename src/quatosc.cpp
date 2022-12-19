@@ -19,7 +19,7 @@
 
 int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
-const int SAMPLES_PER_SECOND = MAX_HISTORY*10;
+const int SAMPLES_PER_SECOND = MAX_HISTORY*25;
 
 struct QuatOSC : Module {
 	enum ParamId {
@@ -113,13 +113,17 @@ struct QuatOSC : Module {
 		return std::min(min, std::max(max, value));
 	}
 
-	float VecCombine(gmtl::Vec3f vector) {
+	inline float VecCombine(gmtl::Vec3f vector) {
 		return vector[0] + vector[1];// + vector[2];
+	}
+
+	inline float calcVOctFreq(int input) {
+		return (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(params[input].getValue())) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
 
-		float voctFreq = (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[voct].getVoltage() + std::round(params[voct].getValue())) + 30.f) / std::pow(2.f, 30.f);
+		float voctFreq = calcVOctFreq(voct);
 
 		if (!voctFreq - freqHistory > 0.001) {
 			resetPhase(); 
@@ -194,8 +198,11 @@ struct QuatOSC : Module {
 
 		gmtl::normalize(sphereQuat);
 
+		float freqAvg = (calcVOctFreq(0) + calcVOctFreq(1) + calcVOctFreq(2)) / 3;
+		float freqLerp = (std::max(0.1f, std::min(1.f, 1.f - (freqAvg / 255)))) * 44000;
+
 		gmtl::Quatf visualRotTo = visualQuat * sphereQuat;
-		gmtl::lerp(visualQuat, args.sampleTime * 50, visualQuat, visualRotTo);
+		gmtl::lerp(visualQuat, args.sampleTime * (std::min(50.f,freqLerp)), visualQuat, visualRotTo);
 		gmtl::normalize(visualQuat);
 
 		gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
@@ -206,12 +213,12 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		if (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0) {
-			xPointSamples.push(visualQuat * xPointOnSphere);
-			yPointSamples.push(visualQuat * yPointOnSphere);
-			zPointSamples.push(visualQuat * zPointOnSphere);
+		if (args.frame % (int)(args.sampleRate/44000) == 0) {
+			xPointSamples.push(sphereQuat * xPointOnSphere);
+			yPointSamples.push(sphereQuat * yPointOnSphere);
+			zPointSamples.push(sphereQuat * zPointOnSphere);
 		}
-
+		//outputs[SINE_OUTPUT].setVoltage(freqLerp);
 		outputs[SINE_OUTPUT].setVoltage((((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue()))) * 3.f);
 
 	}
@@ -265,7 +272,7 @@ struct QuatDisplay : Widget {
 	}
 
 	struct vecHistory {
-		gmtl::Vec3f history[MAX_HISTORY];
+		gmtl::Vec3f history[MAX_HISTORY+1];
 		int cursor = 0;
 	};
 
@@ -283,12 +290,14 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
+		// grab points from audio thread and clear and add it to our own history list
 		while (history.size() > 2) {
 			gmtl::Vec3f point = history.front();
-			addToHistory(point, localHistory);
+			//addToHistory(point, localHistory);
 			history.pop();
 		}
 
+		// Iterate from oldest history value to latest
 		nvgBeginPath(vg);
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
 			gmtl::Vec3f point = localHistory.history[i];
@@ -322,9 +331,9 @@ struct QuatDisplay : Widget {
 		gmtl::Vec3f zPoint = module->zPointSamples.back();
 
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
-		nvgStrokeWidth(args.vg, 0.15f);
+		nvgStrokeWidth(args.vg, 1.f);
 
-		nvgBeginPath(args.vg);
+		/*nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, centerX, centerY);
 		nvgLineTo(args.vg, centerX + xPoint[0], centerY + xPoint[1]);
 		nvgStroke(args.vg);
@@ -355,11 +364,11 @@ struct QuatDisplay : Widget {
 		nvgFillColor(args.vg, nvgRGB(15, 255, 250));
 		nvgBeginPath(args.vg);
 		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
-		nvgFill(args.vg);
+		nvgFill(args.vg);*/
 
-		drawHistory(args.vg, module->xPointSamples, nvgRGB(15 * xInf, 250 * xInf, 15 * xInf), xhistory);
-		drawHistory(args.vg, module->yPointSamples, nvgRGB(250 * yInf, 250 * yInf, 15 * yInf), yhistory);
-		drawHistory(args.vg, module->zPointSamples, nvgRGB(15 * zInf, 250 * zInf, 250 * zInf), zhistory);
+		drawHistory(args.vg, module->xPointSamples, nvgRGBA(15, 250, 15, xInf*255), xhistory);
+		drawHistory(args.vg, module->yPointSamples, nvgRGBA(250, 250, 15, yInf*255), yhistory);
+		drawHistory(args.vg, module->zPointSamples, nvgRGBA(15, 250, 250, zInf*255), zhistory);
 
 		nvgRestore(args.vg);
 	
