@@ -254,10 +254,13 @@ struct QuatDisplay : Widget {
 	void draw(const DrawArgs &args) override {
 		//if (module == NULL) return;
 
-		//nvgFillColor(args.vg, nvgRGB(15, 15, 15));
-        //nvgBeginPath(args.vg);
-        //nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
-        //nvgFill(args.vg);
+		float centerX = box.size.x/2;
+		float centerY = box.size.y/2;
+
+		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
+        nvgBeginPath(args.vg);
+        nvgCircle(args.vg, centerX, centerY, rad);
+        nvgFill(args.vg);
 
 	}
 
@@ -307,11 +310,6 @@ struct QuatDisplay : Widget {
 
 		float centerX = box.size.x/2;
 		float centerY = box.size.y/2;
-
-		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
-        nvgBeginPath(args.vg);
-        nvgCircle(args.vg, centerX, centerY, rad);
-        nvgFill(args.vg);
 
 		if (module == NULL) return;
 
