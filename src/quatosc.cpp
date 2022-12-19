@@ -18,7 +18,7 @@
 // https://ggt.sourceforge.net/html/gmtlfaq.html
 
 int MODULE_SIZE = 12;
-const int MAX_HISTORY = 300;
+const int MAX_HISTORY = 400;
 const int SAMPLES_PER_SECOND = MAX_HISTORY*10;
 
 struct QuatOSC : Module {
@@ -283,7 +283,7 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
-		while (history.size() > 2) {
+		while (history.size()) {
 			gmtl::Vec3f point = history.front();
 			addToHistory(point, localHistory);
 			history.pop();
