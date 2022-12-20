@@ -120,9 +120,9 @@ struct QuatOSC : Module {
 		configInput(X_FLO_I_INPUT, "X LFO Influence");
 		configInput(Y_FLO_I_INPUT, "Y LFO Influence");
 		configInput(Z_FLO_I_INPUT, "Z LFO Influence");
-		configInput(X_FLO_F_INPUT, "X LFO Frequency");
-		configInput(Y_FLO_F_INPUT, "Y LFO Frequency");
-		configInput(Z_FLO_F_INPUT, "Z LFO Frequency");
+		configInput(X_FLO_F_INPUT, "X LFO Rotation");
+		configInput(Y_FLO_F_INPUT, "Y LFO Rotation");
+		configInput(Z_FLO_F_INPUT, "Z LFO Rotation");
 		configInput(X_POS_I_INPUT, "X Position Influence");
 		configInput(Y_POS_I_INPUT, "Y Position Influence");
 		configInput(Z_POS_I_INPUT, "Z Position Influence");
