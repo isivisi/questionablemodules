@@ -62,8 +62,8 @@ struct QuatOSC : Module {
 	};
 	enum OutputId {
 		MONO_OUT,
-		LEFT_OUT,
-		RIGHT_OUT,
+		//LEFT_OUT,
+		//RIGHT_OUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -114,8 +114,8 @@ struct QuatOSC : Module {
 		configInput(VOCT, "VOct 2");
 		configInput(VOCT, "VOct 3");
 		configInput(CLOCK_INPUT, "Clock");
-		configOutput(LEFT_OUT, "Left");
-		configOutput(RIGHT_OUT, "Right");
+		//configOutput(LEFT_OUT, "Left");
+		//configOutput(RIGHT_OUT, "Right");
 		configOutput(MONO_OUT, "Mono");
 		configInput(TRIGGER, "Gate");
 
@@ -265,7 +265,7 @@ struct QuatOSC : Module {
 
 	}
 
-	json_t* dataToJson() override {
+	/*json_t* dataToJson() override {
 		json_t* rootJ = json_object();
 		json_object_set_new(rootJ, "sphereQuatX", json_real(sphereQuat[0]));
 		json_object_set_new(rootJ, "sphereQuatY", json_real(sphereQuat[1]));
@@ -285,9 +285,9 @@ struct QuatOSC : Module {
 		if (json_t* jz = json_object_get(rootJ, "sphereQuatZ")) z = json_real_value(jz);
 		if (json_t* jw = json_object_get(rootJ, "sphereQuatW")) w = json_real_value(jw);
 
-		//sphereQuat = gmtl::Quatf(x,y,z,w);
+		sphereQuat = gmtl::Quatf(x,y,z,w);
 
-	}
+	}*/
 
 };
 
@@ -494,8 +494,8 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*2), 100)), module, QuatOSC::VOCT2));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 100)), module, QuatOSC::VOCT3));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
+		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
+		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 113)), module, QuatOSC::MONO_OUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 113)), module, QuatOSC::CLOCK_INPUT));
 
