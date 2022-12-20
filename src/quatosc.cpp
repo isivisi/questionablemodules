@@ -265,6 +265,11 @@ struct QuatOSC : Module {
 
 	}
 
+	json_t* dataToJson() override {
+		resetPhase();
+		return rootJ;
+	}
+
 	/*json_t* dataToJson() override {
 		json_t* rootJ = json_object();
 		json_object_set_new(rootJ, "sphereQuatX", json_real(sphereQuat[0]));
