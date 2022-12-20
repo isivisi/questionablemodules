@@ -230,6 +230,8 @@ struct QuatOSC : Module {
 
 		sphereQuat = rotationAccumulation * rotOffset;
 
+		gmtl::lerp(rotationAccumulation, args.sampleTime, rotationAccumulation, gmtl::Quatf(0,0,0,1)); // smooth dephase, less clicking :)
+
 		gmtl::normalize(sphereQuat);
 
 		gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
@@ -245,32 +247,6 @@ struct QuatOSC : Module {
 			yPointSamples.push(sphereQuat * yPointOnSphere);
 			zPointSamples.push(sphereQuat * zPointOnSphere);
 		}
-		
-		/*double left;
-		double right;
-
-		double xAxis = VecCombine(xRotated) * params[X_POS_I_PARAM].getValue();
-		double yAxis = VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue();
-		double zAxis = VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue();
-
-		// seperate into left right channels by their y value
-		left += xRotated[0] > 0 ? xAxis * xRotated[0] > 0 : 0.f;
-		left += xAxis * (1-xRotated[0]);
-		right += xRotated[0] < 0 ? xAxis * xRotated[0] > 0 : 0.f;;
-		right += xAxis * (1-xRotated[0]);
-
-		left += yRotated[0] > 0 ? xAxis * yRotated[0] > 0 : 0.f;
-		left += xAxis * (1-yRotated[0]);
-		right += yRotated[0] < 0 ? xAxis * yRotated[0] > 0 : 0.f;
-		right += xAxis * (1-yRotated[0]);
-
-		left += zRotated[0] > 0 ? xAxis * zRotated[0] > 0 : 0.f;
-		left += xAxis * (1-zRotated[0]);
-		right += zRotated[0] < 0 ? xAxis * zRotated[0] > 0 : 0.f;;
-		right += xAxis * (1-zRotated[0]);
-
-		outputs[LEFT_OUT].setVoltage((left));
-		outputs[RIGHT_OUT].setVoltage((right));*/
 
 		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))) * 3.f);
 
@@ -279,30 +255,6 @@ struct QuatOSC : Module {
 	void dataFromJson(json_t* rootJ) override {
 		resetPhase();
 	}
-
-	/*json_t* dataToJson() override {
-		json_t* rootJ = json_object();
-		json_object_set_new(rootJ, "sphereQuatX", json_real(sphereQuat[0]));
-		json_object_set_new(rootJ, "sphereQuatY", json_real(sphereQuat[1]));
-		json_object_set_new(rootJ, "sphereQuatZ", json_real(sphereQuat[2]));
-		json_object_set_new(rootJ, "sphereQuatW", json_real(sphereQuat[3]));
-
-		return rootJ;
-	}
-
-
-	void dataFromJson(json_t* rootJ) override {
-
-		float x,y,z,w;
-
-		if (json_t* jx = json_object_get(rootJ, "sphereQuatX")) x = json_real_value(jx);
-		if (json_t* jy = json_object_get(rootJ, "sphereQuatY")) y = json_real_value(jy);
-		if (json_t* jz = json_object_get(rootJ, "sphereQuatZ")) z = json_real_value(jz);
-		if (json_t* jw = json_object_get(rootJ, "sphereQuatW")) w = json_real_value(jw);
-
-		sphereQuat = gmtl::Quatf(x,y,z,w);
-
-	}*/
 
 };
 
