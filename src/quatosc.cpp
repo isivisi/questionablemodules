@@ -32,9 +32,9 @@ struct QuatOSC : Module {
 		X_FLO_I_PARAM,
 		Y_FLO_I_PARAM,
 		Z_FLO_I_PARAM,
-		X_FLO_F_PARAM,
-		Y_FLO_F_PARAM,
-		Z_FLO_F_PARAM,
+		X_FLO_ROT_PARAM,
+		Y_FLO_ROT_PARAM,
+		Z_FLO_ROT_PARAM,
 		X_POS_I_PARAM,
 		Y_POS_I_PARAM,
 		Z_POS_I_PARAM,
@@ -102,9 +102,9 @@ struct QuatOSC : Module {
 		configParam(X_FLO_I_PARAM, 0.f, 1.f, 0.f, "X LFO Influence");
 		configParam(Y_FLO_I_PARAM, 0.f, 1.f, 0.f, "Y LFO Influence");
 		configParam(Z_FLO_I_PARAM, 0.f, 1.f, 0.f, "Z LFO Influence");
-		configParam(X_FLO_F_PARAM, 0.f, 100.f, 0.f, "X Rotation");
-		configParam(Y_FLO_F_PARAM, 0.f, 100.f, 0.f, "Y Rotation");
-		configParam(Z_FLO_F_PARAM, 0.f, 100.f, 0.f, "Z Rotation");
+		configParam(X_FLO_ROT_PARAM, 0.f, 100.f, 0.f, "X Rotation");
+		configParam(Y_FLO_ROT_PARAM, 0.f, 100.f, 0.f, "Y Rotation");
+		configParam(Z_FLO_ROT_PARAM, 0.f, 100.f, 0.f, "Z Rotation");
 		configParam(X_POS_I_PARAM, 0.f, 1.f, 1.f, "X Position Influence");
 		configParam(Y_POS_I_PARAM, 0.f, 1.f, 1.f, "Y Position Influence");
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 1.f, "Z Position Influence");
@@ -225,7 +225,7 @@ struct QuatOSC : Module {
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
 		gmtl::normalize(rotOffset);
 
-		gmtl::Quatf  rotAddition = gmtl::makePure(gmtl::Vec3f(getValue(X_FLO_F_PARAM) * args.sampleTime, getValue(Y_FLO_F_PARAM)* args.sampleTime, getValue(Z_FLO_F_PARAM)* args.sampleTime));
+		gmtl::Quatf  rotAddition = gmtl::makePure(gmtl::Vec3f(getValue(X_FLO_ROT_PARAM) * args.sampleTime, getValue(Y_FLO_ROT_PARAM)* args.sampleTime, getValue(Z_FLO_ROT_PARAM)* args.sampleTime));
 		rotationAccumulation += rotAddition * rotationAccumulation;
 
 		sphereQuat = rotationAccumulation * rotOffset;
@@ -445,9 +445,9 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 60+ hOff)), module, QuatOSC::Y_POS_I_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 60+ hOff)), module, QuatOSC::Z_POS_I_INPUT));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 70+ hOff)), module, QuatOSC::X_FLO_F_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 70+ hOff)), module, QuatOSC::Y_FLO_F_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 70+ hOff)), module, QuatOSC::Z_FLO_F_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 70+ hOff)), module, QuatOSC::X_FLO_ROT_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 70+ hOff)), module, QuatOSC::Y_FLO_ROT_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 70+ hOff)), module, QuatOSC::Z_FLO_ROT_PARAM));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 70+ hOff)), module, QuatOSC::X_FLO_F_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 70+ hOff)), module, QuatOSC::Y_FLO_F_INPUT));
