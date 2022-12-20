@@ -438,6 +438,7 @@ struct QuatDisplay : Widget {
 
 struct QuatOSCWidget : ModuleWidget {
 	ImagePanel *backdrop;
+	ImagePanel *fade;
 	QuatDisplay *display;
 
 	QuatOSCWidget(QuatOSC* module) {
@@ -447,16 +448,26 @@ struct QuatOSCWidget : ModuleWidget {
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/quatosc.jpg");
-		backdrop->scalar = 3.5;
+		backdrop->scalar = 3.49;
 		backdrop->visible = true;
 
 		display = new QuatDisplay();
 		display->box.pos = Vec(2, 40);
         display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 125);
 		display->module = module;
+
+		fade = new ImagePanel();
+		fade->box.pos = Vec(6, 20);
+		fade->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, ((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10);
+		fade->imagePath = asset::plugin(pluginInstance, "res/circleFade.png");
+		fade->borderColor = nvgRGBA(0,0,0,0);
+		fade->scalar = 3;
+		fade->opacity = 0.1;
+		fade->visible = true;
 		
 		setPanel(backdrop);
 		addChild(display);
+		addChild(fade);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -469,7 +480,7 @@ struct QuatOSCWidget : ModuleWidget {
 
 		float hOff = 5.f;
 		float start = 8;
-		float next = 8.75;
+		float next = 9;
 
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 60 + hOff)), module, QuatOSC::X_POS_I_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 60+ hOff)), module, QuatOSC::Y_POS_I_PARAM));
