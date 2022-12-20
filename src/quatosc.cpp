@@ -265,9 +265,8 @@ struct QuatOSC : Module {
 
 	}
 
-	json_t* dataToJson() override {
+	void dataFromJson(json_t* rootJ) override {
 		resetPhase();
-		return rootJ;
 	}
 
 	/*json_t* dataToJson() override {
