@@ -138,7 +138,12 @@ struct QuatOSC : Module {
 	}
 
 	float fclamp(float min, float max, float value) {
-		return std::min(min, std::max(max, value));
+		return std::min(max, std::max(min, value));
+	}
+
+	float getValue(int value, bool c=false) {
+		if (c) return fclamp(0.f, 1.f, params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage());
+		else return params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage();
 	}
 
 	inline float VecCombine(gmtl::Vec3f vector) {
@@ -146,7 +151,7 @@ struct QuatOSC : Module {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(params[input].getValue())) + 30.f) / std::pow(2.f, 30.f);
+		return (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
@@ -211,27 +216,18 @@ struct QuatOSC : Module {
 			}
 		} else clockFreq = 2.f;
 
-		float lfo1Val = params[X_FLO_I_PARAM].getValue()  * ((processLFO(lfo1Phase, params[X_FLO_F_PARAM].getValue(), args.sampleTime, freqHistory1, VOCT)));
-		float lfo2Val = params[Y_FLO_I_PARAM].getValue()  * ((processLFO(lfo2Phase, params[Y_FLO_F_PARAM].getValue(), args.sampleTime, freqHistory2, VOCT2)));
-		float lfo3Val = params[Z_FLO_I_PARAM].getValue()  * ((processLFO(lfo3Phase, params[Z_FLO_F_PARAM].getValue(), args.sampleTime, freqHistory3, VOCT3)));
+		float lfo1Val = getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, getValue(X_FLO_F_PARAM), args.sampleTime, freqHistory1, VOCT)));
+		float lfo2Val = getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, getValue(Y_FLO_F_PARAM), args.sampleTime, freqHistory2, VOCT2)));
+		float lfo3Val = getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, getValue(Z_FLO_F_PARAM), args.sampleTime, freqHistory3, VOCT3)));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
 
+		gmtl::normalize(rotOffset);
 
-		gmtl::Quatf newRotTo = rotOffset;
-		gmtl::normalize(newRotTo);
-
-		sphereQuat = newRotTo;
+		sphereQuat = rotOffset;
 
 		gmtl::normalize(sphereQuat);
-
-		float freqAvg = (calcVOctFreq(0) + calcVOctFreq(1) + calcVOctFreq(2)) / 3;
-		float freqLerp = (std::max(0.1f, std::min(1.f, 1.f - (freqAvg / 255)))) * 44000;
-
-		gmtl::Quatf visualRotTo = visualQuat * sphereQuat;
-		gmtl::lerp(visualQuat, args.sampleTime * (std::min(50.f,freqLerp)), visualQuat, visualRotTo);
-		gmtl::normalize(visualQuat);
 
 		gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
@@ -273,7 +269,7 @@ struct QuatOSC : Module {
 		outputs[LEFT_OUT].setVoltage((left));
 		outputs[RIGHT_OUT].setVoltage((right));*/
 
-		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue()))) * 3.f);
+		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))) * 3.f);
 
 	}
 
@@ -380,9 +376,9 @@ struct QuatDisplay : Widget {
 
 		if (module == NULL) return;
 
-		float xInf = module->params[QuatOSC::X_POS_I_PARAM].getValue();
-		float yInf = module->params[QuatOSC::Y_POS_I_PARAM].getValue();
-		float zInf = module->params[QuatOSC::Z_POS_I_PARAM].getValue();
+		float xInf = module->getValue(QuatOSC::X_POS_I_PARAM, true);
+		float yInf = module->getValue(QuatOSC::Y_POS_I_PARAM, true);
+		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
 
 		//gmtl::Vec3f xPoint = module->xPointSamples.back();
 		//gmtl::Vec3f yPoint = module->yPointSamples.back();
