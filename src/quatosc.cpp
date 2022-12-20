@@ -158,7 +158,7 @@ struct QuatOSC : Module {
 
 		float voctFreq = calcVOctFreq(voct);
 
-		if (!voctFreq - freqHistory > 0.001) {
+		if (fabs(voctFreq - freqHistory) > 0.1) {
 			resetPhase(); 
 			freqHistory = voctFreq;
 		}
