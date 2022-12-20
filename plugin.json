@@ -32,8 +32,8 @@
     },
     {
       "slug": "quatosc",
-      "name": "Quat Oscillator",
-      "description": "Uses quaternion rotation to oscillate",
+      "name": "SLURP",
+      "description": "Oscillator that uses quaternion rotation to oscillate",
       "tags": ["Oscillator"]
     }
   ]
