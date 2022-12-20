@@ -6,6 +6,7 @@
 #include <vector>
 #include <cmath>
 #include <queue>
+#include <mutex>
 #include <algorithm>
 
 /*
@@ -19,7 +20,9 @@
 
 int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
-const int SAMPLES_PER_SECOND = MAX_HISTORY*25;
+const int SAMPLES_PER_SECOND = MAX_HISTORY*20;
+
+bool reading = false;
 
 struct QuatOSC : Module {
 	enum ParamId {
@@ -213,7 +216,7 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		if (args.frame % (int)(args.sampleRate/44000) == 0) {
+		if (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && !reading) {
 			xPointSamples.push(sphereQuat * xPointOnSphere);
 			yPointSamples.push(sphereQuat * yPointOnSphere);
 			zPointSamples.push(sphereQuat * zPointOnSphere);
@@ -280,7 +283,7 @@ struct QuatDisplay : Widget {
 	vecHistory yhistory;
 	vecHistory zhistory;
 
-	void addToHistory(gmtl::Vec3f vec, vecHistory& h) {
+	void addToHistory(gmtl::Vec3f& vec, vecHistory& h) {
 		h.history[h.cursor] = vec;
 		h.cursor = (h.cursor + 1) % MAX_HISTORY;
 	}
@@ -291,11 +294,12 @@ struct QuatDisplay : Widget {
 		bool f = true;
 
 		// grab points from audio thread and clear and add it to our own history list
-		while (history.size() > 2) {
-			gmtl::Vec3f point = history.front();
-			//addToHistory(point, localHistory);
+		reading = true;
+		while (history.size() > 1) {
+			addToHistory(history.front(), localHistory);
 			history.pop();
 		}
+		reading = false;
 
 		// Iterate from oldest history value to latest
 		nvgBeginPath(vg);
