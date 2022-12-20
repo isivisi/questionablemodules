@@ -478,7 +478,7 @@ struct QuatOSCWidget : ModuleWidget {
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Z, Treequencer::SEND_VOCT_Z_LIGHT));
 
-		float hOff = 5.f;
+		float hOff = 15.f;
 		float start = 8;
 		float next = 9;
 
@@ -514,9 +514,9 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 90+ hOff)), module, QuatOSC::Y_FLO_I_INPUT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 90+ hOff)), module, QuatOSC::Z_FLO_I_INPUT));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*0.5), 100+ hOff)), module, QuatOSC::VOCT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*2.5), 100+ hOff)), module, QuatOSC::VOCT2));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*4.5), 100+ hOff)), module, QuatOSC::VOCT3));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*0.5), 65)), module, QuatOSC::VOCT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
 
 		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
 		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
