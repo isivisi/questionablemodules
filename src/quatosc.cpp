@@ -72,6 +72,7 @@ struct QuatOSC : Module {
 	};
 
     gmtl::Quatf sphereQuat; // defaults to identity
+	gmtl::Quatf rotationAccumulation;
 	gmtl::Quatf visualQuat;
     gmtl::Vec3f xPointOnSphere;
 	gmtl::Vec3f yPointOnSphere;
@@ -101,9 +102,9 @@ struct QuatOSC : Module {
 		configParam(X_FLO_I_PARAM, 0.f, 1.f, 0.f, "X LFO Influence");
 		configParam(Y_FLO_I_PARAM, 0.f, 1.f, 0.f, "Y LFO Influence");
 		configParam(Z_FLO_I_PARAM, 0.f, 1.f, 0.f, "Z LFO Influence");
-		configParam(X_FLO_F_PARAM, 0.f, 100.f, 0.f, "X LFO Frequency");
-		configParam(Y_FLO_F_PARAM, 0.f, 100.f, 0.f, "Y LFO Frequency");
-		configParam(Z_FLO_F_PARAM, 0.f, 100.f, 0.f, "Z LFO Frequency");
+		configParam(X_FLO_F_PARAM, 0.f, 100.f, 0.f, "X Rotation");
+		configParam(Y_FLO_F_PARAM, 0.f, 100.f, 0.f, "Y Rotation");
+		configParam(Z_FLO_F_PARAM, 0.f, 100.f, 0.f, "Z Rotation");
 		configParam(X_POS_I_PARAM, 0.f, 1.f, 1.f, "X Position Influence");
 		configParam(Y_POS_I_PARAM, 0.f, 1.f, 1.f, "Y Position Influence");
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 1.f, "Z Position Influence");
@@ -216,16 +217,18 @@ struct QuatOSC : Module {
 			}
 		} else clockFreq = 2.f;
 
-		float lfo1Val = getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, getValue(X_FLO_F_PARAM), args.sampleTime, freqHistory1, VOCT)));
-		float lfo2Val = getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, getValue(Y_FLO_F_PARAM), args.sampleTime, freqHistory2, VOCT2)));
-		float lfo3Val = getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, getValue(Z_FLO_F_PARAM), args.sampleTime, freqHistory3, VOCT3)));
+		float lfo1Val = getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT)));
+		float lfo2Val = getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2)));
+		float lfo3Val = getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)));
 
 		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
-
 		gmtl::normalize(rotOffset);
 
-		sphereQuat = rotOffset;
+		gmtl::Quatf  rotAddition = gmtl::makePure(gmtl::Vec3f(getValue(X_FLO_F_PARAM) * args.sampleTime, getValue(Y_FLO_F_PARAM)* args.sampleTime, getValue(Z_FLO_F_PARAM)* args.sampleTime));
+		rotationAccumulation += rotAddition * rotationAccumulation;
+
+		sphereQuat = rotationAccumulation * rotOffset;
 
 		gmtl::normalize(sphereQuat);
 
