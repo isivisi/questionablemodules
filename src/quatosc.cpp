@@ -294,7 +294,7 @@ struct QuatDisplay : Widget {
 		bool f = true;
 
 		// grab points from audio thread and clear and add it to our own history list
-		reading = true;
+		//reading = true;
 		while (history.size() > 1) {
 			addToHistory(history.front(), localHistory);
 			history.pop();
@@ -306,7 +306,8 @@ struct QuatDisplay : Widget {
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
 			gmtl::Vec3f point = localHistory.history[i];
 			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
-			else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
+			//else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
+			else nvgLineTo(vg, centerX + point[0], centerY + point[1]);
 			f = false;
 		}
 		nvgStrokeColor(vg, color);
@@ -370,9 +371,11 @@ struct QuatDisplay : Widget {
 		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
 		nvgFill(args.vg);*/
 
-		drawHistory(args.vg, module->xPointSamples, nvgRGBA(15, 250, 15, xInf*255), xhistory);
-		drawHistory(args.vg, module->yPointSamples, nvgRGBA(250, 250, 15, yInf*255), yhistory);
-		drawHistory(args.vg, module->zPointSamples, nvgRGBA(15, 250, 250, zInf*255), zhistory);
+		if (layer == 1) {
+			drawHistory(args.vg, module->xPointSamples, nvgRGBA(15, 250, 15, xInf*255), xhistory);
+			drawHistory(args.vg, module->yPointSamples, nvgRGBA(250, 250, 15, yInf*255), yhistory);
+			drawHistory(args.vg, module->zPointSamples, nvgRGBA(15, 250, 250, zInf*255), zhistory);
+		}
 
 		nvgRestore(args.vg);
 	
