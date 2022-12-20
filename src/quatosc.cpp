@@ -44,11 +44,20 @@ struct QuatOSC : Module {
 		VOCT,
 		VOCT2,
 		VOCT3,
-		VOLTAGE_IN_2,
-		VOLTAGE_IN_3,
 		TRIGGER,
-		FADE_INPUT,
 		CLOCK_INPUT,
+		VOCT1_OCT_INPUT,
+		VOCT2_OCT_INPUT,
+		VOCT3_OCT_INPUT,
+		X_FLO_I_INPUT,
+		Y_FLO_I_INPUT,
+		Z_FLO_I_INPUT,
+		X_FLO_F_INPUT,
+		Y_FLO_F_INPUT,
+		Z_FLO_F_INPUT,
+		X_POS_I_INPUT,
+		Y_POS_I_INPUT,
+		Z_POS_I_INPUT,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -94,15 +103,14 @@ struct QuatOSC : Module {
 		configParam(Y_FLO_F_PARAM, 0.f, 100.f, 0.f, "Y LFO Frequency");
 		configParam(Z_FLO_F_PARAM, 0.f, 100.f, 0.f, "Z LFO Frequency");
 		configParam(X_POS_I_PARAM, 0.f, 1.f, 1.f, "X Position Influence");
-		configParam(Y_POS_I_PARAM, 0.f, 1.f, 0.f, "Y Position Influence");
-		configParam(Z_POS_I_PARAM, 0.f, 1.f, 0.f, "Z Position Influence");
+		configParam(Y_POS_I_PARAM, 0.f, 1.f, 1.f, "Y Position Influence");
+		configParam(Z_POS_I_PARAM, 0.f, 1.f, 1.f, "Z Position Influence");
 		configSwitch(VOCT1_OCT, 0.f, 8.f, 0.f, "VOct 1 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT2_OCT, 0.f, 8.f, 0.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT, "VOct 2");
 		configInput(VOCT, "VOct 3");
-		configInput(FADE_INPUT, "Fade");
 		configOutput(SINE_OUTPUT, "");
 		configInput(TRIGGER, "Gate");
 
@@ -216,7 +224,7 @@ struct QuatOSC : Module {
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
 
-		if (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && !reading) {
+		if (/*args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && */!reading) {
 			xPointSamples.push(sphereQuat * xPointOnSphere);
 			yPointSamples.push(sphereQuat * yPointOnSphere);
 			zPointSamples.push(sphereQuat * zPointOnSphere);
@@ -294,12 +302,10 @@ struct QuatDisplay : Widget {
 		bool f = true;
 
 		// grab points from audio thread and clear and add it to our own history list
-		//reading = true;
 		while (history.size() > 1) {
 			addToHistory(history.front(), localHistory);
 			history.pop();
 		}
-		reading = false;
 
 		// Iterate from oldest history value to latest
 		nvgBeginPath(vg);
@@ -331,9 +337,9 @@ struct QuatDisplay : Widget {
 		float yInf = module->params[QuatOSC::Y_POS_I_PARAM].getValue();
 		float zInf = module->params[QuatOSC::Z_POS_I_PARAM].getValue();
 
-		gmtl::Vec3f xPoint = module->xPointSamples.back();
-		gmtl::Vec3f yPoint = module->yPointSamples.back();
-		gmtl::Vec3f zPoint = module->zPointSamples.back();
+		//gmtl::Vec3f xPoint = module->xPointSamples.back();
+		//gmtl::Vec3f yPoint = module->yPointSamples.back();
+		//gmtl::Vec3f zPoint = module->zPointSamples.back();
 
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgStrokeWidth(args.vg, 1.f);
@@ -371,10 +377,14 @@ struct QuatDisplay : Widget {
 		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
 		nvgFill(args.vg);*/
 
+
+
 		if (layer == 1) {
+			reading = true;
 			drawHistory(args.vg, module->xPointSamples, nvgRGBA(15, 250, 15, xInf*255), xhistory);
 			drawHistory(args.vg, module->yPointSamples, nvgRGBA(250, 250, 15, yInf*255), yhistory);
 			drawHistory(args.vg, module->zPointSamples, nvgRGBA(15, 250, 250, zInf*255), zhistory);
+			reading = false;
 		}
 
 		nvgRestore(args.vg);
@@ -412,31 +422,51 @@ struct QuatOSCWidget : ModuleWidget {
 
 
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50, 113)), module, QuatOSC::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 100)), module, QuatOSC::VOCT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30, 100)), module, QuatOSC::VOCT2));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(50, 100)), module, QuatOSC::VOCT3));
 
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40, 113)), module, QuatOSC::CLOCK_INPUT));
 
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Z, Treequencer::SEND_VOCT_Z_LIGHT));
-		
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 70)), module, QuatOSC::X_FLO_F_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 70)), module, QuatOSC::Y_FLO_F_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 70)), module, QuatOSC::Z_FLO_F_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 90)), module, QuatOSC::X_FLO_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 90)), module, QuatOSC::Y_FLO_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 90)), module, QuatOSC::Z_FLO_I_PARAM));
+		float start = 8;
+		float next = 9;
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 80)), module, QuatOSC::VOCT1_OCT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 80)), module, QuatOSC::VOCT2_OCT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 80)), module, QuatOSC::VOCT3_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 60)), module, QuatOSC::X_POS_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 60)), module, QuatOSC::Y_POS_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 60)), module, QuatOSC::Z_POS_I_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10, 60)), module, QuatOSC::X_POS_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(30, 60)), module, QuatOSC::Y_POS_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(50, 60)), module, QuatOSC::Z_POS_I_PARAM));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 60)), module, QuatOSC::X_POS_I_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 60)), module, QuatOSC::Y_POS_I_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 60)), module, QuatOSC::Z_POS_I_INPUT));
+
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 70)), module, QuatOSC::X_FLO_F_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 70)), module, QuatOSC::Y_FLO_F_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 70)), module, QuatOSC::Z_FLO_F_PARAM));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 70)), module, QuatOSC::X_FLO_F_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 70)), module, QuatOSC::Y_FLO_F_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 70)), module, QuatOSC::Z_FLO_F_INPUT));
+
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 80)), module, QuatOSC::VOCT1_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 80)), module, QuatOSC::VOCT2_OCT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 80)), module, QuatOSC::VOCT3_OCT));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 80)), module, QuatOSC::VOCT1_OCT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 80)), module, QuatOSC::VOCT2_OCT_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 80)), module, QuatOSC::VOCT3_OCT_INPUT));
+
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 90)), module, QuatOSC::X_FLO_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 90)), module, QuatOSC::Y_FLO_I_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 90)), module, QuatOSC::Z_FLO_I_PARAM));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 90)), module, QuatOSC::X_FLO_I_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 90)), module, QuatOSC::Y_FLO_I_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 90)), module, QuatOSC::Z_FLO_I_INPUT));
+
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 100)), module, QuatOSC::VOCT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*2), 100)), module, QuatOSC::VOCT2));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 100)), module, QuatOSC::VOCT3));
 
 	}
 };
