@@ -61,7 +61,9 @@ struct QuatOSC : Module {
 		INPUTS_LEN
 	};
 	enum OutputId {
-		SINE_OUTPUT,
+		MONO_OUT,
+		LEFT_OUT,
+		RIGHT_OUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -111,7 +113,10 @@ struct QuatOSC : Module {
 		configInput(VOCT, "VOct");
 		configInput(VOCT, "VOct 2");
 		configInput(VOCT, "VOct 3");
-		configOutput(SINE_OUTPUT, "");
+		configInput(CLOCK_INPUT, "Clock");
+		configOutput(LEFT_OUT, "Left");
+		configOutput(RIGHT_OUT, "Right");
+		configOutput(MONO_OUT, "Mono");
 		configInput(TRIGGER, "Gate");
 
 		xPointOnSphere = gmtl::Vec3f(50.f, 0.f, 0.f);
@@ -229,8 +234,34 @@ struct QuatOSC : Module {
 			yPointSamples.push(sphereQuat * yPointOnSphere);
 			zPointSamples.push(sphereQuat * zPointOnSphere);
 		}
-		//outputs[SINE_OUTPUT].setVoltage(freqLerp);
-		outputs[SINE_OUTPUT].setVoltage((((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue()))) * 3.f);
+		
+		/*double left;
+		double right;
+
+		double xAxis = VecCombine(xRotated) * params[X_POS_I_PARAM].getValue();
+		double yAxis = VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue();
+		double zAxis = VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue();
+
+		// seperate into left right channels by their y value
+		left += xRotated[0] > 0 ? xAxis * xRotated[0] > 0 : 0.f;
+		left += xAxis * (1-xRotated[0]);
+		right += xRotated[0] < 0 ? xAxis * xRotated[0] > 0 : 0.f;;
+		right += xAxis * (1-xRotated[0]);
+
+		left += yRotated[0] > 0 ? xAxis * yRotated[0] > 0 : 0.f;
+		left += xAxis * (1-yRotated[0]);
+		right += yRotated[0] < 0 ? xAxis * yRotated[0] > 0 : 0.f;
+		right += xAxis * (1-yRotated[0]);
+
+		left += zRotated[0] > 0 ? xAxis * zRotated[0] > 0 : 0.f;
+		left += xAxis * (1-zRotated[0]);
+		right += zRotated[0] < 0 ? xAxis * zRotated[0] > 0 : 0.f;;
+		right += xAxis * (1-zRotated[0]);
+
+		outputs[LEFT_OUT].setVoltage((left));
+		outputs[RIGHT_OUT].setVoltage((right));*/
+
+		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * params[X_POS_I_PARAM].getValue()) + (VecCombine(yRotated) * params[Y_POS_I_PARAM].getValue()) + (VecCombine(zRotated) * params[Z_POS_I_PARAM].getValue()))) * 3.f);
 
 	}
 
@@ -420,11 +451,6 @@ struct QuatOSCWidget : ModuleWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(50, 113)), module, QuatOSC::SINE_OUTPUT));
-
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(40, 113)), module, QuatOSC::CLOCK_INPUT));
-
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Z, Treequencer::SEND_VOCT_Z_LIGHT));
@@ -467,6 +493,11 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 100)), module, QuatOSC::VOCT));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*2), 100)), module, QuatOSC::VOCT2));
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 100)), module, QuatOSC::VOCT3));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 113)), module, QuatOSC::MONO_OUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 113)), module, QuatOSC::CLOCK_INPUT));
 
 	}
 };
