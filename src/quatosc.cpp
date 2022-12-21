@@ -244,6 +244,12 @@ struct QuatOSC : Module {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
+		if (/*args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && */!reading) {
+			xPointSamples.push(xRotated);
+			yPointSamples.push(yRotated);
+			zPointSamples.push(zRotated);
+		}
+
 		gmtl::normalize(xRotated);
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
@@ -252,23 +258,18 @@ struct QuatOSC : Module {
 		float flo1PhaseError = std::asin(lfo1Phase) - std::asin(0);
 		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
 		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
-		lfo1Phase = flerp(lfo1Phase, lfo1Phase - (flo1PhaseError * args.sampleTime), args.sampleTime);
+		lfo1Phase = flerp(lfo1Phase, lfo1Phase - (flo1PhaseError), args.sampleTime);
 
-		float flo2PhaseError = std::asin(lfo2Phase) - std::asin(0.25);
+		float flo2PhaseError = std::asin(lfo2Phase) - std::asin(0);
 		if (flo2PhaseError > M_PI) flo2PhaseError -= 2*M_PI;
 		else if (flo2PhaseError < -M_PI) flo2PhaseError += 2*M_PI;
-		lfo2Phase = flerp(lfo2Phase, lfo2Phase - (flo2PhaseError * args.sampleTime), args.sampleTime);
+		lfo2Phase = flerp(lfo2Phase, lfo2Phase - (flo2PhaseError), args.sampleTime);
 
-		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0.45);
+		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0);
 		if (flo3PhaseError > M_PI) flo3PhaseError -= 2*M_PI;
 		else if (flo3PhaseError < -M_PI) flo3PhaseError += 2*M_PI;
-		lfo3Phase = flerp(lfo3Phase, lfo3Phase - (flo3PhaseError * args.sampleTime), args.sampleTime);
+		lfo3Phase = flerp(lfo3Phase, lfo3Phase - (flo3PhaseError), args.sampleTime);
 
-		if (/*args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && */!reading) {
-			xPointSamples.push(sphereQuat * xPointOnSphere);
-			yPointSamples.push(sphereQuat * yPointOnSphere);
-			zPointSamples.push(sphereQuat * zPointOnSphere);
-		}
 
 		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))) * 3.f);
 
@@ -276,8 +277,8 @@ struct QuatOSC : Module {
 
 	void dataFromJson(json_t* rootJ) override {
 		lfo1Phase = 0;
-		lfo2Phase = 0.25;
-		lfo3Phase = 0.45;
+		lfo2Phase = 0;
+		lfo3Phase = 0;
 		resetPhase();
 	}
 
