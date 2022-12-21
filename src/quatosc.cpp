@@ -101,8 +101,8 @@ struct QuatOSC : Module {
 	QuatOSC() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(X_FLO_I_PARAM, 0.f, 1.f, 0.f, "X LFO Influence");
-		configParam(Y_FLO_I_PARAM, 0.f, 1.f, 0.f, "Y LFO Influence");
-		configParam(Z_FLO_I_PARAM, 0.f, 1.f, 0.f, "Z LFO Influence");
+		configParam(Y_FLO_I_PARAM, 0.f, 1.f, 1.f, "Y LFO Influence");
+		configParam(Z_FLO_I_PARAM, 0.f, 1.f, 1.f, "Z LFO Influence");
 		configParam(X_FLO_ROT_PARAM, 0.f, 100.f, 0.f, "X Rotation");
 		configParam(Y_FLO_ROT_PARAM, 0.f, 100.f, 0.f, "Y Rotation");
 		configParam(Z_FLO_ROT_PARAM, 0.f, 100.f, 0.f, "Z Rotation");
@@ -110,7 +110,7 @@ struct QuatOSC : Module {
 		configParam(Y_POS_I_PARAM, 0.f, 1.f, 1.f, "Y Position Influence");
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 1.f, "Z Position Influence");
 		configSwitch(VOCT1_OCT, 0.f, 8.f, 0.f, "VOct 1 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(VOCT2_OCT, 0.f, 8.f, 0.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT2_OCT, 0.f, 8.f, 6.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT2, "VOct 2");
