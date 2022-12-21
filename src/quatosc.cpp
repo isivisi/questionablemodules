@@ -85,9 +85,9 @@ struct QuatOSC : Module {
 
 	float clockFreq = 2.f;
 
-	float lfo1Phase = 0.f;
-	float lfo2Phase = 0.24;
-	float lfo3Phase = 0.48f;
+	float lfo1Phase = 0;
+	float lfo2Phase = 0;
+	float lfo3Phase = 0;
 
 	float freqHistory1;
 	float freqHistory2;
@@ -155,6 +155,10 @@ struct QuatOSC : Module {
 		return (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
+	inline float getPhase(float lfo) {
+		return std::asin(lfo);
+	}
+
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
 
 		float voctFreq = calcVOctFreq(voct);
@@ -196,11 +200,12 @@ struct QuatOSC : Module {
 	gmtl::Vec3f lfoRotations;
 
 	void resetPhase() {
-		lfo1Phase = 0.f;
-		lfo2Phase = 0.24f;;
-		lfo3Phase = 0.48f;
 		sphereQuat = gmtl::Quatf(0,0,0,1);
 	}
+
+	float deLFO1 = 0.f;
+	float deLFO2 = 0.f;
+	float deLFO3 = 0.f;
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
@@ -241,6 +246,25 @@ struct QuatOSC : Module {
 		gmtl::normalize(xRotated);
 		gmtl::normalize(yRotated);
 		gmtl::normalize(zRotated);
+
+		//dephase
+		float flo1PhaseError = std::asin(lfo1Phase) - std::asin(0);
+		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
+		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
+		lfo1Phase += (flo1PhaseError * args.sampleTime) * 0.1;
+
+		float flo2PhaseError = std::asin(lfo3Phase) - std::asin(0);
+		if (flo2PhaseError > M_PI) flo2PhaseError -= 2*M_PI;
+		else if (flo2PhaseError < -M_PI) flo2PhaseError += 2*M_PI;
+		lfo2Phase += (flo2PhaseError * args.sampleTime) * 0.1;
+
+		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0);
+		if (flo3PhaseError > M_PI) flo3PhaseError -= 2*M_PI;
+		else if (flo3PhaseError < -M_PI) flo3PhaseError += 2*M_PI;
+		lfo3Phase += (flo3PhaseError * args.sampleTime) * 0.1;
+
+		//lfo2Phase += std::asin(lfo2Phase) - std::asin(0.24) * args.sampleTime;
+		//lfo3Phase += std::asin(lfo3Phase) - std::asin(0.48) * args.sampleTime;
 
 		if (/*args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && */!reading) {
 			xPointSamples.push(sphereQuat * xPointOnSphere);
