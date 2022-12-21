@@ -71,7 +71,8 @@ struct QuatOSC : Module {
 		LIGHTS_LEN
 	};
 
-    gmtl::Quatf sphereQuat; // defaults to identity
+    gmtl::Quatf sphereQuat;
+	gmtl::Quatf rotation;
 	gmtl::Quatf rotationAccumulation;
 	gmtl::Quatf visualQuat;
     gmtl::Vec3f xPointOnSphere;
@@ -86,8 +87,8 @@ struct QuatOSC : Module {
 	float clockFreq = 2.f;
 
 	float lfo1Phase = 0;
-	float lfo2Phase = 0.25;
-	float lfo3Phase = 0.45;
+	float lfo2Phase = 0;
+	float lfo3Phase = 0;
 
 	float freqHistory1;
 	float freqHistory2;
@@ -155,10 +156,6 @@ struct QuatOSC : Module {
 		return (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
-	inline float getPhase(float lfo) {
-		return std::asin(lfo);
-	}
-
 	float flerp(float point1, float point2, float t) {
 		float diff = point2 - point1;
 		return point1 + diff * t;
@@ -178,31 +175,6 @@ struct QuatOSC : Module {
 
 		return sin(2.f * M_PI * phase);
 	}
-
-	gmtl::Quatf AngleAxis(float angle, const gmtl::Vec3f& axis)
-	{
-		gmtl::Quatf quat;
-
-		// Normalize the axis of rotation
-		gmtl::Vec3f normalized_axis = axis;
-		gmtl::normalize(normalized_axis);
-
-		// Convert the angle to half-angle
-		float half_angle = angle * 0.5f;
-
-		// Compute the quaternion elements
-		quat[0] = std::cos(half_angle);
-		quat[1] = normalized_axis[0] * std::sin(half_angle);
-		quat[2] = normalized_axis[1] * std::sin(half_angle);
-		quat[3] = normalized_axis[2] * std::sin(half_angle);
-
-		return quat;
-	}
-
-	gmtl::Quatf rotation;
-
-	gmtl::Vec3f momentum;
-	gmtl::Vec3f lfoRotations;
 
 	void resetPhase() {
 		sphereQuat = gmtl::Quatf(0,0,0,1);
@@ -270,8 +242,7 @@ struct QuatOSC : Module {
 		else if (flo3PhaseError < -M_PI) flo3PhaseError += 2*M_PI;
 		lfo3Phase = flerp(lfo3Phase, lfo3Phase - (flo3PhaseError), args.sampleTime);
 
-
-		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))) * 3.f);
+		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))));
 
 	}
 
