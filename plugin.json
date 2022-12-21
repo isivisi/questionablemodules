@@ -34,7 +34,7 @@
       "slug": "quatosc",
       "name": "SLURP",
       "description": "Oscillator that uses quaternion rotation to oscillate",
-      "tags": ["Oscillator"]
+      "tags": ["Oscillator", "Low-frequency oscillator"]
     }
   ]
 }
