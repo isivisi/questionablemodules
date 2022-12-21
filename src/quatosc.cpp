@@ -86,8 +86,8 @@ struct QuatOSC : Module {
 	float clockFreq = 2.f;
 
 	float lfo1Phase = 0;
-	float lfo2Phase = 0;
-	float lfo3Phase = 0;
+	float lfo2Phase = 0.25;
+	float lfo3Phase = 0.45;
 
 	float freqHistory1;
 	float freqHistory2;
@@ -159,6 +159,11 @@ struct QuatOSC : Module {
 		return std::asin(lfo);
 	}
 
+	float flerp(float point1, float point2, float t) {
+		float diff = point2 - point1;
+		return point1 + diff * t;
+	}
+
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
 
 		float voctFreq = calcVOctFreq(voct);
@@ -202,10 +207,6 @@ struct QuatOSC : Module {
 	void resetPhase() {
 		sphereQuat = gmtl::Quatf(0,0,0,1);
 	}
-
-	float deLFO1 = 0.f;
-	float deLFO2 = 0.f;
-	float deLFO3 = 0.f;
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
@@ -251,20 +252,17 @@ struct QuatOSC : Module {
 		float flo1PhaseError = std::asin(lfo1Phase) - std::asin(0);
 		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
 		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
-		lfo1Phase += (flo1PhaseError * args.sampleTime) * 0.1;
+		lfo1Phase = flerp(lfo1Phase, lfo1Phase - (flo1PhaseError * args.sampleTime), args.sampleTime);
 
-		float flo2PhaseError = std::asin(lfo3Phase) - std::asin(0);
+		float flo2PhaseError = std::asin(lfo2Phase) - std::asin(0.25);
 		if (flo2PhaseError > M_PI) flo2PhaseError -= 2*M_PI;
 		else if (flo2PhaseError < -M_PI) flo2PhaseError += 2*M_PI;
-		lfo2Phase += (flo2PhaseError * args.sampleTime) * 0.1;
+		lfo2Phase = flerp(lfo2Phase, lfo2Phase - (flo2PhaseError * args.sampleTime), args.sampleTime);
 
-		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0);
+		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0.45);
 		if (flo3PhaseError > M_PI) flo3PhaseError -= 2*M_PI;
 		else if (flo3PhaseError < -M_PI) flo3PhaseError += 2*M_PI;
-		lfo3Phase += (flo3PhaseError * args.sampleTime) * 0.1;
-
-		//lfo2Phase += std::asin(lfo2Phase) - std::asin(0.24) * args.sampleTime;
-		//lfo3Phase += std::asin(lfo3Phase) - std::asin(0.48) * args.sampleTime;
+		lfo3Phase = flerp(lfo3Phase, lfo3Phase - (flo3PhaseError * args.sampleTime), args.sampleTime);
 
 		if (/*args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && */!reading) {
 			xPointSamples.push(sphereQuat * xPointOnSphere);
@@ -277,6 +275,9 @@ struct QuatOSC : Module {
 	}
 
 	void dataFromJson(json_t* rootJ) override {
+		lfo1Phase = 0;
+		lfo2Phase = 0.25;
+		lfo3Phase = 0.45;
 		resetPhase();
 	}
 
