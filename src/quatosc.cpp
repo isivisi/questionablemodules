@@ -248,10 +248,17 @@ struct QuatOSC : Module {
 
 	}
 
+	json_t* dataToJson() {
+		json_t* nodeJ = json_object();
+		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
+		return nodeJ;
+	}
+
 	void dataFromJson(json_t* rootJ) override {
 		lfo1Phase = 0.8364f;
 		lfo2Phase = 0.435f;
 		lfo3Phase = 0.3234f;
+		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
 		resetPhase();
 	}
 
