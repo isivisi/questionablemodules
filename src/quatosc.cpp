@@ -85,10 +85,12 @@ struct QuatOSC : Module {
 	dsp::Timer clockTimer;
 
 	float clockFreq = 2.f;
-
-	float lfo1Phase = 0;
-	float lfo2Phase = 0;
-	float lfo3Phase = 0;
+	
+	// when manipulating the lfos they will always be sligtly out of phase.
+	// random phase to start for more consistant inconsitency :)
+	float lfo1Phase = 0.8364f;
+	float lfo2Phase = 0.435f;
+	float lfo3Phase = 0.3234f;
 
 	float freqHistory1;
 	float freqHistory2;
@@ -247,9 +249,9 @@ struct QuatOSC : Module {
 	}
 
 	void dataFromJson(json_t* rootJ) override {
-		lfo1Phase = 0;
-		lfo2Phase = 0;
-		lfo3Phase = 0;
+		lfo1Phase = 0.8364f;
+		lfo2Phase = 0.435f;
+		lfo3Phase = 0.3234f;
 		resetPhase();
 	}
 
