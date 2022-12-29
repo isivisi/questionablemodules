@@ -22,6 +22,8 @@ int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
 const int SAMPLES_PER_SECOND = MAX_HISTORY*20;
 
+const float HALF_SEMITONE = 1.029302;
+
 bool reading = false;
 
 struct QuatOSC : Module {
@@ -155,7 +157,7 @@ struct QuatOSC : Module {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float flerp(float point1, float point2, float t) {
