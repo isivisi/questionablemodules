@@ -10,6 +10,7 @@
 .text-bg {
     background-image: url("./images/logobg.jpg");
     background-clip: text;
+    -webkit-background-clip: text;
     background-size: 100%;
     -webkit-text-fill-color: transparent;
 }
