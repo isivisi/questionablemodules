@@ -1,0 +1,15 @@
+.feature {
+    column-count: 2;
+    column-gap: 2em;
+}
+
+.site-header {
+    padding: 33px !important;
+}
+
+.text-bg {
+    background-image: url("./images/logobg.jpg");
+    background-clip: text;
+    background-size: 100%;
+    -webkit-text-fill-color: transparent;
+}

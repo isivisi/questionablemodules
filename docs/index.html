@@ -3,24 +3,21 @@
 
     <head>
 
+      <link href="./style.css" rel="stylesheet">
+      <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
+      <script src="./bootstrap/bootstrap.min.js"></script>
+
     </head>
 
     <style>
-      .feature {
-        column-count: 2;
-        column-gap: 2em;
-      }
-
-      .site-header {
-        padding: 33px !important;
-      }
 
       .slurpbg {
         background-image: url('./images/slurpview.jpg'); 
-        background-position: -375px -33px;
-        background-size: 2500px;
-        background-repeat: no-repeat;
-        height: 750px;
+        background-position: 200px 0px;
+        background-size: 1200px;
+        min-height: 500px;
+
+        text-shadow:1px 1px 15px black;
       }
 
       .treebg {
@@ -28,19 +25,19 @@
         background-position: right 0px bottom 0px; 
         background-size: 1200px;
         background-repeat: no-repeat;
-        background-position: -300px -75px;
-        height: 500px !important;
+        background-position: -295px -155px;
+        min-height: 350px;
+
+        text-shadow:1px 1px 15px black;
       }
     </style>
 
     <body class="bg-light">
-      <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
-      <script src="./bootstrap/bootstrap.min.js"></script>
     
 
         <header class="site-header bg-dark">
           <nav class="container d-flex flex-column flex-md-row justify-content-between">
-            <span class="display-6 fw-bold text-light">Questionable Modules</span>
+            <span class="display-6 fw-bold text-light text-bg">Questionable Modules</span>
 
             <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
               <!--<a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>-->
@@ -50,26 +47,53 @@
 
         <div class="container py-4 bg-light">
 
-          <div class="p-5 bg-light text-light slurpbg">
-            <div class="container-fluid py-5">
-              <h1 class="display-5 fw-bold">SLURP</h1>
-              <p class="col-md-8 fs-4">Quaternion based oscillation.</p>
-              <a href="./slurp.html"><button class="btn btn-secondary btn-lg" type="button">Documentation</button> </a> 
-              <button class="btn btn-primary btn-lg" type="button">View in Library</button>
+          <div class="bg-light text-light slurpbg mb-2">
+            <div>
+              <div class="container-fluid py-5" style="padding: 3rem">
+                <h1 class="display-5 fw-bold">SLURP</h1>
+                <p class="col-md-8 fs-4">Quaternion based oscillation.</p>
+                <a href="./slurp.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a> 
+                <a href="https://library.vcvrack.com/questionablemodules/quatosc"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
+              </div>
             </div>
           </div>
 
-          <div class="row align-items-md-stretch">
-            <div class="col-md-6">
+          <div class="row">
+            <div class="col-6" style="padding-right: 0;">
               <div class="text-white treebg">
-                <div class="p-5" style="backdrop-filter: blur(3px) saturate(25%); width:100%;height:100%;">
+                <div class="p-5" >
                   <h1 class="display-5 fw-bold">Treequencer</h2>
                   <p class="col-md-8 fs-4">Binary tree sequencing</p>
-                  <a href="./treequencer.html"><button class="btn btn-secondary btn-lg" type="button">Documentation</button> </a>
-                  <button class="btn btn-primary btn-lg" type="button">View in Library</button>
+                  <a href="./treequencer.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a>
+                  <a href="https://library.vcvrack.com/questionablemodules/treequencer"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
                 </div>
               </div>
             </div>
+
+            <!-- <div class="col-6" style="padding-left: 0;">
+              <div class="text-white">
+                <div class="p-5" style="backdrop-filter: blur(3px);"">
+                  <h1 class="display-5 fw-bold">Discombobulator</h2>
+                  <p class="col-md-8 fs-4">Randomly swap inputs and outputs</p>
+                  <a href="./discombobulator.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a>
+                  <button class="btn btn-light btn-lg" type="button">View in Library</button>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <div class="row">
+              <div class="col-6" style="padding-right: 0;">
+                <div class="text-white">
+                  <div class="p-5" style="backdrop-filter: blur(3px);">
+                    <h1 class="display-5 fw-bold">Nandomizer</h2>
+                    <p class="col-md-8 fs-4">Randomly swap inputs.</p>
+                    <a href="./discombobulator.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a>
+                    <button class="btn btn-light btn-lg" type="button">View in Library</button>
+                  </div>
+                </div>
+              </div>
+            </div> -->
             
           </div>
 
@@ -103,7 +127,7 @@
 
           -->
 
-          <footer class="pt-3 mt-4 text-muted border-top">
+          <footer class="pt-3 mt-4 text-muted border-top bg-light">
             isivisi © <span id="year"></span>
             <script> document.getElementById("year").innerHTML = new Date().getFullYear() </script>
           </footer>
