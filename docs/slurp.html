@@ -42,26 +42,33 @@
             <div class="feature">
               <p class="fs-4">
                 The SLURP oscillator has 3 oscillators, one for each rotational axis. 
+                Each axis has an LFO that modulates its rotation. 
+                Rotating one axis will in turn move the other two axis. 
+                The final position of each axis is then projected into 2d space and its positional value becomes the output.
               </p>
 
+              <img src="./images/quaternionProjection.svg" width="100%"/>
             
               <h2>Parameters</h2>
               <p class="fs-4">
-                Each oscillator (or axis) has 
+                Each oscillator (or axis) has a
                 <span class="fw-bold">VOct</span>, 
                 <span class="fw-bold">Influence</span>,
                 <span class="fw-bold">Rotation</span>,
                 <span class="fw-bold">Octave</span>, and
-                <span class="fw-bold">LFO Influence</span> parameters.
+                <span class="fw-bold">LFO Influence</span> parameter.
               </p>
+
+              <p class="fs-4"><span class="fw-bold">VOct</span> sets the frequency of the axis LFO to the desired note value. This uses the 1V/oct standard.</p>
+              <p class="fs-4"><span class="fw-bold">Influence</span> sets how much this axis projected position is added to the final output</p>
               <img src="./images/slurp.svg" width="100%"/>
               
               <p class="fs-4"></p>
-
+ 
             </div>
-          </div>
-
-        </div>
+           </div>
+ 
+        </div>  
 
         <footer class="container pb-5 pt-3 mt-2 text-muted border-top bg-white">
           isivisi © <span id="year"></span>
