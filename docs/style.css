@@ -7,10 +7,19 @@
     padding: 33px !important;
 }
 
+.nopad {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 .text-bg {
     background-image: url("./images/logobg.jpg");
     background-clip: text;
     -webkit-background-clip: text;
     background-size: 100%;
     -webkit-text-fill-color: transparent;
+}
+
+.background {
+    background-color: #cfcece;
 }
