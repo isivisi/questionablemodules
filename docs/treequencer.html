@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+
+    </head>
+
+    <style>
+      .feature {
+        column-count: 2;
+        column-gap: 2em;
+      }
+
+      .site-header {
+        padding: 33px !important;
+      }
+
+    </style>
+
+    <body class="bg-light">
+        <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
+        <script src="./bootstrap/bootstrap.min.js"></script>
+
+        <header class="site-header bg-dark">
+          <nav class="container d-flex flex-column flex-md-row justify-content-between">
+            <span class="display-6 fw-bold text-light">Questionable Modules</span>
+
+            <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="https://library.vcvrack.com/questionablemodules/treequencer"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
+              <a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>
+            </div>
+          </nav>
+        </header>
+
+        <div class="container py-4 bg-light">
+
+          <div class="p-2 mb-4 bg-light text-center">
+            <div class="container-fluid py-5">
+              <h1 class="display-1 fw-bold">Treequencer</h1>
+              <p class="fs-4">Binary tree based sequencing.</p>
+
+            </div>
+          </div>
+
+          <img src="./images/treeview.jpg" style="object-fit: cover; width: 100%;"/>
+          
+          <div class="container-fluid py-5">
+            <div class="feature">
+              <p class="fs-4">
+                Treequencer utilizes a binary tree algorithm for sequencing. 
+                Each tree node has a value and can have up to 2 children nodes.
+                When the clock is triggered the next node will be randomly selected from the active nodes children. 
+                Traversing until there are no children left, then either resetting or begin going in the opposite direction.
+              </p>
+
+              <img src="./images/tree.svg" width="100%"/>
+
+              <h2>Editing Nodes</h2>
+
+              <p class="fs-4">
+                You can zoom into the screen using your scroll wheel. Right click and drag to move around the view, Left clicking a node will open a context menu where you can set the node value, chance, and add children.
+              </p>
+
+              <img src="./images/treequencer.svg" width="100%"/>
+            
+              <h2>Inputs</h2>
+
+              <p class="fs-4"><span class="fw-bold">Clock</span> is the trigger that moves the sequence forward.</p>
+              <p class="fs-4"><span class="fw-bold">Gate</span> changes the current sequence if in <a href="#trigger">sequence trigger mode.</a> If not it acts the same as the clock.</p>
+              <p class="fs-4"><span class="fw-bold">Reset</span> resets to the first node.</p>
+
+              <h2>Parameters</h2>
+
+              <p class="fs-4"><span class="fw-bold">Hold</span> overrides the clock value and keeps outputting current node values.</p>
+              <p class="fs-4"><span class="fw-bold">Bounce</span> When bounce is enabled the sequence will iterate backwards once it has reached the end instead of just restarting back to the first node. </p>
+              <p id="trigger" class="fs-4"><span class="fw-bold">Trigger Mode</span> The Step trigger mode will randomly select one child node and move to it when the Gate trigger is activated. The Sequence mode instead limits the movement to one sequence and activating the Gate will change the selected sequence. You can iterate the sequence with the clock input.</p>
+              <p class="fs-4"><span class="fw-bold">Chance Modifier</span> Globally offsets all node chance values. Can be controlled with voltage.</p>
+
+              <h2>Outputs</h2>
+
+              <p class="fs-4"><span class="fw-bold">Sequence Completed</span> triggers when the end of a sequence has been hit. The end of a sequence is when the node is set back to the first or when the sequence begins to move backwards.</p>
+              <p class="fs-4"><span class="fw-bold">VOct Out</span> outputs the current node value divided by 12 to be used as octave control (This uses the 1V/oct standard). Node values higher than 8 will still output here.</p>
+              <p class="fs-4"><span class="fw-bold">Outputs 1-8</span>, values 1 through 8 will activate these corresponding output triggers. Values higher and lower than 8 will not be output here but will still output to VOct.</p>
+ 
+            </div>
+           </div> 
+ 
+        </div> 
+
+        <footer class="container pb-5 pt-3 mt-2 text-muted border-top bg-white">
+          isivisi © <span id="year"></span>
+          <script> document.getElementById("year").innerHTML = new Date().getFullYear() </script>
+        </footer>
+
+    </body>
+
+</html>

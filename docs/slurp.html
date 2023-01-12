@@ -14,6 +14,7 @@
       .site-header {
         padding: 33px !important;
       }
+
     </style>
 
     <body class="bg-light">
@@ -23,6 +24,12 @@
         <header class="site-header bg-dark">
           <nav class="container d-flex flex-column flex-md-row justify-content-between">
             <span class="display-6 fw-bold text-light">Questionable Modules</span>
+
+            <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="https://library.vcvrack.com/questionablemodules/quatosc"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
+              <a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>
+            </div>
+            
           </nav>
         </header>
 
@@ -41,7 +48,7 @@
           <div class="container-fluid py-5">
             <div class="feature">
               <p class="fs-4">
-                The SLURP oscillator has 3 oscillators, one for each rotational axis. 
+                SLURP has 3 oscillating sources, one for each rotational axis.
                 Each axis has an LFO that modulates its rotation. 
                 Rotating one axis will in turn move the other two axis. 
                 The final position of each axis is then projected into 2d space and its positional value becomes the output.
