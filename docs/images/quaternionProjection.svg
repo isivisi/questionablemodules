@@ -24,15 +24,15 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="px"
      showgrid="false"
-     inkscape:zoom="6.0516555"
-     inkscape:cx="73.616219"
-     inkscape:cy="69.898228"
+     inkscape:zoom="8.5583333"
+     inkscape:cx="129.23077"
+     inkscape:cy="80.74002"
      inkscape:window-width="2560"
      inkscape:window-height="1366"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="g8322" />
   <defs
      id="defs2">
     <inkscape:perspective
@@ -116,7 +116,7 @@
          id="g8322">
         <path
            style="fill:none;stroke:#474747;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-           d="m 108.54917,31.431353 c 6.57049,13.112164 -4.40551,25.564642 -6.66017,28.86076"
+           d="m 108.54917,31.431353 c 6.57049,13.112164 -2.06861,27.200475 -4.32327,30.496593"
            id="path5100"
            sodipodi:nodetypes="cc" />
         <path
@@ -134,9 +134,9 @@
            inkscape:rounded="0"
            inkscape:randomized="0"
            d="m 92.775071,69.756571 0.107482,-1.230507 0.107483,-1.230507 1.011909,0.708337 1.011909,0.708336 -1.119391,0.522171 z"
-           inkscape:transform-center-x="-0.30147541"
-           inkscape:transform-center-y="-0.06205518"
-           transform="translate(7.9454722,-7.8286271)" />
+           inkscape:transform-center-x="-0.30714994"
+           inkscape:transform-center-y="-0.055801697"
+           transform="rotate(-0.50415075,-658.11885,-1116.5861)" />
         <path
            sodipodi:type="star"
            style="fill:#333333;stroke:#474747;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
@@ -193,10 +193,10 @@
       </g>
       <g
          id="g9887"
-         transform="rotate(116.66729,56.4201,57.196197)">
+         transform="rotate(77.425228,36.308422,37.555583)">
         <path
            style="fill:none;stroke:#474747;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-           d="m 108.54917,31.431353 c 6.57049,13.112164 -4.40551,25.564642 -6.66017,28.86076"
+           d="m 110.90131,26.199654 c 1.80228,20.251365 -4.31797,31.880401 -6.69981,33.592463"
            id="path9881"
            sodipodi:nodetypes="cc" />
         <path
@@ -214,9 +214,9 @@
            inkscape:rounded="0"
            inkscape:randomized="0"
            d="m 92.775071,69.756571 0.107482,-1.230507 0.107483,-1.230507 1.011909,0.708337 1.011909,0.708336 -1.119391,0.522171 z"
-           inkscape:transform-center-x="-0.30147541"
-           inkscape:transform-center-y="-0.06205518"
-           transform="translate(7.9454722,-7.8286271)" />
+           inkscape:transform-center-x="-0.42466625"
+           inkscape:transform-center-y="0.044162975"
+           transform="matrix(0.75361504,0.18483149,-0.18989121,0.76247161,46.316268,-9.3024377)" />
         <path
            sodipodi:type="star"
            style="fill:#333333;stroke:#474747;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
@@ -232,9 +232,9 @@
            inkscape:rounded="0"
            inkscape:randomized="0"
            d="m 108.19863,32.950341 1.14287,0.158078 1.14288,0.158078 -0.70834,0.910718 -0.70834,0.910718 -0.43453,-1.068796 z"
-           inkscape:transform-center-x="-0.28379132"
-           inkscape:transform-center-y="-0.015262632"
-           transform="matrix(0.82129766,0.31852007,-0.36202463,0.72260215,31.011326,-27.661379)" />
+           inkscape:transform-center-x="-0.51036686"
+           inkscape:transform-center-y="0.14947266"
+           transform="matrix(0.69074721,0.54667465,-0.55912071,0.58360923,54.058364,-53.055536)" />
       </g>
     </g>
     <g
@@ -369,7 +369,7 @@
     </g>
     <g
        id="g19568"
-       transform="matrix(1.362017,-0.35127173,0.32058808,1.4923763,-67.61214,-24.31913)">
+       transform="matrix(0.40868426,-1.0784421,0.99199974,0.50897006,-55.742953,149.57873)">
       <path
          style="fill:none;stroke:#474747;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="M 89.313985,93.095486 C 89.148741,113.25525 89.148741,113.25525 89.148741,113.25525"
