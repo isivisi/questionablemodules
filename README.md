@@ -11,4 +11,4 @@ https://library.vcvrack.com/questionablemodules
 - [Nandomizer](https://github.com/isivisi/questionablemodules/wiki/Nandomizer)
 - [Discombobulator](https://github.com/isivisi/questionablemodules/wiki/Discombobulator)
 - [Treequencer](https://github.com/isivisi/questionablemodules/wiki/Treequencer)
-- [SLURP](https://github.com/isivisi/questionablemodules/wiki/SLURP)
+- [SLURP](https://isivisi.github.io/questionablemodules/slurp)
