@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+
+    </head>
+
+    <style>
+      .feature {
+        column-count: 2;
+        column-gap: 2em;
+      }
+
+      .site-header {
+        padding: 33px !important;
+      }
+    </style>
+
+    <body class="bg-light">
+        <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
+        <script src="./bootstrap/bootstrap.min.js"></script>
+
+      <main>
+        <header class="site-header bg-dark">
+          <nav class="container d-flex flex-column flex-md-row justify-content-between">
+            <span class="display-6 fw-bold text-light">Questionable Modules</span>
+          </nav>
+        </header>
+
+        <div class="container py-4 bg-light">
+
+          <div class="p-2 mb-4 bg-light text-center">
+            <div class="container-fluid py-5">
+              <h1 class="display-1 fw-bold">SLURP</h1>
+              <p class="fs-4">Quaternion based oscillation.</p>
+
+            </div>
+          </div>
+
+          <img src="./images/slurpview.jpg" style="object-fit: cover; width: 100%;"/>
+          
+          <div class="container-fluid py-5">
+            <div class="feature">
+              <p class=" fs-4">
+                SLURP has 3 oscillators that influence the rotational axis (X, Y, Z) of a quaternion. The axes are projected into a waveform.
+              </p>
+      
+              <h2>Parameters</h2>
+              <p class="fs-4"> wip</p>
+            </div>
+          </div>
+
+        </div>
+
+        <footer class="container pb-5 pt-3 mt-2 text-muted border-top bg-white">
+          isivisi © <span id="year"></span>
+          <script> document.getElementById("year").innerHTML = new Date().getFullYear() </script>
+        </footer>
+      </main>
+
+    </body>
+
+</html>
