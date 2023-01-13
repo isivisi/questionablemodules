@@ -16,14 +16,14 @@
       "slug": "discombobulator",
       "name": "Discombobulator",
       "description": "Randomly switches inputs and outputs",
-      "manualUrl": "https://github.com/isivisi/questionablemodules/wiki/Discombobulator",
+      "manualUrl": "https://isivisi.github.io/questionablemodules/discombobulator",
       "tags": ["Random", "Utility"]
     },
     {
       "slug": "nandomizer",
       "name": "Nandomizer",
       "description": "Randomly switches inputs",
-      "manualUrl": "https://github.com/isivisi/questionablemodules/wiki/Nandomizer",
+      "manualUrl": "https://isivisi.github.io/questionablemodules/nandomizer",
       "tags": ["Random", "Utility"]
     },
     {
