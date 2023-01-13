@@ -16,24 +16,28 @@
       "slug": "discombobulator",
       "name": "Discombobulator",
       "description": "Randomly switches inputs and outputs",
+      "manualUrl": "https://github.com/isivisi/questionablemodules/wiki/Discombobulator",
       "tags": ["Random", "Utility"]
     },
     {
       "slug": "nandomizer",
       "name": "Nandomizer",
       "description": "Randomly switches inputs",
+      "manualUrl": "https://github.com/isivisi/questionablemodules/wiki/Nandomizer",
       "tags": ["Random", "Utility"]
     },
     {
       "slug": "treequencer",
       "name": "Treequencer",
       "description": "Sequences using a binary tree algorithm",
+      "manualUrl": "https://isivisi.github.io/questionablemodules/treequencer",
       "tags": ["Sequencer", "Random"]
     },
     {
       "slug": "quatosc",
       "name": "SLURP",
       "description": "Oscillator that uses quaternion rotation to oscillate",
+      "manualUrl": "https://isivisi.github.io/questionablemodules/slurp",
       "tags": ["Synth voice", "Oscillator", "Low-frequency oscillator"]
     }
   ]
