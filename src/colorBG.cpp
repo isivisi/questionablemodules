@@ -1,7 +1,23 @@
+#pragma once
+
 #include "plugin.hpp"
+#include <string>
+#include <unordered_map>
+
+struct ColorBGTheme {
+    NVGcolor color;
+    NVGcolor stroke;
+    NVGcolor fontColor;
+};
+
+static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
+    {"Light", ColorBGTheme{nvgRGB(225, 225, 225), nvgRGB(215, 215, 215), nvgRGB(15,15,15)}},
+    {"Dark", ColorBGTheme{nvgRGB(45, 45, 45), nvgRGB(75, 75, 75), nvgRGB(255,255,255)}},
+};
 
 struct ColorBG : Widget {
 	NVGcolor color = nvgRGB(225, 225, 225);
+    NVGcolor stroke = nvgRGB(215, 215, 215);
     Vec size;
 
     bool drawBackground = true;
@@ -20,6 +36,15 @@ struct ColorBG : Widget {
         size = s;
     }
 
+    void setTheme(ColorBGTheme theme) {
+        color = theme.color;
+        stroke = theme.stroke;
+
+        for (int i = 0; i < textList.size(); i++) {
+            textList[i].color = theme.fontColor;
+        }
+    }
+
     void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos) {
         textList.push_back(drawableText{text,font,color,size,pos});
     }
@@ -30,9 +55,10 @@ struct ColorBG : Widget {
             nvgFillColor(args.vg, color);
             nvgBeginPath(args.vg);
             nvgRect(args.vg, 0,0, size.x, size.y);
-            nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
-            nvgStrokeWidth(args.vg, 3.0);
+            nvgStrokeColor(args.vg, stroke);
+            nvgStrokeWidth(args.vg, 2.0);
             nvgFill(args.vg);
+            nvgStroke(args.vg);
         }
 
         if (drawText) {

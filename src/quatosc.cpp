@@ -74,6 +74,8 @@ struct QuatOSC : Module {
 		LIGHTS_LEN
 	};
 
+	std::string theme;
+
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotation;
 	gmtl::Quatf rotationAccumulation;
@@ -254,6 +256,7 @@ struct QuatOSC : Module {
 	json_t* dataToJson() {
 		json_t* nodeJ = json_object();
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
+		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
 		return nodeJ;
 	}
 
@@ -262,6 +265,7 @@ struct QuatOSC : Module {
 		lfo2Phase = 0.435f;
 		lfo3Phase = 0.3234f;
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 		resetPhase();
 	}
 
@@ -439,6 +443,11 @@ struct QuatOSCWidget : ModuleWidget {
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
 		setText(nvgRGB(255,255,255));
+
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -503,14 +512,22 @@ struct QuatOSCWidget : ModuleWidget {
 
 	void appendContextMenu(Menu *menu) override
   	{
+		QuatOSC* mod = (QuatOSC*)module;
 		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Default", "",[=]() {
 				color->drawBackground = false;
-				setText(nvgRGB(255,255,255));
+				color->setTheme(BG_THEMES["Dark"]); // for text
+				mod->theme = "";
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
-				setText(nvgRGB(15,15,15));
+				color->setTheme(BG_THEMES["Light"]);
+				mod->theme = "Light";
+			}));
+			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Dark"]);
+				mod->theme = "Dark";
 			}));
 		}));
 	}

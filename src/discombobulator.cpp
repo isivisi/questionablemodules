@@ -61,6 +61,8 @@ struct Discombobulator : Module {
 		LIGHTS_LEN
 	};
 
+	std::string theme;
+
 	int inputsUsed{8};
 
 	dsp::SchmittTrigger gateTrigger;
@@ -152,6 +154,16 @@ struct Discombobulator : Module {
 		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
 
 	}
+
+	json_t* dataToJson() {
+		json_t* nodeJ = json_object();
+		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
+		return nodeJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+	}
 };
 
 struct DiscombobulatorWidget : ModuleWidget {
@@ -170,6 +182,11 @@ struct DiscombobulatorWidget : ModuleWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
+
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -196,12 +213,21 @@ struct DiscombobulatorWidget : ModuleWidget {
 
 	void appendContextMenu(Menu *menu) override
   	{
+		Discombobulator* mod = (Discombobulator*)module;
 		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Default", "",[=]() {
 				color->drawBackground = false;
+				mod->theme = "";
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Light"]);
+				mod->theme = "Light";
+			}));
+			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Dark"]);
+				mod->theme = "Dark";
 			}));
 		}));
 	}

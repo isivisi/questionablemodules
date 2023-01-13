@@ -253,6 +253,8 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
+	std::string theme;
+
 	std::queue<std::function<void()>> audioThreadQueue;
 
 	// json data for screen
@@ -471,6 +473,8 @@ struct Treequencer : Module {
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
+		json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
+
 		return rootJ;
 	}
 
@@ -481,6 +485,8 @@ struct Treequencer : Module {
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
+
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
 
@@ -914,6 +920,11 @@ struct TreequencerWidget : ModuleWidget {
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
 		setText(nvgRGB(255,255,255));
+
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -978,11 +989,18 @@ struct TreequencerWidget : ModuleWidget {
 		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Default", "",[=]() {
 				color->drawBackground = false;
-				setText(nvgRGB(255,255,255));
+				color->setTheme(BG_THEMES["Dark"]); // for text
+				mod->theme = "";
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
-				setText(nvgRGB(15,15,15));
+				color->setTheme(BG_THEMES["Light"]);
+				mod->theme = "Light";
+			}));
+			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Dark"]);
+				mod->theme = "Dark";
 			}));
 		}));
 	}
