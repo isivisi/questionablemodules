@@ -20,7 +20,7 @@
 
 int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
-const int SAMPLES_PER_SECOND = MAX_HISTORY*20;
+const int SAMPLES_PER_SECOND = 44100;
 
 const float HALF_SEMITONE = 1.029302;
 
@@ -220,7 +220,7 @@ struct QuatOSC : Module {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
-		if (/*args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0 && */!reading) {
+		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND))) == 0 && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
 			zPointSamples.push(zRotated);
