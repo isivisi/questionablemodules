@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
 #include "textfield.cpp"
+#include "colorBG.cpp"
 #include <iostream>
 #include <map>
 #include <string>
@@ -875,6 +876,13 @@ struct TreequencerWidget : ModuleWidget {
 	ImagePanel *backdrop;
 	NodeDisplay *display;
 	ImagePanel *dirt;
+	ColorBG* color;
+
+	void setText(NVGcolor c) {
+		color->textList.clear();
+		color->addText("TREEQUENCER", "OpenSans-ExtraBold.ttf", c, 14, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 20));
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+	}
 
 	TreequencerWidget(Treequencer* module) {
 		setModule(module);
@@ -902,8 +910,13 @@ struct TreequencerWidget : ModuleWidget {
 		dirt->imagePath = asset::plugin(pluginInstance, "res/dirt.png");
 		dirt->scalar = 3.5;
 		dirt->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
+		setText(nvgRGB(255,255,255));
 		
 		setPanel(backdrop);
+		addChild(color);
 		addChild(display);
 		addChild(dirt);
 

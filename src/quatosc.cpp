@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "colorBG.cpp"
 #include <gmtl/gmtl.h>
 #include <gmtl/Vec.h>
 #include <gmtl/Quat.h>
@@ -403,6 +404,13 @@ struct QuatOSCWidget : ModuleWidget {
 	ImagePanel *backdrop;
 	ImagePanel *fade;
 	QuatDisplay *display;
+	ColorBG* color;
+
+	void setText(NVGcolor c) {
+		color->textList.clear();
+		color->addText("SLURP OSC", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+	}
 
 	QuatOSCWidget(QuatOSC* module) {
 		setModule(module);
@@ -427,8 +435,13 @@ struct QuatOSCWidget : ModuleWidget {
 		fade->scalar = 3;
 		fade->opacity = 0.1;
 		fade->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
+		setText(nvgRGB(255,255,255));
 		
 		setPanel(backdrop);
+		addChild(color);
 		addChild(display);
 		addChild(fade);
 
@@ -487,6 +500,7 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
 	}
+
 };
 
 Model* modelQuatOSC = createModel<QuatOSC, QuatOSCWidget>("quatosc");
