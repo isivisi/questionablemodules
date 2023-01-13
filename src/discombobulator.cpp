@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "colorBG.cpp"
 #include <vector>
 #include <list>
 #include <random>
@@ -11,6 +12,8 @@
     Output: Write with outputs[...].setVoltage(voltage)
     Light: Write with lights[...].setBrightness(brightness)
 */
+
+const int MODULE_SIZE = 10;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
@@ -153,6 +156,7 @@ struct Discombobulator : Module {
 
 struct DiscombobulatorWidget : ModuleWidget {
 	ImagePanel *backdrop;
+	ColorBG* color;
 
 	DiscombobulatorWidget(Discombobulator* module) {
 		setModule(module);
@@ -163,8 +167,12 @@ struct DiscombobulatorWidget : ModuleWidget {
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
 		
 		setPanel(backdrop);
+		addChild(color);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -184,6 +192,18 @@ struct DiscombobulatorWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Discombobulator::BLINK_LIGHT));
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+			}));
+		}));
 	}
 };
 

@@ -501,6 +501,20 @@ struct QuatOSCWidget : ModuleWidget {
 
 	}
 
+	void appendContextMenu(Menu *menu) override
+  	{
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+				setText(nvgRGB(255,255,255));
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+				setText(nvgRGB(15,15,15));
+			}));
+		}));
+	}
+
 };
 
 Model* modelQuatOSC = createModel<QuatOSC, QuatOSCWidget>("quatosc");

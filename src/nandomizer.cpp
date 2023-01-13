@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "colorBG.cpp"
 #include <vector>
 #include <algorithm>
 
@@ -9,6 +10,8 @@
     Output: Write with outputs[...].setVoltage(voltage)
     Light: Write with lights[...].setBrightness(brightness)
 */
+
+const int MODULE_SIZE = 8;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
@@ -144,6 +147,7 @@ struct Nandomizer : Module {
 
 struct NandomizerWidget : ModuleWidget {
 	ImagePanel *backdrop;
+	ColorBG* color;
 
 	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
@@ -154,8 +158,12 @@ struct NandomizerWidget : ModuleWidget {
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
 		
 		setPanel(backdrop);
+		addChild(color);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -174,6 +182,18 @@ struct NandomizerWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 113)), module, Nandomizer::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+			}));
+		}));
 	}
 };
 

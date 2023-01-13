@@ -1,7 +1,7 @@
 #include "plugin.hpp"
 
 struct ColorBG : Widget {
-	NVGcolor color = nvgRGB(175, 175, 175);
+	NVGcolor color = nvgRGB(225, 225, 225);
     Vec size;
 
     bool drawBackground = true;
@@ -31,7 +31,7 @@ struct ColorBG : Widget {
             nvgBeginPath(args.vg);
             nvgRect(args.vg, 0,0, size.x, size.y);
             nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
-            nvgStrokeWidth(args.vg, 1.0);
+            nvgStrokeWidth(args.vg, 3.0);
             nvgFill(args.vg);
         }
 

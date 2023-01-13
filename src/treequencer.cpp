@@ -974,6 +974,17 @@ struct TreequencerWidget : ModuleWidget {
 				mod->onAudioThread([=]() { mod->colorMode = 2; });
 			}));
 		}));
+
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+				setText(nvgRGB(255,255,255));
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+				setText(nvgRGB(15,15,15));
+			}));
+		}));
 	}
 };
 
