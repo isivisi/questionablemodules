@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="contextmenu.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="2.0058594"
+     inkscape:cx="206.89387"
+     inkscape:cy="255.75073"
+     inkscape:window-width="2560"
+     inkscape:window-height="1366"
+     inkscape:window-x="2560"
+     inkscape:window-y="104"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#e6e6e6;stroke:#474747;stroke-width:0"
+       id="rect788"
+       width="326.54333"
+       height="495.54819"
+       x="11.964947"
+       y="10.469328"
+       ry="0.0083278781" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="19.443039"
+       y="52.845181"
+       id="text948"><tspan
+         sodipodi:role="line"
+         id="tspan946"
+         x="19.443039"
+         y="52.845181">Node Output:</tspan></text>
+    <rect
+       style="fill:#ffffff;stroke:#474747;stroke-width:0"
+       id="rect1058"
+       width="309.09445"
+       height="63.314507"
+       x="19.443039"
+       y="65.308662"
+       ry="0.0063713286" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="16.451803"
+       y="176.0078"
+       id="text1114"><tspan
+         sodipodi:role="line"
+         id="tspan1112"
+         x="16.451803"
+         y="176.0078">Node Chance:</tspan></text>
+    <rect
+       style="fill:#ffffff;stroke:#474747;stroke-width:0"
+       id="rect1166"
+       width="309.09445"
+       height="63.314507"
+       x="18.9445"
+       y="184.47711"
+       ry="0.0063713286" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="18.9445"
+       y="297.15872"
+       id="text1170"><tspan
+         sodipodi:role="line"
+         id="tspan1168"
+         x="18.9445"
+         y="297.15872">Preview</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="18.445961"
+       y="388.42065"
+       id="text1176"><tspan
+         sodipodi:role="line"
+         id="tspan1174"
+         x="18.445961"
+         y="388.42065">Add Child</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="17.947422"
+       y="450.76144"
+       id="text1182"><tspan
+         sodipodi:role="line"
+         id="tspan1180"
+         x="17.947422"
+         y="450.76144">Remove</tspan></text>
+    <rect
+       style="fill:#1a1a1a;stroke:#474747;stroke-width:0"
+       id="rect1184"
+       width="311.58716"
+       height="3.4897761"
+       x="19.443037"
+       y="323.08276"
+       ry="0.0083278781" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:26.6667px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="34.399223"
+       y="107.24442"
+       id="text4232"><tspan
+         sodipodi:role="line"
+         id="tspan4230"
+         x="34.399223"
+         y="107.24442">0 to 2147483647</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:26.6667px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="34.915287"
+       y="228.88805"
+       id="text4236"><tspan
+         sodipodi:role="line"
+         id="tspan4234"
+         x="34.915287"
+         y="228.88805">0.0 to 1.0</tspan></text>
+  </g>
+</svg>
