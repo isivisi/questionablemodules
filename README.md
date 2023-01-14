@@ -8,7 +8,7 @@ https://library.vcvrack.com/questionablemodules
 <img src="https://github.com/isivisi/questionablemodules/blob/master/images/slurp.jpg?raw=true?raw=true" width="201">
 
 ## Modules
-- [Nandomizer](https://github.com/isivisi/questionablemodules/wiki/Nandomizer)
-- [Discombobulator](https://github.com/isivisi/questionablemodules/wiki/Discombobulator)
+- [Nandomizer](https://isivisi.github.io/questionablemodules/nandomizer)
+- [Discombobulator](https://isivisi.github.io/questionablemodules/discombobulator)
 - [Treequencer](https://isivisi.github.io/questionablemodules/treequencer)
 - [SLURP](https://isivisi.github.io/questionablemodules/slurp)
