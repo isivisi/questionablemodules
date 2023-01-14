@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "colorBG.cpp"
 #include <vector>
 #include <list>
 #include <random>
@@ -11,6 +12,8 @@
     Output: Write with outputs[...].setVoltage(voltage)
     Light: Write with lights[...].setBrightness(brightness)
 */
+
+const int MODULE_SIZE = 10;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
@@ -57,6 +60,8 @@ struct Discombobulator : Module {
 		BLINK_LIGHT,
 		LIGHTS_LEN
 	};
+
+	std::string theme;
 
 	int inputsUsed{8};
 
@@ -149,10 +154,21 @@ struct Discombobulator : Module {
 		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
 
 	}
+
+	json_t* dataToJson() {
+		json_t* nodeJ = json_object();
+		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
+		return nodeJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+	}
 };
 
 struct DiscombobulatorWidget : ModuleWidget {
 	ImagePanel *backdrop;
+	ColorBG* color;
 
 	DiscombobulatorWidget(Discombobulator* module) {
 		setModule(module);
@@ -163,8 +179,17 @@ struct DiscombobulatorWidget : ModuleWidget {
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop-dis.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
+
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
 		
 		setPanel(backdrop);
+		addChild(color);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -184,6 +209,27 @@ struct DiscombobulatorWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Discombobulator::BLINK_LIGHT));
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		Discombobulator* mod = (Discombobulator*)module;
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+				mod->theme = "";
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Light"]);
+				mod->theme = "Light";
+			}));
+			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Dark"]);
+				mod->theme = "Dark";
+			}));
+		}));
 	}
 };
 

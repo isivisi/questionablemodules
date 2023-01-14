@@ -40,13 +40,13 @@
         <div class="container mt-2 nosidepad bg-light">
           <div class="p-2 mb-4 bg-light text-center">
             <div class="container-fluid py-5">
-              <h1 class="display-1 fw-bold">SLURP</h1>
-              <p class="fs-4">Quaternion based oscillation.</p>
+              <h1 class="display-1 fw-bold">Nandomizer</h1>
+              <p class="fs-4">Randomize inputs.</p>
 
             </div>
           </div>
 
-          <img src="./images/slurpview.jpg" style="object-fit: cover; width: 100%;"/>
+          <img src="./images/nandoview.jpg" style="object-fit: cover; width: 100%;"/>
         </div>
 
         <div class="container bg-light">
@@ -54,38 +54,18 @@
           <div class="container-fluid py-5">
             <div class="feature">
               <p class="">
-                SLURP has 3 oscillating sources, one for each rotational axis.
-                Each axis has an LFO that modulates its rotation. 
-                Rotating one axis will in turn move the other two axis. 
-                The final position of each axis is then projected into 2d space and its positional value becomes the output.
+                Nandomizer randomly selects a connected input to send to the output every time you trigger the gate.
               </p>
 
-              <img src="./images/quaternionProjection.svg" width="100%"/>
-            
-              <h2>Parameters</h2>
-              <p class="">
-                Each oscillator (or axis) has a
-                <span class="fw-bold">VOct</span>, 
-                <span class="fw-bold">Influence</span>,
-                <span class="fw-bold">Rotation</span>,
-                <span class="fw-bold">Octave</span>, and
-                <span class="fw-bold">LFO Influence</span> parameter.
-              </p>
+              <img src="./images/nandomizer.svg" width="100%"/>
 
-              <img src="./images/slurp.svg" width="100%"/>
+              <p class=""><span class="fw-bold">Fade</span> When the gate is triggered and switches input sources this controls how much the previous input fades out. 0.f has no fade and 1.f is full fadeout effect.</p>
+              <p class=""><span class="fw-bold">Gate</span> triggers the random swap.</p>
+              <p class=""><span class="fw-bold">Output</span> outputs the current randomly selected input.</p>
+              <p class=""><span class="fw-bold">Inputs 1-8</span> are inputs that take in any monophonic value. These will be randomly selected once you send voltage to the gate input.</p>
 
-              <p class=""><span class="fw-bold">VOct</span> Sets the frequency of the axis LFO to the desired note value. This uses the 1V/oct standard.</p>
-              <p class=""><span class="fw-bold">Influence</span> Sets how much this axis projected position is added to the final output.</p>
-              <p class=""><span class="fw-bold">Rotation</span> Adds a constant rotation value over time to the axis.</p>
-              <p class=""><span class="fw-bold">Octave</span> offsets the LFOs frequency by whole octave (0-8).</p>
-              <p class=""><span class="fw-bold">LFO Influence</span> How much influence the LFO has on the axis.</p>
-
-              <p class=""><span class="fw-bold">Clock</span> Offsets the frequency of all LFOs to be in sync with the incoming clock signal.</p>
-
-              <p class=""></p>
- 
             </div>
-           </div> 
+           </div>
 
            <div class="container-fluid py-5">
             <div>

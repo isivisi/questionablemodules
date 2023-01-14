@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
 #include "textfield.cpp"
+#include "colorBG.cpp"
 #include <iostream>
 #include <map>
 #include <string>
@@ -252,6 +253,8 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
+	std::string theme;
+
 	std::queue<std::function<void()>> audioThreadQueue;
 
 	// json data for screen
@@ -470,6 +473,8 @@ struct Treequencer : Module {
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
+		json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
+
 		return rootJ;
 	}
 
@@ -480,6 +485,8 @@ struct Treequencer : Module {
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
+
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
 
@@ -875,6 +882,13 @@ struct TreequencerWidget : ModuleWidget {
 	ImagePanel *backdrop;
 	NodeDisplay *display;
 	ImagePanel *dirt;
+	ColorBG* color;
+
+	void setText(NVGcolor c) {
+		color->textList.clear();
+		color->addText("TREEQUENCER", "OpenSans-ExtraBold.ttf", c, 14, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 20));
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+	}
 
 	TreequencerWidget(Treequencer* module) {
 		setModule(module);
@@ -902,8 +916,18 @@ struct TreequencerWidget : ModuleWidget {
 		dirt->imagePath = asset::plugin(pluginInstance, "res/dirt.png");
 		dirt->scalar = 3.5;
 		dirt->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
+		setText(nvgRGB(255,255,255));
+
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
 		
 		setPanel(backdrop);
+		addChild(color);
 		addChild(display);
 		addChild(dirt);
 
@@ -959,6 +983,24 @@ struct TreequencerWidget : ModuleWidget {
 			}));
 			menu->addChild(createMenuItem("Muted", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 2; });
+			}));
+		}));
+
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+				color->setTheme(BG_THEMES["Dark"]); // for text
+				mod->theme = "";
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Light"]);
+				mod->theme = "Light";
+			}));
+			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Dark"]);
+				mod->theme = "Dark";
 			}));
 		}));
 	}

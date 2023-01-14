@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "colorBG.cpp"
 #include <vector>
 #include <algorithm>
 
@@ -9,6 +10,8 @@
     Output: Write with outputs[...].setVoltage(voltage)
     Light: Write with lights[...].setBrightness(brightness)
 */
+
+const int MODULE_SIZE = 8;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
@@ -47,6 +50,8 @@ struct Nandomizer : Module {
 		BLINK_LIGHT,
 		LIGHTS_LEN
 	};
+
+	std::string theme;
 
 	int inputsUsed{8};
 
@@ -137,13 +142,25 @@ struct Nandomizer : Module {
 		outputs[0].setVoltage(inputs[activeOutput].getVoltage() + (fadingInputs * fadeAmnt));
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
+
 		else if (lights[BLINK_LIGHT].getBrightness() > 0.0) lights[BLINK_LIGHT].setBrightness(lights[BLINK_LIGHT].getBrightness() - 0.0001f);
 
+	}
+
+	json_t* dataToJson() {
+		json_t* nodeJ = json_object();
+		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
+		return nodeJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 	}
 };
 
 struct NandomizerWidget : ModuleWidget {
 	ImagePanel *backdrop;
+	ColorBG* color;
 
 	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
@@ -154,8 +171,17 @@ struct NandomizerWidget : ModuleWidget {
 		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
+
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
 		
 		setPanel(backdrop);
+		addChild(color);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -174,6 +200,27 @@ struct NandomizerWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 113)), module, Nandomizer::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		Nandomizer* mod = (Nandomizer*)module;
+		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Default", "",[=]() {
+				color->drawBackground = false;
+				mod->theme = "";
+			}));
+			menu->addChild(createMenuItem("Boring", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Light"]);
+				mod->theme = "Light";
+			}));
+			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+				color->drawBackground = true;
+				color->setTheme(BG_THEMES["Dark"]);
+				mod->theme = "Dark";
+			}));
+		}));
 	}
 };
 
