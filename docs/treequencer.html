@@ -6,6 +6,7 @@
   <link href="./style.css" rel="stylesheet">
   <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
   <script src="./bootstrap/bootstrap.min.js"></script>
+  <script src="./script.js"></script>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FZ9FD6YW4S"></script>
@@ -71,7 +72,7 @@
 
               <p class=""><span class="fw-bold">Node Output</span> The whole number output value, values 1 to 8 output to the corresponding <a href="#outputs">1-8 outputs</a>. Values higer than 8 will still output through the <a href="#voct">VOct out.</a></p>
               <p class=""><span class="fw-bold">Node Chance</span> Lets the chance for each child node to be randomly selected. 0.0 means no chance for child 1 to be selected and 1.0 means 100% chance.</p>
-              <p class=""><span class="fw-bold">Preview</span> Sets the selected node to the active node and enabled hold. This allows you to easily preview the node output.</p>
+              <p class=""><span class="fw-bold">Preview</span> Sets the selected node to the active node and enables hold. This allows you to easily preview the node output.</p>
               <p class=""><span class="fw-bold">Add Child</span> Adds a child to this node, maximum 2 children.</p>
               <p class=""><span class="fw-bold">Remove</span> Removes the selected node and all attached to this node. (children and their children)</p>
 
@@ -118,10 +119,7 @@
               
         </div> 
 
-        <footer class="container pb-5 pt-3 text-muted border-top bg-white">
-          isivisi © <span id="year"></span>
-          <script> document.getElementById("year").innerHTML = new Date().getFullYear() </script>
-        </footer>
+        <script> importHTML("footer.html") </script>
 
         <script>
 

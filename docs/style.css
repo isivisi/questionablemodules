@@ -23,3 +23,8 @@
 .background {
     background-color: #cfcece;
 }
+
+footer a {
+    color: #495057;
+    text-decoration: none;
+  }
