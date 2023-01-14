@@ -11,8 +11,8 @@ struct ColorBGTheme {
 };
 
 static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
-    {"Light", ColorBGTheme{nvgRGB(225, 225, 225), nvgRGB(215, 215, 215), nvgRGB(15,15,15)}},
-    {"Dark", ColorBGTheme{nvgRGB(45, 45, 45), nvgRGB(75, 75, 75), nvgRGB(255,255,255)}},
+    {"Light", ColorBGTheme{nvgRGB(225, 225, 225), nvgRGB(195, 195, 195), nvgRGB(15,15,15)}},
+    {"Dark", ColorBGTheme{nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
 };
 
 struct ColorBG : Widget {
