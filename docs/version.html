@@ -13,6 +13,7 @@
     var dropdownList = document.getElementById("dropdownList")
 
     var currFile = window.location.pathname.split("/").pop();
+    if (!currFile.includes(".html")) currFile += ".html";
 
     versionDropdown.innerHTML = DocVersion
 
