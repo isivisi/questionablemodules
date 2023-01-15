@@ -72,34 +72,50 @@ bool isNumber(std::string s)
 	return char_pos == s.size(); // must reach the ending 0 of the string 
 }
 
-struct ScaleDef {
+struct Scale {
 	std::string name;
 	std::vector<int> notes;
 
 	// probabilities[note] = {anotherNote: probability, ...}
 	//std::map<int, std::map<int, float>> probabilities;
 
-	std::vector<int> generateRandom(int size) {
+	std::vector<int> generateRandom(int size, int scaleLength = 1) {
 		std::vector<int> sequence;
 
 		for (int i = 0; i < size; i++) {
-			sequence.push_back(notes[randomInteger(0, notes.size()-1)]);
+			int randomNote = notes[randomInteger(0, notes.size()-1)];
+			int randomOffset = scaleLength == 1 ? 1 : randomInteger(1, scaleLength);
+			sequence.push_back(randomNote * randomOffset);
 		}
 
 		return sequence;
 	}
+
+	static std::string getNoteString(int note) {
+		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+		return noteStrings[note%12] + std::to_string(floor(note/12)+1);
+	}
+
+	Scale getTransposedBy(int note) {
+		Scale newScale;
+		newScale.name = Scale::getNoteString(note) + std::string(" ") + name;
+		for (int i = 0; i < notes.size(); i++) {
+			newScale.notes.push_back(notes[i] + note);
+		}
+		return newScale;
+	}
 };
 
 // All starting at C
-std::vector<ScaleDef> scales = {
-	ScaleDef{"Chromatic", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}, // C(0), C#(1), D(2), D#(3), E(4), F(5), F#(6), G(7), G#(8), A(9), A#(10), B(11)
-	ScaleDef{"Major", {0, 2, 4, 5, 7, 9, 11}}, // C, D, E, F, G, A, B
-	ScaleDef{"Minor", {0, 2, 3, 5, 7, 8, 10}} // C, D, D#, F, G, G#, A#
-	ScaleDef{"Pentatonic", {0, 2, 5, 7, 10}}, // C, D, F, G, A#
-	ScaleDef{"Blues", {0, 3, 5, 6, 7, 10}}, // C, D#, F, F#, G, A#
-	ScaleDef{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
-	ScaleDef{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
-}
+std::vector<Scale> scales = {
+	Scale{"Chromatic", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}, // C(0), C#(1), D(2), D#(3), E(4), F(5), F#(6), G(7), G#(8), A(9), A#(10), B(11)
+	Scale{"Major", {0, 2, 4, 5, 7, 9, 11}}, // C, D, E, F, G, A, B
+	Scale{"Minor", {0, 2, 3, 5, 7, 8, 10}}, // C, D, D#, F, G, G#, A#
+	Scale{"Pentatonic", {0, 2, 5, 7, 10}}, // C, D, F, G, A#
+	Scale{"Blues", {0, 3, 5, 6, 7, 10}}, // C, D#, F, F#, G, A#
+	Scale{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
+	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
+};
 
 // A node in the tree
 struct Node {
