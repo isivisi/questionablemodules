@@ -1,0 +1,23 @@
+
+<span class="dropdown">
+        <a class="btn bg-white text-dark btn-sm dropdown-toggle" href="" role="button" id="versionDropdown" data-bs-toggle="dropdown">
+          Version
+        </a>
+      
+        <ul class="dropdown-menu" id="dropdownList">
+        </ul>
+</span>
+
+<script>
+    var versionDropdown = document.getElementById("versionDropdown")
+    var dropdownList = document.getElementById("dropdownList")
+
+    var currFile = window.location.pathname.split("/").pop();
+
+    versionDropdown.innerHTML = DocVersion
+
+    for (var i = 0; i < previousVersions.length; i++) {
+        var version = previousVersions[i]
+        dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://rawcdn.githack.com/isivisi/questionablemodules/${version.commit}/docs/${currFile}">${version.verison}</a></li>`
+    }
+</script>
