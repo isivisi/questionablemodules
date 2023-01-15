@@ -1,3 +1,6 @@
+// Settings
+var DocVersion = "v2.1.5";
+
 async function importHTML(file) {
     const resp = await fetch(file);
     const html = await resp.text();

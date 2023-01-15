@@ -5,7 +5,7 @@
         <h5>Questionable Modules</h5>
         <ul class="list-unstyled">
           <li>Code License: <a href="./gpl-license.html">GPL-3.0-or-later</a></li>
-          <li>Docs for <a href="https://github.com/isivisi/questionablemodules/tree/v2.1.5">v2.1.5</a></li>
+          <li>Docs for <a id="versionLink" href="https://github.com/isivisi/questionablemodules"></a></li>
         </ul>
       </div>
       <div class="col-3">
@@ -30,6 +30,11 @@
     <div class="row">
       <div class="col-3"> isivisi © <span id="year"></span> </div>
     </div>
-    <script> document.getElementById("year").innerHTML = new Date().getFullYear() </script>
+    <script> 
+      document.getElementById("year").innerHTML = new Date().getFullYear() 
+      document.getElementById("versionLink").innerHTML = DocVersion
+      document.getElementById("versionLink").href = "https://github.com/isivisi/questionablemodules/tree/" + DocVersion 
+
+    </script>
 
   </footer>
