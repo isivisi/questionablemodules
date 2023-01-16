@@ -89,8 +89,14 @@ struct Scale {
 		return sequence;
 	}
 
-	int getNextInSequence(std::vector<int>& sequence, int maxSize) {
+	int getNextInSequence(std::vector<int> sequence, int maxSize) {
 		int offset = 0;
+
+		// convert back to offset values
+		for (int i = 0; i < sequence.size(); i++) {
+			sequence[i] = toOffset(sequence[i]);
+		}
+
 		if (!sequence.size()) offset = randomInteger(0, maxSize);
 		else {
 			int randomType = randomInteger(0, 3);
@@ -115,6 +121,14 @@ struct Scale {
 	static std::string getNoteString(int note) {
 		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 		return noteStrings[note%12] + std::to_string((int)((note/12)+1));
+	}
+	
+	// convert note to position offset
+	int toOffset(int note) {
+		for (int i = 0; i < notes.size(); i++) {
+			if (notes[i] == abs(note % (int)notes.size())) return i * (note / (int)notes.size());
+		}
+		return 0;
 	}
 
 	Scale getTransposedBy(int note) {
