@@ -79,16 +79,21 @@ struct Scale {
 	// probabilities[note] = {anotherNote: probability, ...}
 	//std::map<int, std::map<int, float>> probabilities;
 
-	std::vector<int> generateRandom(int size, int scaleLength = 1) {
-		std::vector<int> sequence;
+	std::vector<int> generateRandom(int size) {
+		std::vector<int> sequence = sequence;
 
 		for (int i = 0; i < size; i++) {
-			int randomNote = notes[randomInteger(0, notes.size()-1)];
-			int randomOffset = scaleLength == 1 ? 1 : randomInteger(1, scaleLength);
-			sequence.push_back(randomNote * randomOffset);
+			sequence.push_back(getNextInSequence(sequence, size));
 		}
 
 		return sequence;
+	}
+
+	int getNextInSequence(std::vector<int>& sequence, int maxSize) {
+		int offset;
+		if (!sequence.size()) offset = randomInteger(1, maxSize);
+		else randomInteger(sequence.back()-5, sequence.back()+5);
+		return notes[offset%12] * (offset/12);
 	}
 
 	static std::string getNoteString(int note) {
@@ -195,13 +200,15 @@ struct Node {
 		children.push_back(child2);
   	}
 
-	void addChild() {
+	Node* addChild() {
 
 		Node* child = new Node(this);
 		child->parent = this;
 		child->chance = randFloat(0.9f);
 		child->output = randomInteger(-1, 7);
 		children.push_back(child);
+
+		return child;
 
 	}
 
@@ -218,6 +225,23 @@ struct Node {
 			sizes.push_back(children[i]->maxDepth() + 1);
 		}
 		return *std::max_element(sizes.begin(), sizes.end());
+	}
+
+	void generateSequencesToDepth(Scale s, int depth, std::vector<int> history=std::vector<int>()) {
+		if (depth <= 0) return;
+
+		Node* child1 = addChild();
+		child1->output = s.getNextInSequence(history, 24);
+		Node* child2 = addChild();
+		child2->output = s.getNextInSequence(history, 24);
+
+		std::vector<int> child1History = history;
+		child1History.push_back(child1->output);
+		std::vector<int> child2History = history;
+		child2History.push_back(child2->output);
+
+		child1->generateSequencesToDepth(s, depth-1, child1History);
+		child2->generateSequencesToDepth(s, depth-1, child2History);
 	}
 
 	json_t* const toJson() {
@@ -647,6 +671,17 @@ struct NodeDisplay : Widget {
 				node->remove();
 				renderStateDirty();
 			});
+		}));
+
+		menu->addChild(rack::createSubmenuItem("Generate Sequence", "", [=](ui::Menu* menu) {
+			for (int i = 0; i < scales.size(); i++) {
+				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
+					mod->onAudioThread([=]() { 
+						node->generateSequencesToDepth(scales[i], 12);
+						renderStateDirty();
+					});
+				}));
+			}
 		}));
 		
 	}
