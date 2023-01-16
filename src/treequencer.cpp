@@ -98,7 +98,7 @@ struct Scale {
 
 	static std::string getNoteString(int note) {
 		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-		return noteStrings[note%12] + std::to_string(floor(note/12)+1);
+		return noteStrings[note%12]+ std::to_string((int)(floor(note/12)+1));
 	}
 
 	Scale getTransposedBy(int note) {
@@ -821,6 +821,13 @@ struct NodeDisplay : Widget {
 			nvgFill(vg);
 
 		}
+
+		//std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
+        //nvgFontFaceId(vg, font->handle);
+        //nvgFontSize(vg, 25);
+        //nvgFillColor(vg, nvgRGB(25,25,25));
+    	//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
+        //nvgText(vg, xVal + (xSize/2), yVal + (xSize/2), Scale::getNoteString(node->output).c_str(), NULL);
 
 		if (node->children.size() > 1) {
 			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
