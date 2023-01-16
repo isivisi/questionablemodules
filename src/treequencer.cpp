@@ -92,7 +92,23 @@ struct Scale {
 	int getNextInSequence(std::vector<int> sequence, int maxSize) {
 		int offset;
 		if (!sequence.size()) offset = randomInteger(0, maxSize);
-		else offset = randomInteger(sequence.back()-3, sequence.back()+3);
+		else {
+			int randomType = randomInteger(1, 4);
+			switch (randomType) {
+				case 0: // random number nearby
+					offset = randomInteger(sequence.back()-3, sequence.back()+3);
+					break;
+				case 1: // move a 3rd
+					offset = randomInteger(0,1) ? sequence.back()+3 : sequence.back()-3;
+					break;
+				case 2: // move a 5th
+					offset = randomInteger(0,1) ? sequence.back()+5 : sequence.back()-5;
+					break;
+				case 3: // move a 7th
+					offset = randomInteger(0,1) ? sequence.back()+7 : sequence.back()-7;
+					break;
+			}
+		}
 		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
 	}
 
