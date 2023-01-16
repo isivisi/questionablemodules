@@ -93,25 +93,24 @@ struct Scale {
 		int offset = 0;
 
 		// convert back to offset values
-		for (int i = 0; i < sequence.size(); i++) {
-			sequence[i] = toOffset(sequence[i]);
-		}
+		int front = toOffset(sequence.front());
+		int back = toOffset(sequence.back());
 
 		if (!sequence.size()) offset = randomInteger(0, maxSize);
 		else {
 			int randomType = randomInteger(0, 3);
 			switch (randomType) {
 				case 0: // random number nearby
-					offset = randomInteger(sequence.back()-9, sequence.back()+9);
+					offset = randomInteger(back-9, back+9);
 					break;
 				case 1: // move a 3rd
-					offset = (randomInteger(0,1) ? sequence.front()+3 : sequence.front()-3) * std::max(1, (int)(sequence.back() / 12));
+					offset = (randomInteger(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
 					break;
 				case 2: // move a 5th
-					offset = (randomInteger(0,1) ? sequence.front()+5 : sequence.front()-5) * std::max(1, (int)(sequence.back() / 12));
+					offset = (randomInteger(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
 					break;
 				case 3: // move a 7th
-					offset = (randomInteger(0,1) ? sequence.front()+7 : sequence.front()-7) * std::max(1, (int)(sequence.back() / 12));
+					offset = (randomInteger(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
 					break;
 			}
 		}
@@ -782,7 +781,7 @@ struct NodeDisplay : Widget {
 	}
 
 	// https://personal.sron.nl/~pault/
-	const NVGcolor octColors[3][5] = {
+	const NVGcolor octColors[4][5] = {
 		{ // Tol Light
 			nvgRGB(238,136,102), // orange
 			nvgRGB(153,221,255), // cyan
@@ -803,13 +802,21 @@ struct NodeDisplay : Widget {
 			nvgRGB(170,68,153), // purple
 			nvgRGB(136,34,85), // wine
 			nvgRGB(221,204,119) // sand
+		},
+		{ // White
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
 		}
 	};
 
-	const NVGcolor activeColor[3] = {
+	const NVGcolor activeColor[4] = {
 		nvgRGB(68,187,153),
 		nvgRGB(0,153,136),
-		nvgRGB(68,170,153)
+		nvgRGB(68,170,153),
+		nvgRGB(68,187,153)
 	};
 
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
@@ -1100,6 +1107,9 @@ struct TreequencerWidget : ModuleWidget {
 			}));
 			menu->addChild(createMenuItem("Muted", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 2; });
+			}));
+			menu->addChild(createMenuItem("Greyscale", "", [=]() {
+				mod->onAudioThread([=]() { mod->colorMode = 3; });
 			}));
 		}));
 
