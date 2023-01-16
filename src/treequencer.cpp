@@ -620,6 +620,14 @@ struct NodeDisplay : Widget {
 
 	}
 
+	void resetScreenPosition() {
+		xOffset = 25;
+		yOffset = 0;
+		dragX = 0;
+		dragY = 0;
+		screenScale = 3.5f;
+	}
+
 	void renderStateDirty() {
 		dirtyRender = true;
 	}
@@ -1129,6 +1137,10 @@ struct TreequencerWidget : ModuleWidget {
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
 			}));
+		}));
+
+		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
+			display->resetScreenPosition();
 		}));
 	}
 };
