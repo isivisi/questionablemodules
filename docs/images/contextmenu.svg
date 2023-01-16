@@ -25,8 +25,8 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:zoom="2.0058594"
-     inkscape:cx="136.5998"
-     inkscape:cy="256.24927"
+     inkscape:cx="68.299902"
+     inkscape:cy="256.74781"
      inkscape:window-width="2560"
      inkscape:window-height="1366"
      inkscape:window-x="0"
@@ -130,7 +130,7 @@
          sodipodi:role="line"
          id="tspan4230"
          x="34.399223"
-         y="107.24442">0 to 2147483647</tspan></text>
+         y="107.24442">-999 to 999</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:26.6667px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
