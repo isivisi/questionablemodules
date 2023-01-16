@@ -169,7 +169,7 @@ struct Node {
 
 	void setOutput(int out) {
 		
-		output = std::max(-1, out);
+		output = out;
 	}
 
 	void setChance(float ch) {
@@ -544,12 +544,9 @@ struct Treequencer : Module {
 
 		outputs[SEQUENCE_COMPLETE].setVoltage(sequenceP ? 10.f : 0.0f);
 
-		if (activeNode->output < 0) {
-			outputs[ALL_OUT].setVoltage(0.f);
-		} else {
-			if (activeNode->output < 8) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
-			outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
-		}
+
+		if (activeNode->output < 8 && activeNode->output <= 0) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
+		outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
 
 	}
 
@@ -817,7 +814,7 @@ struct NodeDisplay : Widget {
 		}
 
 		// node bg
-		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][octOffset%5]);
+		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][abs(octOffset%5)]);
         nvgBeginPath(vg);
         nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
@@ -830,7 +827,7 @@ struct NodeDisplay : Widget {
 		float gridStartX = xVal + (xSize/8);
 		float gridStartY = yVal + (xSize/8);
 
-		for (int i = 0; i < (node->output+1) % 12; i++) {
+		for (int i = 0; i < abs((node->output+1) % 12); i++) {
 
 			float boxX = gridStartX + (((NODE_SIZE/7)*scale) * (i%3));
 			float boxY = gridStartY + (((NODE_SIZE/7)*scale) * floor(i/3));
