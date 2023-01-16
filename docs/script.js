@@ -1,13 +1,13 @@
 // Settings
-var DocVersion = "v2.1.5";
+var DocVersion = "v2.1.6";
 var previousVersions = [
+    {
+        verison: "v2.1.5",
+        commit: "8f4f0ea4718606845b24d6cd821247752e57c334"
+    },
     {
         verison: "v2.1.4",
     }
-    /*{
-        verison: "v2.1.4",
-        commit: "ae440e0e43fe738f03537fc4261bc3fdc9fc9ad1"
-    }*/
 ]
 
 async function importHTML(file, parent=undefined) {
