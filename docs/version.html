@@ -1,6 +1,6 @@
 
 <span class="dropdown">
-        <a class="btn bg-white text-dark btn-sm dropdown-toggle" href="" role="button" id="versionDropdown" data-bs-toggle="dropdown">
+        <a class="bg-white text-dark btn-sm dropdown-toggle" href="" role="button" id="versionDropdown" data-bs-toggle="dropdown">
           Version
         </a>
       
@@ -19,6 +19,7 @@
 
     for (var i = 0; i < previousVersions.length; i++) {
         var version = previousVersions[i]
-        dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://rawcdn.githack.com/isivisi/questionablemodules/${version.commit}/docs/${currFile}">${version.verison}</a></li>`
+        if (version.hasOwnProperty("commit")) dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://rawcdn.githack.com/isivisi/questionablemodules/${version.commit}/docs/${currFile}">${version.verison}</a></li>`
+        else dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://github.com/isivisi/questionablemodules/wiki/${currFile.replace(".html", "")}">${version.verison}</a></li>`
     }
 </script>
