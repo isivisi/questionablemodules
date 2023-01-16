@@ -89,23 +89,23 @@ struct Scale {
 		return sequence;
 	}
 
-	int getNextInSequence(std::vector<int> sequence, int maxSize) {
-		int offset;
+	int getNextInSequence(std::vector<int>& sequence, int maxSize) {
+		int offset = 0;
 		if (!sequence.size()) offset = randomInteger(0, maxSize);
 		else {
-			int randomType = randomInteger(1, 4);
+			int randomType = randomInteger(0, 3);
 			switch (randomType) {
 				case 0: // random number nearby
-					offset = randomInteger(sequence.back()-3, sequence.back()+3);
+					offset = randomInteger(sequence.back()-9, sequence.back()+9);
 					break;
 				case 1: // move a 3rd
-					offset = randomInteger(0,1) ? sequence.back()+3 : sequence.back()-3;
+					offset = (randomInteger(0,1) ? sequence.front()+3 : sequence.front()-3) * std::max(1, (int)(sequence.back() / 12));
 					break;
 				case 2: // move a 5th
-					offset = randomInteger(0,1) ? sequence.back()+5 : sequence.back()-5;
+					offset = (randomInteger(0,1) ? sequence.front()+5 : sequence.front()-5) * std::max(1, (int)(sequence.back() / 12));
 					break;
 				case 3: // move a 7th
-					offset = randomInteger(0,1) ? sequence.back()+7 : sequence.back()-7;
+					offset = (randomInteger(0,1) ? sequence.front()+7 : sequence.front()-7) * std::max(1, (int)(sequence.back() / 12));
 					break;
 			}
 		}
@@ -244,18 +244,22 @@ struct Node {
 		return *std::max_element(sizes.begin(), sizes.end());
 	}
 
-	void generateSequencesToDepth(Scale s, int d/*, std::vector<int> history=std::vector<int>()*/) {
+	void generateSequencesToDepth(Scale s, int d, std::vector<int> history=std::vector<int>()) {
 		if (d <= 0) return;
 		if (depth >= 21) return;
 
 		if (Node* child1 = addChild()) {
-			child1->output = s.getNextInSequence(std::vector<int>{output}, 24);
-			child1->generateSequencesToDepth(s, d-1);
+			std::vector<int> c1History = history;
+			c1History.push_back(output);
+			child1->output = s.getNextInSequence(c1History, 48);
+			child1->generateSequencesToDepth(s, d-1, c1History);
 		}
 		
 		if (Node* child2 = addChild()) {
-			child2->output = s.getNextInSequence(std::vector<int>{output}, 24);
-			child2->generateSequencesToDepth(s, d-1);
+			std::vector<int> c2History = history;
+			c2History.push_back(output);
+			child2->output = s.getNextInSequence(c2History, 48);
+			child2->generateSequencesToDepth(s, d-1, c2History);
 		}
 	}
 
