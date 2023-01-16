@@ -89,11 +89,11 @@ struct Scale {
 		return sequence;
 	}
 
-	int getNextInSequence(std::vector<int>& sequence, int maxSize) {
+	int getNextInSequence(std::vector<int> sequence, int maxSize) {
 		int offset;
-		if (!sequence.size()) offset = randomInteger(1, maxSize);
-		else randomInteger(sequence.back()-5, sequence.back()+5);
-		return notes[offset%12] * (offset/12);
+		if (!sequence.size()) offset = randomInteger(0, maxSize);
+		else offset = randomInteger(sequence.back()-5, sequence.back()+5);
+		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
 	}
 
 	static std::string getNoteString(int note) {
@@ -201,6 +201,7 @@ struct Node {
   	}
 
 	Node* addChild() {
+		if (children.size() > 1) return nullptr;
 
 		Node* child = new Node(this);
 		child->parent = this;
@@ -227,21 +228,23 @@ struct Node {
 		return *std::max_element(sizes.begin(), sizes.end());
 	}
 
-	void generateSequencesToDepth(Scale s, int depth, std::vector<int> history=std::vector<int>()) {
-		if (depth <= 0) return;
+	void generateSequencesToDepth(Scale s, int d, std::vector<int> history=std::vector<int>()) {
+		if (d <= 0) return;
+		if (depth >= 21) return;
 
-		Node* child1 = addChild();
-		child1->output = s.getNextInSequence(history, 24);
-		Node* child2 = addChild();
-		child2->output = s.getNextInSequence(history, 24);
-
-		std::vector<int> child1History = history;
-		child1History.push_back(child1->output);
-		std::vector<int> child2History = history;
-		child2History.push_back(child2->output);
-
-		child1->generateSequencesToDepth(s, depth-1, child1History);
-		child2->generateSequencesToDepth(s, depth-1, child2History);
+		if (Node* child1 = addChild()) {
+			child1->output = s.getNextInSequence(history, 24);
+			std::vector<int> child1History = history;
+			child1History.push_back(child1->output);
+			child1->generateSequencesToDepth(s, d-1, child1History);
+		}
+		
+		if (Node* child2 = addChild()) {
+			child2->output = s.getNextInSequence(history, 24);
+			std::vector<int> child2History = history;
+			child2History.push_back(child2->output);
+			child2->generateSequencesToDepth(s, d-1, child2History);
+		}
 	}
 
 	json_t* const toJson() {
@@ -677,7 +680,7 @@ struct NodeDisplay : Widget {
 			for (int i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
-						node->generateSequencesToDepth(scales[i], 12);
+						node->generateSequencesToDepth(scales[i], 8);
 						renderStateDirty();
 					});
 				}));
