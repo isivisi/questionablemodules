@@ -92,7 +92,7 @@ struct Scale {
 	int getNextInSequence(std::vector<int> sequence, int maxSize) {
 		int offset;
 		if (!sequence.size()) offset = randomInteger(0, maxSize);
-		else offset = randomInteger(sequence.back()-5, sequence.back()+5);
+		else offset = randomInteger(sequence.back()-3, sequence.back()+3);
 		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
 	}
 
@@ -228,22 +228,18 @@ struct Node {
 		return *std::max_element(sizes.begin(), sizes.end());
 	}
 
-	void generateSequencesToDepth(Scale s, int d, std::vector<int> history=std::vector<int>()) {
+	void generateSequencesToDepth(Scale s, int d/*, std::vector<int> history=std::vector<int>()*/) {
 		if (d <= 0) return;
 		if (depth >= 21) return;
 
 		if (Node* child1 = addChild()) {
-			child1->output = s.getNextInSequence(history, 24);
-			std::vector<int> child1History = history;
-			child1History.push_back(child1->output);
-			child1->generateSequencesToDepth(s, d-1, child1History);
+			child1->output = s.getNextInSequence(std::vector<int>{output}, 24);
+			child1->generateSequencesToDepth(s, d-1);
 		}
 		
 		if (Node* child2 = addChild()) {
-			child2->output = s.getNextInSequence(history, 24);
-			std::vector<int> child2History = history;
-			child2History.push_back(child2->output);
-			child2->generateSequencesToDepth(s, d-1, child2History);
+			child2->output = s.getNextInSequence(std::vector<int>{output}, 24);
+			child2->generateSequencesToDepth(s, d-1);
 		}
 	}
 
