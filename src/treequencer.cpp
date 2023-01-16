@@ -114,7 +114,7 @@ struct Scale {
 
 	static std::string getNoteString(int note) {
 		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-		return noteStrings[note%12]+ std::to_string((int)(floor(note/12)+1));
+		return noteStrings[note%12] + std::to_string((int)((note/12)+1));
 	}
 
 	Scale getTransposedBy(int note) {
