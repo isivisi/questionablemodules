@@ -117,9 +117,10 @@ struct Scale {
 		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
 	}
 
-	static std::string getNoteString(int note) {
+	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
 		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-		return noteStrings[note%12] + std::to_string((int)((note/12)+1));
+		if (includeOctaveOffset) return noteStrings[abs(note%12)] + std::to_string((int)((note/12)+1));
+		else return noteStrings[abs(note%12)];
 	}
 	
 	// convert note to position offset
@@ -868,12 +869,16 @@ struct NodeDisplay : Widget {
 
 		}
 
-		//std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
-        //nvgFontFaceId(vg, font->handle);
-        //nvgFontSize(vg, 25);
-        //nvgFillColor(vg, nvgRGB(25,25,25));
+		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
+		nvgSave(vg);
+		float textScale = scale/4;
+		nvgScale(vg, textScale, textScale);
+        nvgFontFaceId(vg, font->handle);
+        nvgFontSize(vg, 50);
+        nvgFillColor(vg, nvgRGB(44,44,44));
     	//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
-        //nvgText(vg, xVal + (xSize/2), yVal + (xSize/2), Scale::getNoteString(node->output).c_str(), NULL);
+        nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
+		nvgRestore(vg);
 
 		if (node->children.size() > 1) {
 			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
