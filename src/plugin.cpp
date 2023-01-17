@@ -1,7 +1,16 @@
 #include "plugin.hpp"
+#include "settings.hpp"
 
 
 Plugin* pluginInstance;
+
+UserSettings pluginSettings("questionablemodules.json", [](json_t* json) {
+	// first time initialization
+
+	json_object_set_new(json, "theme", json_integer(0));
+
+	return json;
+});
 
 void init(Plugin* p) {
 	pluginInstance = p;

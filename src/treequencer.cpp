@@ -1131,16 +1131,19 @@ struct TreequencerWidget : ModuleWidget {
 				color->drawBackground = false;
 				color->setTheme(BG_THEMES["Dark"]); // for text
 				mod->theme = "";
+				pluginSettings.setSetting<std::string>("theme", "");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Light"]);
 				mod->theme = "Light";
+				pluginSettings.setSetting<std::string>("theme", "Light");
 			}));
 			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
+				pluginSettings.setSetting<std::string>("theme", "Dark");
 			}));
 		}));
 
