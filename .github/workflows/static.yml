@@ -23,6 +23,7 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
+    if: ${{ (startsWith(github.ref, 'refs/tags/doc') && github.repository_owner == 'isivisi') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
