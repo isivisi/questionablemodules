@@ -871,7 +871,7 @@ struct NodeDisplay : Widget {
 
 		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
 		nvgSave(vg);
-		float textScale = scale/4;
+		float textScale = scale/6;
 		nvgScale(vg, textScale, textScale);
         nvgFontFaceId(vg, font->handle);
         nvgFontSize(vg, 50);
