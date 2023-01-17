@@ -3,7 +3,7 @@ var DocVersion = "v2.1.6";
 var previousVersions = [
     {
         verison: "v2.1.5",
-        commit: "8f4f0ea4718606845b24d6cd821247752e57c334"
+        commit: "doc2.1.5"
     },
     {
         verison: "v2.1.4",
