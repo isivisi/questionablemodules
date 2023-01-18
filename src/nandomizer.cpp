@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
 #include "colorBG.cpp"
+#include "questionableModule.hpp"
 #include <vector>
 #include <algorithm>
 
@@ -16,7 +17,7 @@ const int MODULE_SIZE = 8;
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
 
-struct Nandomizer : Module {
+struct Nandomizer : QuestionableModule {
 	enum ParamId {
 		FADE_PARAM,
 		PARAMS_LEN
@@ -50,8 +51,6 @@ struct Nandomizer : Module {
 		BLINK_LIGHT,
 		LIGHTS_LEN
 	};
-
-	std::string theme = userSettings.getSetting<std::string>("theme");
 
 	int inputsUsed{8};
 
@@ -147,20 +146,9 @@ struct Nandomizer : Module {
 
 	}
 
-	json_t* dataToJson() {
-		json_t* nodeJ = json_object();
-		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
-		return nodeJ;
-	}
-
-	void dataFromJson(json_t* rootJ) override {
-		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
-	}
 };
 
-struct NandomizerWidget : ModuleWidget {
-	ImagePanel *backdrop;
-	ColorBG* color;
+struct NandomizerWidget : QuestionableWidget {
 
 	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
@@ -202,29 +190,6 @@ struct NandomizerWidget : ModuleWidget {
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
 	}
 
-	void appendContextMenu(Menu *menu) override
-  	{
-		Nandomizer* mod = (Nandomizer*)module;
-		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Default", "",[=]() {
-				color->drawBackground = false;
-				mod->theme = "";
-				userSettings.setSetting<std::string>("theme", "");
-			}));
-			menu->addChild(createMenuItem("Boring", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Light"]);
-				mod->theme = "Light";
-				userSettings.setSetting<std::string>("theme", "Light");
-			}));
-			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Dark"]);
-				mod->theme = "Dark";
-				userSettings.setSetting<std::string>("theme", "Dark");
-			}));
-		}));
-	}
 };
 
 Model* modelNandomizer = createModel<Nandomizer, NandomizerWidget>("nandomizer");

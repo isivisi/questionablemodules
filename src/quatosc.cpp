@@ -1,6 +1,7 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
 #include "colorBG.cpp"
+#include "questionableModule.hpp"
 #include <gmtl/gmtl.h>
 #include <gmtl/Vec.h>
 #include <gmtl/Quat.h>
@@ -27,7 +28,7 @@ const float HALF_SEMITONE = 1.029302;
 
 bool reading = false;
 
-struct QuatOSC : Module {
+struct QuatOSC : QuestionableModule {
 	enum ParamId {
 		VOCT1_OCT,
 		VOCT2_OCT,
@@ -73,8 +74,6 @@ struct QuatOSC : Module {
 		BLINK_LIGHT,
 		LIGHTS_LEN
 	};
-
-	std::string theme = userSettings.getSetting<std::string>("theme");
 
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotation;
@@ -254,19 +253,19 @@ struct QuatOSC : Module {
 	}
 
 	json_t* dataToJson() {
-		json_t* nodeJ = json_object();
+		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
 		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
 		return nodeJ;
 	}
 
 	void dataFromJson(json_t* rootJ) override {
+		QuestionableModule::dataFromJson(rootJ);
+		
 		lfo1Phase = 0.8364f;
 		lfo2Phase = 0.435f;
 		lfo3Phase = 0.3234f;
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
-
-		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 		
 		resetPhase();
 	}
@@ -406,11 +405,9 @@ struct QuatDisplay : Widget {
 
 };
 
-struct QuatOSCWidget : ModuleWidget {
-	ImagePanel *backdrop;
+struct QuatOSCWidget : QuestionableWidget {
 	ImagePanel *fade;
 	QuatDisplay *display;
-	ColorBG* color;
 
 	void setText(NVGcolor c) {
 		color->textList.clear();
@@ -511,32 +508,6 @@ struct QuatOSCWidget : ModuleWidget {
 		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
 	}
-
-	void appendContextMenu(Menu *menu) override
-  	{
-		QuatOSC* mod = (QuatOSC*)module;
-		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Default", "",[=]() {
-				color->drawBackground = false;
-				color->setTheme(BG_THEMES["Dark"]); // for text
-				mod->theme = "";
-				userSettings.setSetting<std::string>("theme", "");
-			}));
-			menu->addChild(createMenuItem("Boring", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Light"]);
-				mod->theme = "Light";
-				userSettings.setSetting<std::string>("theme", "Light");
-			}));
-			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Dark"]);
-				mod->theme = "Dark";
-				userSettings.setSetting<std::string>("theme", "Dark");
-			}));
-		}));
-	}
-
 };
 
 Model* modelQuatOSC = createModel<QuatOSC, QuatOSCWidget>("quatosc");

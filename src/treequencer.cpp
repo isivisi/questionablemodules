@@ -2,6 +2,7 @@
 #include "imagepanel.cpp"
 #include "textfield.cpp"
 #include "colorBG.cpp"
+#include "questionableModule.hpp"
 #include <iostream>
 #include <map>
 #include <string>
@@ -314,7 +315,7 @@ struct Node {
     
 }*/
 
-struct Treequencer : Module {
+struct Treequencer : QuestionableModule {
 	enum ParamId {
 		FADE_PARAM,
 		TRIGGER_TYPE,
@@ -354,8 +355,6 @@ struct Treequencer : Module {
 		HOLD_LIGHT,
 		LIGHTS_LEN
 	};
-
-	std::string theme = userSettings.getSetting<std::string>("theme");
 
 	std::queue<std::function<void()>> audioThreadQueue;
 
@@ -565,20 +564,19 @@ struct Treequencer : Module {
 	}
 
 	json_t* dataToJson() override {
-		json_t* rootJ = json_object();
+		json_t* rootJ = QuestionableModule::dataToJson();
 		json_object_set_new(rootJ, "startScreenScale", json_real(startScreenScale));
 		json_object_set_new(rootJ, "startOffsetX", json_real(startOffsetX));
 		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
-		json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
-
 		return rootJ;
 	}
 
 
 	void dataFromJson(json_t* rootJ) override {
+		QuestionableModule::dataFromJson(rootJ);
 
 		if (json_t* sss = json_object_get(rootJ, "startScreenScale")) startScreenScale = json_real_value(sss);
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
@@ -1015,11 +1013,9 @@ struct NodeDisplay : Widget {
 
 };
 
-struct TreequencerWidget : ModuleWidget {
-	ImagePanel *backdrop;
+struct TreequencerWidget : QuestionableWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
-	ColorBG* color;
 
 	void setText(NVGcolor c) {
 		color->textList.clear();
@@ -1130,26 +1126,7 @@ struct TreequencerWidget : ModuleWidget {
 			}));
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Default", "",[=]() {
-				color->drawBackground = false;
-				color->setTheme(BG_THEMES["Dark"]); // for text
-				mod->theme = "";
-				userSettings.setSetting<std::string>("theme", "");
-			}));
-			menu->addChild(createMenuItem("Boring", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Light"]);
-				mod->theme = "Light";
-				userSettings.setSetting<std::string>("theme", "Light");
-			}));
-			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Dark"]);
-				mod->theme = "Dark";
-				userSettings.setSetting<std::string>("theme", "Dark");
-			}));
-		}));
+		QuestionableWidget::appendContextMenu(menu);
 
 		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
 			display->resetScreenPosition();
