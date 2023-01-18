@@ -18,8 +18,6 @@ void init(Plugin* p) {
 	p->addModel(modelTreequencer);
 	p->addModel(modelQuatOSC);
 
-	userSettings.setSetting<std::string>("theme", "Dark");
-
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.
 }
