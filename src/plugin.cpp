@@ -5,6 +5,7 @@ UserSettings userSettings("questionablemodules.json", [](json_t* json) {
 	// Runs at program start
 
 	UserSettings::json_create_if_not_exists(json, "theme", json_string(""));
+	UserSettings::json_create_if_not_exists(json, "treequencerScreenColor", json_integer(0));
 
 	return json;
 });

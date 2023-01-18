@@ -363,7 +363,7 @@ struct Treequencer : Module {
 	float startScreenScale = 12.9f;
 	float startOffsetX = 12.5f;
 	float startOffsetY = -11.f;
-	int colorMode = 0;
+	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -1114,15 +1114,19 @@ struct TreequencerWidget : ModuleWidget {
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 0; });
+				userSettings.setSetting<int>("treequencerScreenColor", 0);
 			}));
 			menu->addChild(createMenuItem("Vibrant", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 1; });
+				userSettings.setSetting<int>("treequencerScreenColor", 1);
 			}));
 			menu->addChild(createMenuItem("Muted", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 2; });
+				userSettings.setSetting<int>("treequencerScreenColor", 2);
 			}));
 			menu->addChild(createMenuItem("Greyscale", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 3; });
+				userSettings.setSetting<int>("treequencerScreenColor", 3);
 			}));
 		}));
 
