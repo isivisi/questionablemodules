@@ -25,12 +25,12 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:zoom="2.0058594"
-     inkscape:cx="206.89387"
-     inkscape:cy="255.75073"
+     inkscape:cx="68.299902"
+     inkscape:cy="256.74781"
      inkscape:window-width="2560"
      inkscape:window-height="1366"
-     inkscape:window-x="2560"
-     inkscape:window-y="104"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -42,7 +42,7 @@
     <rect
        style="fill:#e6e6e6;stroke:#474747;stroke-width:0"
        id="rect788"
-       width="326.54333"
+       width="451.17819"
        height="495.54819"
        x="11.964947"
        y="10.469328"
@@ -60,7 +60,7 @@
     <rect
        style="fill:#ffffff;stroke:#474747;stroke-width:0"
        id="rect1058"
-       width="309.09445"
+       width="434.72601"
        height="63.314507"
        x="19.443039"
        y="65.308662"
@@ -78,7 +78,7 @@
     <rect
        style="fill:#ffffff;stroke:#474747;stroke-width:0"
        id="rect1166"
-       width="309.09445"
+       width="434.72641"
        height="63.314507"
        x="18.9445"
        y="184.47711"
@@ -86,33 +86,33 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
-       x="18.9445"
-       y="297.15872"
+       x="20.440119"
+       y="296.16165"
        id="text1170"><tspan
          sodipodi:role="line"
          id="tspan1168"
-         x="18.9445"
-         y="297.15872">Preview</tspan></text>
+         x="20.440119"
+         y="296.16165">Preview</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
-       x="18.445961"
-       y="388.42065"
+       x="19.94158"
+       y="370.47324"
        id="text1176"><tspan
          sodipodi:role="line"
          id="tspan1174"
-         x="18.445961"
-         y="388.42065">Add Child</tspan></text>
+         x="19.94158"
+         y="370.47324">Add Child</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
-       x="17.947422"
-       y="450.76144"
+       x="18.932816"
+       y="428.82571"
        id="text1182"><tspan
          sodipodi:role="line"
          id="tspan1180"
-         x="17.947422"
-         y="450.76144">Remove</tspan></text>
+         x="18.932816"
+         y="428.82571">Remove</tspan></text>
     <rect
        style="fill:#1a1a1a;stroke:#474747;stroke-width:0"
        id="rect1184"
@@ -130,7 +130,7 @@
          sodipodi:role="line"
          id="tspan4230"
          x="34.399223"
-         y="107.24442">0 to 2147483647</tspan></text>
+         y="107.24442">-999 to 999</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:26.6667px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
@@ -141,5 +141,33 @@
          id="tspan4234"
          x="34.915287"
          y="228.88805">0.0 to 1.0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+       x="17.947422"
+       y="484.66211"
+       id="text307"><tspan
+         sodipodi:role="line"
+         id="tspan305"
+         x="17.947422"
+         y="484.66211">Generate Sequence</tspan></text>
+    <path
+       sodipodi:type="star"
+       style="fill:#000000;stroke:none;stroke-width:7.55906"
+       id="path463"
+       inkscape:flatsided="false"
+       sodipodi:sides="3"
+       sodipodi:cx="391.35345"
+       sodipodi:cy="456.66211"
+       sodipodi:r1="11.818645"
+       sodipodi:r2="5.9093227"
+       sodipodi:arg1="2.0533096"
+       sodipodi:arg2="3.1005072"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 385.86952,467.13144 -0.4204,-10.22661 -0.4204,-10.22661 9.0667,4.74923 9.06671,4.74922 -8.64631,5.47738 z"
+       inkscape:transform-center-x="-2.8908318"
+       inkscape:transform-center-y="-0.073440661"
+       transform="rotate(3.0661123,107.31615,1368.903)" />
   </g>
 </svg>

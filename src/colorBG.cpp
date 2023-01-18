@@ -65,7 +65,7 @@ struct ColorBG : Widget {
             
             for (int i = 0; i < textList.size(); i++) {
                 drawableText textDef = textList[i];
-                std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font)));
+                std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
                 if (!font) return;
                 nvgFontFaceId(args.vg, font->handle);
                 nvgTextLetterSpacing(args.vg, 0.0);

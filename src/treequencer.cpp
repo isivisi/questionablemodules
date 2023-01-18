@@ -72,6 +72,86 @@ bool isNumber(std::string s)
 	return char_pos == s.size(); // must reach the ending 0 of the string 
 }
 
+struct Scale {
+	std::string name;
+	std::vector<int> notes;
+
+	// probabilities[note] = {anotherNote: probability, ...}
+	//std::map<int, std::map<int, float>> probabilities;
+
+	std::vector<int> generateRandom(int size) {
+		std::vector<int> sequence = sequence;
+
+		for (int i = 0; i < size; i++) {
+			sequence.push_back(getNextInSequence(sequence, size));
+		}
+
+		return sequence;
+	}
+
+	int getNextInSequence(std::vector<int> sequence, int maxSize) {
+		int offset = 0;
+
+		// convert back to offset values
+		int front = toOffset(sequence.front());
+		int back = toOffset(sequence.back());
+
+		if (!sequence.size()) offset = randomInteger(0, maxSize);
+		else {
+			int randomType = randomInteger(0, 3);
+			switch (randomType) {
+				case 0: // random number nearby
+					offset = randomInteger(back-9, back+9);
+					break;
+				case 1: // move a 3rd
+					offset = (randomInteger(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
+					break;
+				case 2: // move a 5th
+					offset = (randomInteger(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
+					break;
+				case 3: // move a 7th
+					offset = (randomInteger(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
+					break;
+			}
+		}
+		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
+	}
+
+	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
+		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+		if (includeOctaveOffset) return noteStrings[abs(note%12)] + std::to_string((int)((note/12)+1));
+		else return noteStrings[abs(note%12)];
+	}
+	
+	// convert note to position offset
+	int toOffset(int note) {
+		for (int i = 0; i < notes.size(); i++) {
+			if (notes[i] == abs(note % (int)notes.size())) return i * (note / (int)notes.size());
+		}
+		return 0;
+	}
+
+	Scale getTransposedBy(int note) {
+		Scale newScale;
+		newScale.name = Scale::getNoteString(note) + std::string(" ") + name;
+		for (int i = 0; i < notes.size(); i++) {
+			newScale.notes.push_back(notes[i] + note);
+		}
+		return newScale;
+	}
+};
+
+// All starting at C
+std::vector<Scale> scales = {
+	Scale{"Chromatic", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}, // C(0), C#(1), D(2), D#(3), E(4), F(5), F#(6), G(7), G#(8), A(9), A#(10), B(11)
+	Scale{"Major", {0, 2, 4, 5, 7, 9, 11}}, // C, D, E, F, G, A, B
+	Scale{"Minor", {0, 2, 3, 5, 7, 8, 10}}, // C, D, D#, F, G, G#, A#
+	Scale{"Pentatonic", {0, 2, 5, 7, 10}}, // C, D, F, G, A#
+	Scale{"Blues", {0, 3, 5, 6, 7, 10}}, // C, D#, F, F#, G, A#
+	Scale{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
+	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
+};
+
 // A node in the tree
 struct Node {
   	int output = 0;
@@ -103,7 +183,7 @@ struct Node {
 
 	void setOutput(int out) {
 		
-		output = std::max(-1, out);
+		output = out;
 	}
 
 	void setChance(float ch) {
@@ -150,13 +230,16 @@ struct Node {
 		children.push_back(child2);
   	}
 
-	void addChild() {
+	Node* addChild() {
+		if (children.size() > 1) return nullptr;
 
 		Node* child = new Node(this);
 		child->parent = this;
 		child->chance = randFloat(0.9f);
 		child->output = randomInteger(-1, 7);
 		children.push_back(child);
+
+		return child;
 
 	}
 
@@ -173,6 +256,25 @@ struct Node {
 			sizes.push_back(children[i]->maxDepth() + 1);
 		}
 		return *std::max_element(sizes.begin(), sizes.end());
+	}
+
+	void generateSequencesToDepth(Scale s, int d, std::vector<int> history=std::vector<int>()) {
+		if (d <= 0) return;
+		if (depth >= 21) return;
+
+		if (Node* child1 = addChild()) {
+			std::vector<int> c1History = history;
+			c1History.push_back(output);
+			child1->output = s.getNextInSequence(c1History, 48);
+			child1->generateSequencesToDepth(s, d-1, c1History);
+		}
+		
+		if (Node* child2 = addChild()) {
+			std::vector<int> c2History = history;
+			c2History.push_back(output);
+			child2->output = s.getNextInSequence(c2History, 48);
+			child2->generateSequencesToDepth(s, d-1, c2History);
+		}
 	}
 
 	json_t* const toJson() {
@@ -253,7 +355,7 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
-	std::string theme;
+	std::string theme = userSettings.getSetting<std::string>("theme");
 
 	std::queue<std::function<void()>> audioThreadQueue;
 
@@ -261,7 +363,7 @@ struct Treequencer : Module {
 	float startScreenScale = 12.9f;
 	float startOffsetX = 12.5f;
 	float startOffsetY = -11.f;
-	int colorMode = 0;
+	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -456,12 +558,9 @@ struct Treequencer : Module {
 
 		outputs[SEQUENCE_COMPLETE].setVoltage(sequenceP ? 10.f : 0.0f);
 
-		if (activeNode->output < 0) {
-			outputs[ALL_OUT].setVoltage(0.f);
-		} else {
-			if (activeNode->output < 8) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
-			outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
-		}
+
+		if (activeNode->output < 8 && activeNode->output <= 0) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f); 
+		outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
 
 	}
 
@@ -520,6 +619,14 @@ struct NodeDisplay : Widget {
 
 	NodeDisplay() {
 
+	}
+
+	void resetScreenPosition() {
+		xOffset = 25;
+		yOffset = 0;
+		dragX = 0;
+		dragY = 0;
+		screenScale = 3.5f;
 	}
 
 	void renderStateDirty() {
@@ -603,6 +710,17 @@ struct NodeDisplay : Widget {
 				renderStateDirty();
 			});
 		}));
+
+		menu->addChild(rack::createSubmenuItem("Generate Sequence", "", [=](ui::Menu* menu) {
+			for (int i = 0; i < scales.size(); i++) {
+				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
+					mod->onAudioThread([=]() { 
+						node->generateSequencesToDepth(scales[i], 8);
+						renderStateDirty();
+					});
+				}));
+			}
+		}));
 		
 	}
 
@@ -672,7 +790,7 @@ struct NodeDisplay : Widget {
 	}
 
 	// https://personal.sron.nl/~pault/
-	const NVGcolor octColors[3][5] = {
+	const NVGcolor octColors[4][5] = {
 		{ // Tol Light
 			nvgRGB(238,136,102), // orange
 			nvgRGB(153,221,255), // cyan
@@ -693,13 +811,21 @@ struct NodeDisplay : Widget {
 			nvgRGB(170,68,153), // purple
 			nvgRGB(136,34,85), // wine
 			nvgRGB(221,204,119) // sand
+		},
+		{ // White
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
+			nvgRGB(200,200,200),
 		}
 	};
 
-	const NVGcolor activeColor[3] = {
+	const NVGcolor activeColor[4] = {
 		nvgRGB(68,187,153),
 		nvgRGB(0,153,136),
-		nvgRGB(68,170,153)
+		nvgRGB(68,170,153),
+		nvgRGB(68,187,153)
 	};
 
 	void drawNode(NVGcontext* vg, Node* node, float x, float y,  float scale) {
@@ -718,7 +844,7 @@ struct NodeDisplay : Widget {
 		}
 
 		// node bg
-		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][octOffset%5]);
+		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][abs(octOffset%5)]);
         nvgBeginPath(vg);
         nvgRect(vg, xVal, yVal, xSize, ySize);
         nvgFill(vg);
@@ -731,7 +857,7 @@ struct NodeDisplay : Widget {
 		float gridStartX = xVal + (xSize/8);
 		float gridStartY = yVal + (xSize/8);
 
-		for (int i = 0; i < (node->output+1) % 12; i++) {
+		for (int i = 0; i < abs((node->output+1) % 12); i++) {
 
 			float boxX = gridStartX + (((NODE_SIZE/7)*scale) * (i%3));
 			float boxY = gridStartY + (((NODE_SIZE/7)*scale) * floor(i/3));
@@ -742,6 +868,17 @@ struct NodeDisplay : Widget {
 			nvgFill(vg);
 
 		}
+
+		/*std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
+		nvgSave(vg);
+		float textScale = scale/6;
+		nvgScale(vg, textScale, textScale);
+        nvgFontFaceId(vg, font->handle);
+        nvgFontSize(vg, 50);
+        nvgFillColor(vg, nvgRGB(44,44,44));
+    	//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
+        nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
+		nvgRestore(vg);*/
 
 		if (node->children.size() > 1) {
 			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
@@ -977,12 +1114,19 @@ struct TreequencerWidget : ModuleWidget {
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 0; });
+				userSettings.setSetting<int>("treequencerScreenColor", 0);
 			}));
 			menu->addChild(createMenuItem("Vibrant", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 1; });
+				userSettings.setSetting<int>("treequencerScreenColor", 1);
 			}));
 			menu->addChild(createMenuItem("Muted", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 2; });
+				userSettings.setSetting<int>("treequencerScreenColor", 2);
+			}));
+			menu->addChild(createMenuItem("Greyscale", "", [=]() {
+				mod->onAudioThread([=]() { mod->colorMode = 3; });
+				userSettings.setSetting<int>("treequencerScreenColor", 3);
 			}));
 		}));
 
@@ -991,17 +1135,24 @@ struct TreequencerWidget : ModuleWidget {
 				color->drawBackground = false;
 				color->setTheme(BG_THEMES["Dark"]); // for text
 				mod->theme = "";
+				userSettings.setSetting<std::string>("theme", "");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Light"]);
 				mod->theme = "Light";
+				userSettings.setSetting<std::string>("theme", "Light");
 			}));
 			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
+				userSettings.setSetting<std::string>("theme", "Dark");
 			}));
+		}));
+
+		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
+			display->resetScreenPosition();
 		}));
 	}
 };
