@@ -277,7 +277,6 @@ struct QuatOSC : QuestionableModule {
 	json_t* dataToJson() {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
-		json_object_set_new(nodeJ, "theme", json_string(theme.c_str()));
 		return nodeJ;
 	}
 
