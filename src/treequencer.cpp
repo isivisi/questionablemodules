@@ -869,7 +869,7 @@ struct NodeDisplay : Widget {
 
 		}
 
-		std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
+		/*std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
 		nvgSave(vg);
 		float textScale = scale/6;
 		nvgScale(vg, textScale, textScale);
@@ -878,7 +878,7 @@ struct NodeDisplay : Widget {
         nvgFillColor(vg, nvgRGB(44,44,44));
     	//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
         nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
-		nvgRestore(vg);
+		nvgRestore(vg);*/
 
 		if (node->children.size() > 1) {
 			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
