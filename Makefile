@@ -2,7 +2,7 @@
 RACK_DIR ?= ../..
 
 # FLAGS will be passed to both the C and C++ compiler
-FLAGS += -I ./src/gmtl
+FLAGS += -std=c++17 -I ./src/gmtl
 CFLAGS +=
 CXXFLAGS +=
 
