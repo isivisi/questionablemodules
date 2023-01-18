@@ -1,7 +1,7 @@
 {
   "plugin": "questionablemodules",
   "model": "quatosc",
-  "version": "2.1.6",
+  "version": "2.1.5",
   "params": [
     {
       "value": 5.6385593414306641,
