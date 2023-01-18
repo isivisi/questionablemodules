@@ -61,7 +61,7 @@ struct Discombobulator : Module {
 		LIGHTS_LEN
 	};
 
-	std::string theme;
+	std::string theme = userSettings.getSetting<std::string>("theme");
 
 	int inputsUsed{8};
 
@@ -218,16 +218,19 @@ struct DiscombobulatorWidget : ModuleWidget {
 			menu->addChild(createMenuItem("Default", "",[=]() {
 				color->drawBackground = false;
 				mod->theme = "";
+				userSettings.setSetting<std::string>("theme", "");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Light"]);
 				mod->theme = "Light";
+				userSettings.setSetting<std::string>("theme", "Light");
 			}));
 			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
+				userSettings.setSetting<std::string>("theme", "Dark");
 			}));
 		}));
 	}

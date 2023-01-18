@@ -74,7 +74,7 @@ struct QuatOSC : Module {
 		LIGHTS_LEN
 	};
 
-	std::string theme;
+	std::string theme = userSettings.getSetting<std::string>("theme");
 
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotation;
@@ -265,7 +265,9 @@ struct QuatOSC : Module {
 		lfo2Phase = 0.435f;
 		lfo3Phase = 0.3234f;
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
+
 		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+		
 		resetPhase();
 	}
 
@@ -518,16 +520,19 @@ struct QuatOSCWidget : ModuleWidget {
 				color->drawBackground = false;
 				color->setTheme(BG_THEMES["Dark"]); // for text
 				mod->theme = "";
+				userSettings.setSetting<std::string>("theme", "");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Light"]);
 				mod->theme = "Light";
+				userSettings.setSetting<std::string>("theme", "Light");
 			}));
 			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
+				userSettings.setSetting<std::string>("theme", "Dark");
 			}));
 		}));
 	}

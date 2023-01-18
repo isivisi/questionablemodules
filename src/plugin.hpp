@@ -1,8 +1,9 @@
 #pragma once
 #include <rack.hpp>
-
-
 using namespace rack;
+#include "settings.hpp"
+
+extern UserSettings userSettings;
 
 // Declare the Plugin, defined in plugin.cpp
 extern Plugin* pluginInstance;

@@ -355,7 +355,7 @@ struct Treequencer : Module {
 		LIGHTS_LEN
 	};
 
-	std::string theme;
+	std::string theme = userSettings.getSetting<std::string>("theme");
 
 	std::queue<std::function<void()>> audioThreadQueue;
 
@@ -1131,19 +1131,19 @@ struct TreequencerWidget : ModuleWidget {
 				color->drawBackground = false;
 				color->setTheme(BG_THEMES["Dark"]); // for text
 				mod->theme = "";
-				pluginSettings.setSetting<std::string>("theme", "");
+				userSettings.setSetting<std::string>("theme", "");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Light"]);
 				mod->theme = "Light";
-				pluginSettings.setSetting<std::string>("theme", "Light");
+				userSettings.setSetting<std::string>("theme", "Light");
 			}));
 			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
-				pluginSettings.setSetting<std::string>("theme", "Dark");
+				userSettings.setSetting<std::string>("theme", "Dark");
 			}));
 		}));
 
