@@ -104,6 +104,10 @@ struct QuatOSC : QuestionableModule {
 	std::queue<gmtl::Vec3f> yPointSamples;
 	std::queue<gmtl::Vec3f> zPointSamples;
 
+	bool oct1Connected = false;
+	bool oct2Connected = false;
+	bool oct3Connected = false;
+
 	QuatOSC() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configParam(X_FLO_I_PARAM, 0.f, 1.f, 0.f, "X LFO Influence");
@@ -182,12 +186,30 @@ struct QuatOSC : QuestionableModule {
 		return sin(2.f * M_PI * phase);
 	}
 
-	void resetPhase() {
+	void resetPhase(bool resetLfo=false) {
 		sphereQuat = gmtl::Quatf(0,0,0,1);
+		if (resetLfo) {
+			lfo1Phase = 0.8364f;
+			lfo2Phase = 0.435f;
+			lfo3Phase = 0.3234f;
+		}
 	}
 
 	void process(const ProcessArgs& args) override {
 		gmtl::Quatf newRot;
+
+		if (oct1Connected != inputs[VOCT].isConnected()) {
+			oct1Connected = inputs[VOCT].isConnected();
+			resetPhase(true);
+		}
+		if (oct2Connected != inputs[VOCT2].isConnected()) {
+			oct2Connected = inputs[VOCT2].isConnected();
+			resetPhase(true);
+		}
+		if (oct3Connected != inputs[VOCT3].isConnected()) {
+			oct3Connected = inputs[VOCT3].isConnected();
+			resetPhase(true);
+		}
 
 		if (inputs[CLOCK_INPUT].isConnected()) {
 			clockTimer.process(args.sampleTime);
@@ -262,12 +284,9 @@ struct QuatOSC : QuestionableModule {
 	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
 		
-		lfo1Phase = 0.8364f;
-		lfo2Phase = 0.435f;
-		lfo3Phase = 0.3234f;
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
 		
-		resetPhase();
+		resetPhase(true);
 	}
 
 };
