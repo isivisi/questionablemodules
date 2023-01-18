@@ -2,9 +2,9 @@
 
 Plugin* pluginInstance;
 UserSettings userSettings("questionablemodules.json", [](json_t* json) {
-	// first time initialization
+	// Runs at program start
 
-	json_object_set_new(json, "theme", json_string(""));
+	UserSettings::json_create_if_not_exists(json, "theme", json_string(""));
 
 	return json;
 });

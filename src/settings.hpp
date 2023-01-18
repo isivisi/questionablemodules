@@ -16,13 +16,14 @@ struct UserSettings {
         settingFileName = fn;
 
         if (initFunction) {
-            std::ifstream file(asset::user(settingFileName));
-            if (!file.is_open()) {
-                json_t* json = readSettings();
-                json = initFunction(json);
-                saveSettings(json);
-            } else file.close();
+            json_t* json = readSettings();
+            json = initFunction(json);
+            saveSettings(json);
         }
+    }
+
+    static void json_create_if_not_exists(json_t* json, std::string name, json_t* value) {
+        if (!json_object_get(json, name.c_str())) json_object_set_new(json, name.c_str(), value);
     }
 
     template <typename T>
