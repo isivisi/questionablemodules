@@ -1,6 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
-#include "colorBG.cpp"
+#include "colorBG.hpp"
 #include "questionableModule.hpp"
 #include <vector>
 #include <algorithm>

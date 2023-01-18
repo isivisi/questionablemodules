@@ -1,4 +1,6 @@
 #include "plugin.hpp"
+#include "colorBG.hpp"
+#include <string>
 
 struct QuestionableModule : Module {
     std::string theme = userSettings.getSetting<std::string>("theme");
