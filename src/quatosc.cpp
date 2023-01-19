@@ -160,7 +160,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::floor(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float flerp(float point1, float point2, float t) {
@@ -193,7 +193,6 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	void process(const ProcessArgs& args) override {
-		gmtl::Quatf newRot;
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
 			oct1Connected = inputs[VOCT].isConnected();
@@ -220,15 +219,19 @@ struct QuatOSC : QuestionableModule {
 			}
 		} else clockFreq = 2.f;
 
-		float lfo1Val = getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT)));
-		float lfo2Val = getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2)));
-		float lfo3Val = getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)));
-
-		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
+		gmtl::Vec3f angle = gmtl::Vec3f(
+			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT))), 
+			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2))), 
+			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)))
+		);
 		gmtl::Quatf rotOffset = gmtl::makePure(angle);
 		gmtl::normalize(rotOffset);
 
-		gmtl::Quatf  rotAddition = gmtl::makePure(gmtl::Vec3f(getValue(X_FLO_ROT_PARAM) * args.sampleTime, getValue(Y_FLO_ROT_PARAM)* args.sampleTime, getValue(Z_FLO_ROT_PARAM)* args.sampleTime));
+		gmtl::Quatf rotAddition = gmtl::makePure(gmtl::Vec3f(
+			getValue(X_FLO_ROT_PARAM) * args.sampleTime, 
+			getValue(Y_FLO_ROT_PARAM)* args.sampleTime, 
+			getValue(Z_FLO_ROT_PARAM)* args.sampleTime
+		));
 		rotationAccumulation += rotAddition * rotationAccumulation;
 
 		sphereQuat = rotationAccumulation * rotOffset;
