@@ -160,7 +160,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::floor(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float flerp(float point1, float point2, float t) {
@@ -193,10 +193,10 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	float smoothDephase(float offset, float phase, float sampleTime) {
-		float flo1PhaseError = std::asin(phase) - std::asin(offset);
-		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
-		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
-		return flerp(phase, phase - (flo1PhaseError), sampleTime);
+		float phaseError = std::asin(phase) - std::asin(offset);
+		if (phaseError > M_PI) phaseError -= 2*M_PI;
+		else if (phaseError < -M_PI) phaseError += 2*M_PI;
+		return flerp(phase, phase - (phaseError), sampleTime);
 	}
 
 	void process(const ProcessArgs& args) override {
