@@ -76,13 +76,10 @@ struct QuatOSC : QuestionableModule {
 	};
 
     gmtl::Quatf sphereQuat;
-	gmtl::Quatf rotation;
 	gmtl::Quatf rotationAccumulation;
-	gmtl::Quatf visualQuat;
     gmtl::Vec3f xPointOnSphere;
 	gmtl::Vec3f yPointOnSphere;
 	gmtl::Vec3f zPointOnSphere;
-	gmtl::Vec3f pointOnSphereRotated;
 
 	dsp::SchmittTrigger gateTrigger;
 	dsp::SchmittTrigger clockTrigger;
