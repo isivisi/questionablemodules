@@ -226,12 +226,11 @@ struct QuatOSC : QuestionableModule {
 			}
 		} else clockFreq = 2.f;
 
-		gmtl::Vec3f angle = gmtl::Vec3f(
+		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
 			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT))), 
 			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2))), 
 			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)))
-		);
-		gmtl::Quatf rotOffset = gmtl::makePure(angle);
+		));
 		gmtl::normalize(rotOffset);
 
 		gmtl::Quatf rotAddition = gmtl::makePure(gmtl::Vec3f(
