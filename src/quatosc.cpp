@@ -192,6 +192,13 @@ struct QuatOSC : QuestionableModule {
 		}
 	}
 
+	float smoothDephase(float offset, float phase, float sampleTime) {
+		float flo1PhaseError = std::asin(phase) - std::asin(offset);
+		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
+		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
+		return flerp(phase, phase - (flo1PhaseError), sampleTime);
+	}
+
 	void process(const ProcessArgs& args) override {
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
@@ -244,7 +251,7 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
-		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND))) == 0 && !reading) {
+		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
 			zPointSamples.push(zRotated);
@@ -255,20 +262,9 @@ struct QuatOSC : QuestionableModule {
 		gmtl::normalize(zRotated);
 
 		//dephase
-		float flo1PhaseError = std::asin(lfo1Phase) - std::asin(0);
-		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
-		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
-		lfo1Phase = flerp(lfo1Phase, lfo1Phase - (flo1PhaseError), args.sampleTime);
-
-		float flo2PhaseError = std::asin(lfo2Phase) - std::asin(0);
-		if (flo2PhaseError > M_PI) flo2PhaseError -= 2*M_PI;
-		else if (flo2PhaseError < -M_PI) flo2PhaseError += 2*M_PI;
-		lfo2Phase = flerp(lfo2Phase, lfo2Phase - (flo2PhaseError), args.sampleTime);
-
-		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0);
-		if (flo3PhaseError > M_PI) flo3PhaseError -= 2*M_PI;
-		else if (flo3PhaseError < -M_PI) flo3PhaseError += 2*M_PI;
-		lfo3Phase = flerp(lfo3Phase, lfo3Phase - (flo3PhaseError), args.sampleTime);
+		lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
+		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
+		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
 		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))));
 
