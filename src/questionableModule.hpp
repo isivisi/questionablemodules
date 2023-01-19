@@ -41,7 +41,7 @@ struct QuestionableWidget : ModuleWidget {
 				mod->theme = "Light";
 				userSettings.setSetting<std::string>("theme", "Light");
 			}));
-			menu->addChild(createMenuItem("Boring but dark", "", [=]() {
+			menu->addChild(createMenuItem("Boring but Dark", "", [=]() {
 				color->drawBackground = true;
 				color->setTheme(BG_THEMES["Dark"]);
 				mod->theme = "Dark";
