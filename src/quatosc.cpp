@@ -426,6 +426,29 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->textList.clear();
 		color->addText("SLURP OSC", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+
+		color->addText("X", "OpenSans-Bold.ttf", c, 20, Vec(19, 198));
+		color->addText("Y", "OpenSans-Bold.ttf", c, 20, Vec(72, 198));
+		color->addText("Z", "OpenSans-Bold.ttf", c, 20, Vec(125, 198));
+
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 209));
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 209));
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 209));
+
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37, 239));
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 239));
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 239));
+
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37, 269));
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 269));
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 269));
+
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 298));
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 298));
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 298));
+
+		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358));
+		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358));
 	}
 
 	QuatOSCWidget(QuatOSC* module) {
