@@ -51,7 +51,7 @@ struct QuestionableWidget : ModuleWidget {
 
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
-			std::string title = model->name + std::string(" ") + std::string("Bug Report");
+			std::string title = model->name + std::string(" Bug Report");
 			std::string body = std::string("Module: ") + model->name +
 			std::string("%0APlugin Version: ") + model->plugin->version + 
 			std::string("%0APlease describe your problem below:%0A%0A");
