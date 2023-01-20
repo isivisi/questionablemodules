@@ -1,6 +1,11 @@
+#pragma once
+
 #include "plugin.hpp"
 #include "colorBG.hpp"
 #include <string>
+#include <cctype>
+#include <iomanip>
+#include <sstream>
 
 struct QuestionableModule : Module {
     std::string theme = userSettings.getSetting<std::string>("theme");
@@ -51,11 +56,14 @@ struct QuestionableWidget : ModuleWidget {
 
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
+			char* jsondump = json_dumps(module->toJson(), 0);
 			std::string title = model->name + std::string(" Bug Report");
 			std::string body = std::string("Module: ") + model->name +
-			std::string("%0APlugin Version: ") + model->plugin->version + 
-			std::string("%0APlease describe your problem below:%0A%0A");
-			system::openBrowser("https://github.com/isivisi/questionablemodules/issues/new?title=" + title + std::string("&body=") + body);
+			std::string("\nPlugin Version: ") + model->plugin->version + 
+			std::string("\nJSON: `") + std::string(jsondump) +
+			std::string("`\n---------- Please describe your problem below: ----------\n\n");
+			system::openBrowser("https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title) + std::string("&body=") + network::encodeUrl(body));
+			free(jsondump);
 		}));
 
 	}
