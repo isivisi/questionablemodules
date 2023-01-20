@@ -62,7 +62,11 @@ struct QuestionableWidget : ModuleWidget {
 			std::string("\nPlugin Version: ") + model->plugin->version + 
 			std::string("\nJSON: `") + std::string(jsondump) +
 			std::string("`\n---------- Please describe your problem below: ----------\n\n");
-			system::openBrowser("https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title) + std::string("&body=") + network::encodeUrl(body));
+			
+			std::string url = "https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title) + std::string("&body=") + network::encodeUrl(body);
+			if (url.size() < 8202) { // can be too large for githubs nginx buffer
+				system::openBrowser(url);
+			} else system::openBrowser("https://github.com/isivisi/questionablemodules/issues/new");
 			free(jsondump);
 		}));
 
