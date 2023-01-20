@@ -5,14 +5,15 @@
 #include <unordered_map>
 
 struct ColorBGTheme {
+    std::string name;
     NVGcolor color;
     NVGcolor stroke;
     NVGcolor fontColor;
 };
 
 static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
-    {"Light", ColorBGTheme{nvgRGB(225, 225, 225), nvgRGB(195, 195, 195), nvgRGB(15,15,15)}},
-    {"Dark", ColorBGTheme{nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
+    {"Light", ColorBGTheme{"Light", nvgRGB(225, 225, 225), nvgRGB(195, 195, 195), nvgRGB(15,15,15)}},
+    {"Dark", ColorBGTheme{"Dark", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
 };
 
 struct ColorBG : Widget {
@@ -23,6 +24,8 @@ struct ColorBG : Widget {
     bool drawBackground = true;
     bool drawText = true;
 
+    std::string currTheme = "";
+
     struct drawableText {
         std::string text;
         std::string font;
@@ -32,11 +35,14 @@ struct ColorBG : Widget {
     };
     std::vector<drawableText> textList;
 
+    std::function<void(const DrawArgs&, std::string)> onDraw;
+
     ColorBG(Vec s) {
         size = s;
     }
 
     void setTheme(ColorBGTheme theme) {
+        currTheme = theme.name;
         color = theme.color;
         stroke = theme.stroke;
 
@@ -60,6 +66,8 @@ struct ColorBG : Widget {
             nvgFill(args.vg);
             nvgStroke(args.vg);
         }
+
+        if (onDraw) onDraw(args, currTheme);
 
         if (drawText) {
             
