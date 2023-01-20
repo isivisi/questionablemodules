@@ -483,6 +483,22 @@ struct QuatOSCWidget : QuestionableWidget {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
+
+		color->onDraw = [=](const DrawArgs& args, std::string theme) {
+			NVGcolor c;
+			if (theme == "Light") c = nvgRGBA(45, 45, 45, 25);
+			else if (theme == "Dark") c = nvgRGBA(255, 255, 255, 15);
+			else if (theme == "") return;
+			nvgFillColor(args.vg, c);
+            nvgBeginPath(args.vg);
+            nvgRect(args.vg, 9, 175, 55, 151);
+            nvgFill(args.vg);
+
+			nvgFillColor(args.vg, c);
+            nvgBeginPath(args.vg);
+            nvgRect(args.vg, 116, 175, 55, 151);
+            nvgFill(args.vg);
+		};
 		
 		setPanel(backdrop);
 		addChild(color);
