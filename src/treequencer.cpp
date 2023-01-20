@@ -1111,6 +1111,9 @@ struct TreequencerWidget : QuestionableWidget {
   	{
 		Treequencer* mod = (Treequencer*)module;
 		menu->addChild(new MenuSeparator);
+		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
+			display->resetScreenPosition();
+		}));
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 0; });
@@ -1131,10 +1134,6 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 
 		QuestionableWidget::appendContextMenu(menu);
-
-		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
-			display->resetScreenPosition();
-		}));
 	}
 };
 
