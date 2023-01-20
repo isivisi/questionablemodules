@@ -26,31 +26,29 @@ struct QuestionableWidget : ModuleWidget {
     ColorBG* color;
 
     QuestionableWidget() {
-
+		
     }
+
+	void setWidgetTheme(std::string theme) {
+		QuestionableModule* mod = (QuestionableModule*)module;
+		color->drawBackground = theme != "Default";
+		color->setTheme(BG_THEMES[theme]);
+		if (mod) mod->theme = theme;
+		userSettings.setSetting<std::string>("theme", theme);
+	}
     
 	void appendContextMenu(Menu *menu) override
   	{
-		QuestionableModule* mod = (QuestionableModule*)module;
 
 		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Default", "",[=]() {
-				color->drawBackground = false;
-				color->setTheme(BG_THEMES["Dark"]); // for text
-				mod->theme = "";
-				userSettings.setSetting<std::string>("theme", "");
+				setWidgetTheme("Default");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Light"]);
-				mod->theme = "Light";
-				userSettings.setSetting<std::string>("theme", "Light");
+				setWidgetTheme("Light");
 			}));
 			menu->addChild(createMenuItem("Boring but Dark", "", [=]() {
-				color->drawBackground = true;
-				color->setTheme(BG_THEMES["Dark"]);
-				mod->theme = "Dark";
-				userSettings.setSetting<std::string>("theme", "Dark");
+				setWidgetTheme("Dark");
 			}));
 		}));
 
