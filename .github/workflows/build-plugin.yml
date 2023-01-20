@@ -38,7 +38,7 @@ jobs:
         if: "! startsWith(github.ref, 'refs/tags/v')"
   build:
     name: ${{ matrix.platform }}
-    if: ${{ (github.ref == 'refs/heads/master' && github.repository_owner == 'isivisi') || (startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'isivisi') }}
+    if: ${{ (github.ref == 'refs/heads/master' && github.repository_owner == 'isivisi') || (startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'isivisi') || github.event_name == 'pull_request'}}
     needs: modify-plugin-version
     runs-on: ubuntu-latest
     container:
@@ -70,7 +70,7 @@ jobs:
 
   build-mac:
     name: mac
-    if: ${{ (github.ref == 'refs/heads/master' && github.repository_owner == 'isivisi') || (startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'isivisi') }}
+    if: ${{ (github.ref == 'refs/heads/master' && github.repository_owner == 'isivisi') || (startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'isivisi') || github.event_name == 'pull_request'}}
     needs: modify-plugin-version
     runs-on: macos-12
     strategy:
