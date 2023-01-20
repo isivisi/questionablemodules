@@ -56,19 +56,24 @@ struct QuestionableWidget : ModuleWidget {
 
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
-			char* jsondump = json_dumps(module->toJson(), 0);
 			std::string title = model->name + std::string(" Bug Report");
-			std::string body = std::string("Module: ") + model->name +
-			std::string("\nPlugin Version: ") + model->plugin->version + 
-			std::string("\nJSON: `") + std::string(jsondump) +
-			std::string("`\n---------- Please describe your problem below: ----------\n\n");
 			
-			std::string url = "https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title) + std::string("&body=") + network::encodeUrl(body);
+			std::string url = "https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title) + std::string("&body=") + network::encodeUrl(getReportBody(true));
 			if (url.size() < 8202) { // can be too large for githubs nginx buffer
 				system::openBrowser(url);
-			} else system::openBrowser("https://github.com/isivisi/questionablemodules/issues/new");
-			free(jsondump);
+			} else system::openBrowser("https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title) + std::string("&body=") + network::encodeUrl(getReportBody(false)));
+
 		}));
 
+	}
+
+	std::string getReportBody(bool json) {
+		char* jsondump = json_dumps(module->toJson(), 0);
+		std::string body = std::string("Module: ") + model->name +
+		std::string("\nPlugin Version: ") + model->plugin->version + 
+		(json ? std::string("\nJSON: `") + std::string(jsondump) : "") +
+		std::string("`\n---------- Please describe your problem below: ----------\n\n");
+		free(jsondump);
+		return body;
 	}
 };
