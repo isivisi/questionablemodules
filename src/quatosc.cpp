@@ -494,7 +494,7 @@ struct QuatOSCWidget : QuestionableWidget {
             nvgRect(args.vg, 9, 177, 55, 151);
             nvgFill(args.vg);
 
-			nvgFillColor(args.vg, NVGcolor{c.r, c.g, c.b, c.a - 0.05});
+			nvgFillColor(args.vg, NVGcolor{c.r, c.g, c.b, c.a - 0.05f});
             nvgBeginPath(args.vg);
             nvgRect(args.vg, 9 + 55, 177, 52, 151);
             nvgFill(args.vg);
