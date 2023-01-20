@@ -12,7 +12,7 @@
     Light: Write with lights[...].setBrightness(brightness)
 */
 
-const int MODULE_SIZE = 8;
+const int MODULE_SIZE = 6;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
