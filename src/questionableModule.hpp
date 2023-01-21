@@ -36,6 +36,13 @@ struct QuestionableWidget : ModuleWidget {
 		if (mod) mod->theme = theme;
 		userSettings.setSetting<std::string>("theme", theme);
 	}
+
+	void draw(const DrawArgs& args) override {
+		ModuleWidget::draw(args);
+		if (module && backdrop && module->isBypassed()) {
+			backdrop->drawBackground = false;
+		} else if (backdrop) backdrop->drawBackground = true;
+	}
     
 	void appendContextMenu(Menu *menu) override
   	{
