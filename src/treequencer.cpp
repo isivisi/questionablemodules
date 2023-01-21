@@ -178,7 +178,6 @@ struct Node {
 	}
 
 	~Node() {
-		
 		for (int i = 0; i < children.size(); i++) delete children[i];
 	}
 
@@ -247,6 +246,7 @@ struct Node {
 	void remove() {
 		if (!parent) return;
 		parent->children.erase(std::find(parent->children.begin(), parent->children.end(), this));
+		delete this;
 	}
 
 	int maxDepth() {
