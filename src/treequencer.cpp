@@ -562,7 +562,7 @@ struct Treequencer : QuestionableModule {
 		outputs[SEQUENCE_COMPLETE].setVoltage(sequenceP ? 10.f : 0.0f);
 
 
-		if (activeNode->output < 8 && activeNode->output > 0) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f);
+		if (activeNode->output < 8 && activeNode->output >= 0) outputs[activeNode->output].setVoltage(activeP ? 10.f : 0.0f);
 		outputs[ALL_OUT].setVoltage((float)activeNode->output/12);
 
 	}
