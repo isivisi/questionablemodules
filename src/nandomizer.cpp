@@ -115,7 +115,6 @@ struct Nandomizer : QuestionableModule {
 		bool shouldRandomize = gateTrigger.process(inputs[8].getVoltage(), 0.1f, 2.f);
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			float voltage = inputs[i].getVoltage();
 			if (inputs[i].isConnected()) {
 				usableInputs.push_back(i);
 				lights[i].setBrightness(1.f);

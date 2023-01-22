@@ -47,7 +47,7 @@ struct ColorBG : Widget {
         color = theme.color;
         stroke = theme.stroke;
 
-        for (int i = 0; i < textList.size(); i++) {
+        for (size_t i = 0; i < textList.size(); i++) {
             textList[i].color = theme.fontColor;
         }
     }
@@ -72,7 +72,7 @@ struct ColorBG : Widget {
 
         if (drawText) {
             
-            for (int i = 0; i < textList.size(); i++) {
+            for (size_t i = 0; i < textList.size(); i++) {
                 drawableText textDef = textList[i];
                 std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
                 if (!font) return;

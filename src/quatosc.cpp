@@ -269,7 +269,7 @@ struct QuatOSC : QuestionableModule {
 
 	}
 
-	json_t* dataToJson() {
+	json_t* dataToJson() override {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
 		return nodeJ;
@@ -353,8 +353,8 @@ struct QuatDisplay : Widget {
 		nvgSave(args.vg);
 		//nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
-		float centerX = box.size.x/2;
-		float centerY = box.size.y/2;
+		//float centerX = box.size.x/2;
+		//float centerY = box.size.y/2;
 
 		if (module == NULL) return;
 

@@ -126,7 +126,7 @@ struct Scale {
 	
 	// convert note to position offset
 	int toOffset(int note) {
-		for (int i = 0; i < notes.size(); i++) {
+		for (size_t i = 0; i < notes.size(); i++) {
 			if (notes[i] == abs(note % (int)notes.size())) return i * (note / (int)notes.size());
 		}
 		return 0;
@@ -135,7 +135,7 @@ struct Scale {
 	Scale getTransposedBy(int note) {
 		Scale newScale;
 		newScale.name = Scale::getNoteString(note) + std::string(" ") + name;
-		for (int i = 0; i < notes.size(); i++) {
+		for (size_t i = 0; i < notes.size(); i++) {
 			newScale.notes.push_back(notes[i] + note);
 		}
 		return newScale;
@@ -178,7 +178,7 @@ struct Node {
 	}
 
 	~Node() {
-		for (int i = 0; i < children.size(); i++) delete children[i];
+		for (size_t i = 0; i < children.size(); i++) delete children[i];
 	}
 
 	void setOutput(int out) {
@@ -253,7 +253,7 @@ struct Node {
 		if (children.size() == 0) return 0;
 
 		std::vector<int> sizes;
-		for (int i = 0; i < children.size(); i++) {
+		for (size_t i = 0; i < children.size(); i++) {
 			sizes.push_back(children[i]->maxDepth() + 1);
 		}
 		return *std::max_element(sizes.begin(), sizes.end());
@@ -278,7 +278,7 @@ struct Node {
 		}
 	}
 
-	json_t* const toJson() {
+	json_t* toJson() {
 		json_t* nodeJ = json_object();
 
 		json_object_set_new(nodeJ, "output", json_integer(output));
@@ -287,7 +287,7 @@ struct Node {
 		json_t *childrenArray = json_array();
 		json_object_set_new(nodeJ, "children", childrenArray);
 
-		for (int i = 0; i < children.size(); i++) {
+		for (size_t i = 0; i < children.size(); i++) {
 			json_array_append_new(childrenArray, children[i]->toJson());
 		}
 
@@ -301,7 +301,7 @@ struct Node {
 
 		if (json_t* arr = json_object_get(json, "children")) {
 
-			for (int i = 0; i < json_array_size(arr); i++) {
+			for (size_t i = 0; i < json_array_size(arr); i++) {
 				children.push_back(new Node(json_array_get(arr, i), this));
 			}
 
@@ -480,7 +480,7 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
-	int sequencePos = 0;
+	size_t sequencePos = 0;
 	void processSequence(bool newSequence = false) {
 		bool lastBounce = bouncing;
 		if (newSequence) {
@@ -714,7 +714,7 @@ struct NodeDisplay : Widget {
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Generate Sequence", "", [=](ui::Menu* menu) {
-			for (int i = 0; i < scales.size(); i++) {
+			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
 						node->generateSequencesToDepth(scales[i], 8);
@@ -731,7 +731,7 @@ struct NodeDisplay : Widget {
 
 		if (isInsideBox(mp, node->box)) return node;
 
-		for (int i = 0; i < node->children.size(); i++)
+		for (size_t i = 0; i < node->children.size(); i++)
     	{
 			Node* found = findNodeClicked(mp, node->children[i]);
 			if (found) return found;
@@ -776,11 +776,11 @@ struct NodeDisplay : Widget {
 
     }
 
-	void onHoverScroll(const HoverScrollEvent& e) {
+	void onHoverScroll(const HoverScrollEvent& e) override {
 		e.consume(this);
-		float posX = APP->scene->rack->getMousePos().x;
-        float posY = APP->scene->rack->getMousePos().y;
-		float oldScreenScale = screenScale;
+		//float posX = APP->scene->rack->getMousePos().x;
+        //float posY = APP->scene->rack->getMousePos().y;
+		//float oldScreenScale = screenScale;
 
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
 		module->startScreenScale = screenScale;
@@ -802,7 +802,7 @@ struct NodeDisplay : Widget {
 		},
 		{ // Tol Vibrant
 			nvgRGB(238,119,51), // orange
-			nvgRGB(51,187,338), // cyan
+			nvgRGB(51,187,82), // cyan
 			nvgRGB(0,119,187), // blue
 			nvgRGB(238,51,119), // magenta
 			nvgRGB(187,187,187) // grey
@@ -905,7 +905,7 @@ struct NodeDisplay : Widget {
 
 	void drawNodes(NVGcontext* vg) {
 
-		for (int i = 0; i < nodeCache.size(); i++) {
+		for (size_t i = 0; i < nodeCache.size(); i++) {
 			drawNode(vg, nodeCache[i].node, nodeCache[i].pos.x, nodeCache[i].pos.y, nodeCache[i].scale);
 		}
 	}
@@ -976,14 +976,12 @@ struct NodeDisplay : Widget {
 		
 		gatherNodesForBins(&module->rootNode);
 		nodeCache.clear();
-
-		int depth = module->rootNode.maxDepth() + 2;
 		
 		float cumulativeX = -25.f;
-		for (int d = 0; d < nodeBins.size(); d++) {
+		for (size_t d = 0; d < nodeBins.size(); d++) {
 			int binLen = nodeBins[d].size();
 			float scale = calcNodeScale(binLen);
-			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size());
+			float prevScale = calcNodeScale(nodeBins[std::max(0, (int)d-1)].size());
 			cumulativeX += ((NODE_SIZE+1)*prevScale);
 			for(int i = 0; i < binLen; i++) {
 				Node* node = nodeBins[d][i];
@@ -1009,7 +1007,7 @@ struct NodeDisplay : Widget {
 
 		//nodeBins[depth].push_back(&node);
 
-		for (int i = 0; i < node->children.size(); i++) {
+		for (size_t i = 0; i < node->children.size(); i++) {
 			gatherNodesForBins(node->children[i], (position*2)+i, depth+1);
 		}
 
