@@ -550,7 +550,11 @@ struct Treequencer : QuestionableModule {
 			activeNode->enabled = true;
 			pulse.trigger(1e-3f);
 		}
-		if (isClockTriggered && seqTrigger) processSequence();
+		if (isClockTriggered && seqTrigger) {
+			processSequence();
+			activeNode->enabled = true;
+			pulse.trigger(1e-3f);
+		}
 
 		bool activeP = pulse.process(args.sampleTime);
 		bool sequenceP = sequencePulse.process(args.sampleTime);
