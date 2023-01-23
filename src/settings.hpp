@@ -30,6 +30,7 @@ struct UserSettings {
     T getSetting(std::string setting) {
 
         if constexpr (std::is_same<T, int>::value) return json_integer_value(json_object_get(readSettings(), setting.c_str()));
+        if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json_object_get(readSettings(), setting.c_str()));
         if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(readSettings(), setting.c_str()));
         if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(readSettings(), setting.c_str()));
 
@@ -41,6 +42,7 @@ struct UserSettings {
         json_t* v = nullptr;
 
         if constexpr (std::is_same<T, int>::value) v = json_integer(value);
+        if constexpr (std::is_same<T, bool>::value) v = json_boolean(value);
         if constexpr (std::is_same<T, float>::value) v = json_real(value);
         if constexpr (std::is_same<T, std::string>::value) v = json_string(value.c_str());
 

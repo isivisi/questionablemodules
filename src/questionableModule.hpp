@@ -8,16 +8,19 @@
 #include <sstream>
 
 struct QuestionableModule : Module {
+	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
     std::string theme = userSettings.getSetting<std::string>("theme");
 
     json_t* dataToJson() override {
 		json_t* rootJ = json_object();
         json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
+		json_object_set_new(rootJ, "showDescriptors", json_boolean(showDescriptors));
         return rootJ;
     }
 
     void dataFromJson(json_t* rootJ) override {
         if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+		if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
     }
 };
 
