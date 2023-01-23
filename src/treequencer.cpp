@@ -1075,13 +1075,13 @@ struct TreequencerWidget : QuestionableWidget {
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(101.441f, 90.f)), module, Treequencer::TTYPE_GATE));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(88.424f, 100.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(88.424f, 100.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(88.424f, 90.f)), module, Treequencer::BOUNCE_GATE));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(75.406f, 100.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(75.406f, 100.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(75.406f, 90.f)), module, Treequencer::HOLD_INPUT));
 
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(88.424f, 10.f)), module, Treequencer::SEQUENCE_COMPLETE));

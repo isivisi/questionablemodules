@@ -97,7 +97,7 @@ struct QuestionableParam : T {
 			Model* model = mod->getModel();
 			if (!model) return;
 			ParamQuantity* param = this->getParamQuantity();
-			std::string url = "http://127.0.0.1:3000/docs/" + string::lowercase(model->name) + "#" + param->name;
+			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
 			system::openBrowser(url);
 		}));
 	}
