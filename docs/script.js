@@ -28,3 +28,18 @@ function runEmbeddedScripts(text) {
         eval(scripts[i].innerHTML);
     }
 }
+
+// highlight logic for ids
+window.addEventListener('load', function () {
+    var hash = window.location.hash.slice(1);
+    if (hash) {
+        var paragraphsWithIds = document.querySelectorAll("p[id]");
+        for (var i = 0; i < paragraphsWithIds.length; i++) {
+            if (hash.includes(paragraphsWithIds[i].id)) {
+                console.log(paragraphsWithIds[i]);
+
+                paragraphsWithIds[i].classList.add("hashSelected");
+            }
+        }
+    } 
+});

@@ -128,7 +128,7 @@
         var layers = [];
         var layersBouncing = [];
 
-          window.onload = function () {
+          window.addEventListener('load', function () {
             var svg = document.getElementById("animatingSvg").contentDocument;
             layers.push(svg.getElementById("layer1"));
             layers.push(svg.getElementById("layer2"));
@@ -143,7 +143,7 @@
             layersBouncing.push(svg.getElementById("layer4"));
             layersBouncing.push(svg.getElementById("layer5"));
 
-          }
+          });
           
           var currentLayer = 0;
           setInterval(function(){
