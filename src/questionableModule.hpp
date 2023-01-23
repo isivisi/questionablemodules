@@ -85,3 +85,22 @@ struct QuestionableWidget : ModuleWidget {
 		return body;
 	}
 };
+
+template <typename T>
+struct QuestionableParam : T {
+	static_assert(std::is_base_of<ParamWidget, T>::value, "T must inherit from ParamWidget");
+
+	void appendContextMenu(Menu* menu) override {
+		QuestionableModule* mod = (QuestionableModule*)this->module;
+		if (!mod) return;
+		menu->addChild(createMenuItem("Go to Documentation", "", [=]() {
+			Model* model = mod->getModel();
+			if (!model) return;
+			ParamQuantity* param = this->module->paramQuantities[this->paramId];
+			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
+			system::openBrowser(url);
+		}));
+	}
+};
+
+
