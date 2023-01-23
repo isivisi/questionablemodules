@@ -184,15 +184,15 @@ struct DiscombobulatorWidget : QuestionableWidget {
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
-			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
 		}
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Discombobulator::BLINK_LIGHT));
 	}

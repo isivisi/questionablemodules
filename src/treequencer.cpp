@@ -1071,36 +1071,36 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
 
 		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(101.441f, 90.f)), module, Treequencer::TTYPE_GATE));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(101.441f, 90.f)), module, Treequencer::TTYPE_GATE));
 
 		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(88.424f, 100.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(88.424f, 90.f)), module, Treequencer::BOUNCE_GATE));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(88.424f, 90.f)), module, Treequencer::BOUNCE_GATE));
 
 		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(75.406f, 100.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(75.406f, 90.f)), module, Treequencer::HOLD_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(75.406f, 90.f)), module, Treequencer::HOLD_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(88.424f, 10.f)), module, Treequencer::SEQUENCE_COMPLETE));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(101.441f, 10.f)), module, Treequencer::ALL_OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(88.424f, 10.f)), module, Treequencer::SEQUENCE_COMPLETE));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(101.441f, 10.f)), module, Treequencer::ALL_OUT));
 
 		for (int i = 0; i < MAX_OUTPUTS; i++) {
-			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
 		}
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
 
-		//addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
+		//addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
+		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
 		
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
-		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
+		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
+		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
 
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Treequencer::TRIGGER));
+		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 113)), module, Treequencer::TRIGGER));
 
 		//addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Treequencer::BLINK_LIGHT));
 	}

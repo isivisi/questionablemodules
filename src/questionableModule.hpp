@@ -93,14 +93,29 @@ struct QuestionableParam : T {
 	void appendContextMenu(Menu* menu) override {
 		QuestionableModule* mod = (QuestionableModule*)this->module;
 		if (!mod) return;
-		menu->addChild(createMenuItem("Go to Documentation", "", [=]() {
+		menu->addChild(createMenuItem("Find in Documentation", "", [=]() {
 			Model* model = mod->getModel();
 			if (!model) return;
-			ParamQuantity* param = this->module->paramQuantities[this->paramId];
+			ParamQuantity* param = this->getParamQuantity();
 			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
 			system::openBrowser(url);
 		}));
 	}
 };
 
+template <typename T>
+struct QuestionablePort : T {
+	static_assert(std::is_base_of<PortWidget, T>::value, "T must inherit from PortWidget");
 
+	void appendContextMenu(Menu* menu) override {
+		QuestionableModule* mod = (QuestionableModule*)this->module;
+		if (!mod) return;
+		menu->addChild(createMenuItem("Find in Documentation", "", [=]() {
+			Model* model = mod->getModel();
+			if (!model) return;
+			PortInfo* param = this->getPortInfo();
+			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
+			system::openBrowser(url);
+		}));
+	}
+};
