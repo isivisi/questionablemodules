@@ -36,7 +36,7 @@ window.addEventListener('load', function () {
         var paragraphsWithIds = document.querySelectorAll("p[id]");
         for (var i = 0; i < paragraphsWithIds.length; i++) {
             if (hash.includes(paragraphsWithIds[i].id)) {
-                console.log(paragraphsWithIds[i]);
+                window.location.hash = "#" + paragraphsWithIds[i].id;
 
                 paragraphsWithIds[i].classList.add("hashSelected");
             }
