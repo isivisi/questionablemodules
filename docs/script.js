@@ -31,10 +31,11 @@ function runEmbeddedScripts(text) {
 
 // highlight logic for ids
 window.addEventListener('load', function () {
-    var hash = window.location.hash.slice(1);
+    var hash = decodeURIComponent(window.location.hash.slice(1));
     if (hash) {
         var paragraphsWithIds = document.querySelectorAll("p[id]");
         for (var i = 0; i < paragraphsWithIds.length; i++) {
+            console.log(hash, paragraphsWithIds[i].id)
             if (hash.includes(paragraphsWithIds[i].id)) {
                 window.location.hash = "#" + paragraphsWithIds[i].id;
 
