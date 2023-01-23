@@ -30,7 +30,8 @@ footer a {
 }
 
 .hashSelected {
-    margin-left: -6px;
+    margin-left: -9px;
+    padding-left: 3px;
     border-left: 6px solid #4e93fb !important;
 
     background-color: #d7e4f5;
