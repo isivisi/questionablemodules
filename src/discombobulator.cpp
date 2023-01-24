@@ -173,6 +173,7 @@ struct DiscombobulatorWidget : QuestionableWidget {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
 		addChild(color);

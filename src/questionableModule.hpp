@@ -62,6 +62,13 @@ struct QuestionableWidget : ModuleWidget {
 			}));
 		}));
 
+		menu->addChild(createMenuItem("Toggle Descriptors", "", [=]() {
+			QuestionableModule* mod = (QuestionableModule*)module;
+			mod->showDescriptors = !mod->showDescriptors;
+			color->setTextGroupVisibility("descriptor", mod->showDescriptors);
+			userSettings.setSetting<bool>("showDescriptors", mod->showDescriptors);
+		}));
+
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
 			std::string title = model->name + std::string(" Bug Report");

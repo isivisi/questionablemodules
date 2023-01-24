@@ -427,28 +427,28 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->addText("SLURP OSC", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
-		color->addText("X VOCT", "OpenSans-Bold.ttf", c, 6, Vec(37, 209));
-		color->addText("Y VOCT", "OpenSans-Bold.ttf", c, 6, Vec(90, 209));
-		color->addText("Z VOCT", "OpenSans-Bold.ttf", c, 6, Vec(144, 209));
+		color->addText("X VOCT", "OpenSans-Bold.ttf", c, 6, Vec(37, 209), "descriptor");
+		color->addText("Y VOCT", "OpenSans-Bold.ttf", c, 6, Vec(90, 209), "descriptor");
+		color->addText("Z VOCT", "OpenSans-Bold.ttf", c, 6, Vec(144, 209), "descriptor");
 
-		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 237));
-		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 237));
-		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 237));
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 237), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 237), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 237), "descriptor");
 
-		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37, 267));
-		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 267));
-		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 267));
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37, 267), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 267), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 267), "descriptor");
 
-		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37, 296));
-		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 296));
-		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 296));
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37, 296), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 296), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 296), "descriptor");
 
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 326));
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 326));
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 326));
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 326), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 326), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 326)), "descriptor";
 
-		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358));
-		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358));
+		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
+		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358), "descriptor");
 	}
 
 	QuatOSCWidget(QuatOSC* module) {
@@ -483,27 +483,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
-
-		/*color->onDraw = [=](const DrawArgs& args, std::string theme) {
-			NVGcolor c;
-			if (theme == "Light") c = nvgRGBA(45, 45, 45, 25);
-			else if (theme == "Dark") c = nvgRGBA(255, 255, 255, 15);
-			else if (theme == "") return;
-			nvgFillColor(args.vg, c);
-            nvgBeginPath(args.vg);
-            nvgRect(args.vg, 9, 177, 55, 151);
-            nvgFill(args.vg);
-
-			nvgFillColor(args.vg, NVGcolor{c.r, c.g, c.b, c.a - 0.05f});
-            nvgBeginPath(args.vg);
-            nvgRect(args.vg, 9 + 55, 177, 52, 151);
-            nvgFill(args.vg);
-
-			nvgFillColor(args.vg, c);
-            nvgBeginPath(args.vg);
-            nvgRect(args.vg, 116, 177, 55, 151);
-            nvgFill(args.vg);
-		};*/
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
 		addChild(color);

@@ -30,6 +30,8 @@ struct ColorBG : Widget {
     struct drawableText {
         std::string text;
         std::string font;
+        std::string group = "default";
+        bool enabled = true;
         NVGcolor color;
         float size;
         Vec pos;
@@ -52,8 +54,14 @@ struct ColorBG : Widget {
         }
     }
 
-    void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos) {
-        textList.push_back(drawableText{text,font,color,size,pos});
+    void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default") {
+        textList.push_back(drawableText{text,font,group,true,color,size,pos});
+    }
+
+    void setTextGroupVisibility(std::string group, bool visibility) {
+        for (size_t i = 0; i < textList.size(); i++) {
+            if (textList[i].group == group) textList[i].enabled = visibility;
+        }
     }
 
 	void draw(const DrawArgs &args) override {
@@ -74,14 +82,16 @@ struct ColorBG : Widget {
             
             for (size_t i = 0; i < textList.size(); i++) {
                 drawableText textDef = textList[i];
-                std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
-                if (!font) return;
-                nvgFontFaceId(args.vg, font->handle);
-                nvgTextLetterSpacing(args.vg, 0.0);
-                nvgFontSize(args.vg, textDef.size);
-                nvgFillColor(args.vg, textDef.color);
-                nvgTextAlign(args.vg, NVGalign::NVG_ALIGN_CENTER);
-                nvgText(args.vg, textDef.pos.x, textDef.pos.y, textDef.text.c_str(), NULL);
+                if (textDef.enabled) {
+                    std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
+                    if (!font) return;
+                    nvgFontFaceId(args.vg, font->handle);
+                    nvgTextLetterSpacing(args.vg, 0.0);
+                    nvgFontSize(args.vg, textDef.size);
+                    nvgFillColor(args.vg, textDef.color);
+                    nvgTextAlign(args.vg, NVGalign::NVG_ALIGN_CENTER);
+                    nvgText(args.vg, textDef.pos.x, textDef.pos.y, textDef.text.c_str(), NULL);
+                }
             }
         }
 	}
