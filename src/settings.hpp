@@ -18,7 +18,7 @@ struct UserSettings {
     std::string settingFileName;
     json_t* settingCache = nullptr;
 
-    UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction=nullptr, std::vector<std::function<json_t*(json_t*)>> migrations=std::vector<std::function<json_t*(json_t*)>>()) {
+    UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction=nullptr, std::vector<std::function<json_t*(json_t*)>> migrations) {
         settingFileName = fn;
 
         if (initFunction) {
