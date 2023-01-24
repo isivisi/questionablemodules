@@ -23,8 +23,8 @@ struct UserSettings {
         if (initFunction) {
             json_t* json = readSettings();
             UserSettings::json_create_if_not_exists(json, "settingsVersion", json_integer(settingsVersion));
-            json = initFunction(json);
             if (migrations.size()) json = runMigrations(json, migrations);
+            json = initFunction(json);
             saveSettings(json);
         }
     }
