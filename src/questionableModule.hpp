@@ -34,7 +34,7 @@ struct QuestionableWidget : ModuleWidget {
 
 	void setWidgetTheme(std::string theme) {
 		QuestionableModule* mod = (QuestionableModule*)module;
-		color->drawBackground = theme != "Default";
+		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
 		userSettings.setSetting<std::string>("theme", theme);
@@ -52,7 +52,7 @@ struct QuestionableWidget : ModuleWidget {
 
 		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Default", "",[=]() {
-				setWidgetTheme("Default");
+				setWidgetTheme("");
 			}));
 			menu->addChild(createMenuItem("Boring", "", [=]() {
 				setWidgetTheme("Light");
@@ -91,10 +91,9 @@ struct QuestionableParam : T {
 	static_assert(std::is_base_of<ParamWidget, T>::value, "T must inherit from ParamWidget");
 
 	void appendContextMenu(Menu* menu) override {
-		QuestionableModule* mod = (QuestionableModule*)this->module;
-		if (!mod) return;
+		if (!this->module) return;
 		menu->addChild(createMenuItem("Find in Documentation", "", [=]() {
-			Model* model = mod->getModel();
+			Model* model = this->module->getModel();
 			if (!model) return;
 			ParamQuantity* param = this->getParamQuantity();
 			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
@@ -108,10 +107,9 @@ struct QuestionablePort : T {
 	static_assert(std::is_base_of<PortWidget, T>::value, "T must inherit from PortWidget");
 
 	void appendContextMenu(Menu* menu) override {
-		QuestionableModule* mod = (QuestionableModule*)this->module;
-		if (!mod) return;
+		if (!this->module) return;
 		menu->addChild(createMenuItem("Find in Documentation", "", [=]() {
-			Model* model = mod->getModel();
+			Model* model = this->module->getModel();
 			if (!model) return;
 			PortInfo* param = this->getPortInfo();
 			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;

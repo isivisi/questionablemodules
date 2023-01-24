@@ -9,15 +9,23 @@ using namespace rack;
 
 // Global module settings
 struct UserSettings {
+    enum Version {
+        THEME_DEFAULT_STR,
+        LATEST // define migrations above
+    };
+    int settingsVersion = LATEST;
+
     std::string settingFileName;
     json_t* settingCache = nullptr;
 
-    UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction=nullptr) {
+    UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction=nullptr, std::vector<std::function<json_t*(json_t*)>> migrations=std::vector<std::function<json_t*(json_t*)>>()) {
         settingFileName = fn;
 
         if (initFunction) {
             json_t* json = readSettings();
+            UserSettings::json_create_if_not_exists(json, "settingsVersion", json_integer(settingsVersion));
             json = initFunction(json);
+            if (migrations.size()) json = runMigrations(json, migrations);
             saveSettings(json);
         }
     }
@@ -26,13 +34,26 @@ struct UserSettings {
         if (!json_object_get(json, name.c_str())) json_object_set_new(json, name.c_str(), value);
     }
 
-    template <typename T>
-    T getSetting(std::string setting) {
+    json_t* runMigrations(json_t* json, std::vector<std::function<json_t*(json_t*)>> migrations) {
+        int saveFileVer = getSetting<int>("settingsVersion", json);
+        if (saveFileVer < settingsVersion) {
+            // migrate save file to latest
+            for (int i = saveFileVer; i < LATEST; i++) {
+                json = migrations[i](json);
+                json_object_set(json, "settingsVersion", json_integer(i+1));
+            }
+        }
+        return json;
+    }
 
-        if constexpr (std::is_same<T, int>::value) return json_integer_value(json_object_get(readSettings(), setting.c_str()));
-        if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json_object_get(readSettings(), setting.c_str()));
-        if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(readSettings(), setting.c_str()));
-        if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(readSettings(), setting.c_str()));
+    template <typename T>
+    T getSetting(std::string setting, json_t* settings=nullptr) {
+        if (!settings) settings = readSettings();
+
+        if constexpr (std::is_same<T, int>::value) return json_integer_value(json_object_get(settings, setting.c_str()));
+        if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json_object_get(settings, setting.c_str()));
+        if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(settings, setting.c_str()));
+        if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(settings, setting.c_str()));
 
         throw std::runtime_error("QuestionableModules::UserSettings::getJsonSetting function for type not defined. :(");
     }

@@ -12,7 +12,7 @@ struct ColorBGTheme {
 };
 
 static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
-    {"Default", ColorBGTheme{"Default", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}}, // just for light text
+    {"", ColorBGTheme{"", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}}, // just for light text
     {"Light", ColorBGTheme{"Light", nvgRGB(225, 225, 225), nvgRGB(195, 195, 195), nvgRGB(15,15,15)}},
     {"Dark", ColorBGTheme{"Dark", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
 };
