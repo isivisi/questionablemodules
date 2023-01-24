@@ -10,7 +10,6 @@ using namespace rack;
 // Global module settings
 struct UserSettings {
     enum Version {
-        THEME_DEFAULT_STR,
         LATEST // define migrations above
     };
     int settingsVersion = LATEST;
