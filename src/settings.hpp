@@ -7,6 +7,10 @@ using namespace rack;
 #include <fstream>
 #include <stdexcept>
 
+// https://stackoverflow.com/questions/17032310/how-to-make-a-variadic-is-same
+template <class T, class... Ts>
+struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
+
 // Global module settings
 struct UserSettings {
     enum Version {
@@ -48,6 +52,8 @@ struct UserSettings {
 
     template <typename T>
     T getSetting(std::string setting, json_t* settings=nullptr) {
+        static_assert(is_any<T, int, bool, float, std::string>::value, "getSetting has no function defined for type");
+
         if (!settings) settings = readSettings();
 
         if constexpr (std::is_same<T, int>::value) return json_integer_value(json_object_get(settings, setting.c_str()));
@@ -55,11 +61,13 @@ struct UserSettings {
         if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(settings, setting.c_str()));
         if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(settings, setting.c_str()));
 
-        throw std::runtime_error("QuestionableModules::UserSettings::getJsonSetting function for type not defined. :(");
+        throw std::runtime_error("QuestionableModules::UserSettings::getSetting function for type not defined. :(");
     }
 
     template <typename T>
     void setSetting(std::string setting, T value) {
+        static_assert(is_any<T, int, bool, float, std::string>::value, "setSetting has no function defined for type");
+
         json_t* v = nullptr;
 
         if constexpr (std::is_same<T, int>::value) v = json_integer(value);
@@ -75,7 +83,7 @@ struct UserSettings {
             return;
         }
         
-        throw std::runtime_error("QuestionableModules::UserSettings::setJsonSetting function for type not defined. :(");
+        throw std::runtime_error("QuestionableModules::UserSettings::setSetting function for type not defined. :(");
     }
 
     private:
