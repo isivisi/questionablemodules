@@ -2,7 +2,7 @@
 
 Plugin* pluginInstance;
 
-std::vector<std::function<json_t*(json_t*)>> migrations = {
+const std::function<json_t*(json_t*)>* migrations = {
 
 };
 

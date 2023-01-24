@@ -17,13 +17,13 @@ struct UserSettings {
     std::string settingFileName;
     json_t* settingCache = nullptr;
 
-    UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction, std::vector<std::function<json_t*(json_t*)>> migrations) {
+    UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction, const std::function<json_t*(json_t*)>* migrations) {
         settingFileName = fn;
 
         if (initFunction) {
             json_t* json = readSettings();
             UserSettings::json_create_if_not_exists(json, "settingsVersion", json_integer(settingsVersion));
-            if (migrations.size()) json = runMigrations(json, migrations);
+            if (migrations) json = runMigrations(json, migrations);
             json = initFunction(json);
             saveSettings(json);
         }
@@ -33,7 +33,8 @@ struct UserSettings {
         if (!json_object_get(json, name.c_str())) json_object_set_new(json, name.c_str(), value);
     }
 
-    json_t* runMigrations(json_t* json, std::vector<std::function<json_t*(json_t*)>> migrations) {
+    json_t* runMigrations(json_t* json, const std::function<json_t*(json_t*)>* migrations) {
+        static_assert(std::extent<decltype(migrations)>::value == LATEST, "Migration size must match migration enum size");
         int saveFileVer = getSetting<int>("settingsVersion", json);
         if (saveFileVer < settingsVersion) {
             // migrate save file to latest
