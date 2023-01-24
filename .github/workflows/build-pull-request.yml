@@ -1,9 +1,7 @@
 name: Build VCV Rack Plugin
 on:
   pull_request:
-  types: 
-    - ready_for_review
-    - review_requested
+    types: [ready_for_review]
 
 env:
   rack-sdk-version: 2.2.1
