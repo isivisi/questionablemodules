@@ -12,6 +12,7 @@
 #include <memory>
 #include <queue>
 #include <algorithm>
+#include <utility>
 
 const int MAX_OUTPUTS = 8;
 const int MODULE_SIZE = 22;
@@ -78,7 +79,26 @@ struct Scale {
 	std::vector<int> notes;
 
 	// probabilities[note] = {anotherNote: probability, ...}
-	//std::map<int, std::map<int, float>> probabilities;
+	std::unordered_map<int, std::unordered_map<int, float>> probabilities;
+
+	Scale() { }
+	
+	Scale(std::string name, std::vector<int> notes) {
+		this->name = name;
+		this->notes = notes;
+	}
+
+	std::unordered_map<int, std::unordered_map<int, float>> getProbabilities() {
+		if (probabilities.empty()) {
+			probabilities.reserve(notes.size());
+			for (size_t i = 0; i < notes.size(); i++) {
+				for (size_t x = 0; x < notes.size(); x++) {
+					probabilities[i][x] = randFloat();
+				}
+			}
+		}
+		return probabilities;
+	}
 
 	std::vector<int> generateRandom(int size) {
 		std::vector<int> sequence = sequence;
@@ -92,6 +112,24 @@ struct Scale {
 
 	int getNextInSequence(std::vector<int> sequence, int maxSize) {
 		int offset = 0;
+
+		/*auto probs = getProbabilities();
+
+		std::vector<float> cumulativeProbs;
+		cumulativeProbs.resize(notes.size());
+		float maxVal = 0.f;
+		for (size_t i = 0; i < sequence.size(); i++) {
+			for (auto& notePobPair : probs[sequence[i]%12]) cumulativeProbs[notePobPair.first] += notePobPair.second;
+			maxVal = cumulativeProbs[i] > maxVal ? cumulativeProbs[i] : maxVal;
+		}
+
+		float rand = randFloat(maxVal);
+
+		int note = 0;
+		for(size_t i = 0; i < cumulativeProbs.size(); i++) {
+			if (rand <= cumulativeProbs[i]) note = notes[i];
+		}
+		return note;*/
 
 		// convert back to offset values
 		int front = toOffset(sequence.front());
@@ -695,8 +733,6 @@ struct NodeDisplay : Widget {
 				mod->params[Treequencer::HOLD].setValue(1.f);
 			});
 		}));
-
-		menu->addChild(new MenuSeparator);
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
