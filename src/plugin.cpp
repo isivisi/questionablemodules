@@ -2,9 +2,7 @@
 
 Plugin* pluginInstance;
 
-const std::function<json_t*(json_t*)>* migrations = {
-
-};
+const std::function<json_t*(json_t*)>* migrations = {};
 
 UserSettings userSettings("questionablemodules.json", [](json_t* json) {
 	// Runs at program start

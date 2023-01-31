@@ -75,6 +75,14 @@ struct QuatOSC : QuestionableModule {
 		LIGHTS_LEN
 	};
 
+	std::unordered_map<std::string, gmtl::Vec3f> projectionPlanes = {
+		{"X", gmtl::Vec3f{0.f, 1.f, 1.f}},
+		{"Y", gmtl::Vec3f{1.f, 0.f, 1.f}},
+		{"Z", gmtl::Vec3f{1.f, 1.f, 0.f}}
+	};
+
+	std::string projection = "Z";
+
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
     gmtl::Vec3f xPointOnSphere;
@@ -156,7 +164,8 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float VecCombine(gmtl::Vec3f vector) {
-		return vector[0] + vector[1];// + vector[2];
+		gmtl::Vec3f proj = projectionPlanes[projection];
+		return (vector[0]*proj[0]) + (vector[1]*proj[1]) + (vector[2]*proj[2]);
 	}
 
 	inline float calcVOctFreq(int input) {
@@ -250,15 +259,15 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
+		gmtl::normalize(xRotated);
+		gmtl::normalize(yRotated);
+		gmtl::normalize(zRotated);
+
 		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
 			zPointSamples.push(zRotated);
 		}
-
-		gmtl::normalize(xRotated);
-		gmtl::normalize(yRotated);
-		gmtl::normalize(zRotated);
 
 		//dephase
 		lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
@@ -271,6 +280,7 @@ struct QuatOSC : QuestionableModule {
 
 	json_t* dataToJson() override {
 		json_t* nodeJ = QuestionableModule::dataToJson();
+		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
 		return nodeJ;
 	}
@@ -278,6 +288,7 @@ struct QuatOSC : QuestionableModule {
 	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
 		
+		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
 		
 		resetPhase(true);
@@ -316,6 +327,12 @@ struct QuatDisplay : Widget {
 	vecHistory yhistory;
 	vecHistory zhistory;
 
+	std::unordered_map<std::string, gmtl::Quatf> projRot = {
+		{"X", {0.f, 0.7071067, 0.f, 0.7071069}},
+		{"Y", {0.7071067, 0.f, 0.f, 0.7071069}},
+		{"Z", {0.f, 0.f, 0.f, 1.f}},
+	};
+
 	void addToHistory(gmtl::Vec3f& vec, vecHistory& h) {
 		h.history[h.cursor] = vec;
 		h.cursor = (h.cursor + 1) % MAX_HISTORY;
@@ -326,6 +343,8 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
+		gmtl::Quatf rot = projRot[((QuatOSC*)module)->projection];
+
 		// grab points from audio thread and clear and add it to our own history list
 		while (history.size() > 1) {
 			addToHistory(history.front(), localHistory);
@@ -335,7 +354,9 @@ struct QuatDisplay : Widget {
 		// Iterate from oldest history value to latest
 		nvgBeginPath(vg);
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
-			gmtl::Vec3f point = localHistory.history[i];
+			gmtl::Vec3f point = rot * localHistory.history[i];
+			gmtl::normalize(point);
+			point *= 65.f;
 			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
 			//else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
 			else nvgLineTo(vg, centerX + point[0], centerY + point[1]);
@@ -351,10 +372,6 @@ struct QuatDisplay : Widget {
 	void drawLayer(const DrawArgs &args, int layer) override {
 
 		nvgSave(args.vg);
-		//nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
-
-		//float centerX = box.size.x/2;
-		//float centerY = box.size.y/2;
 
 		if (module == NULL) return;
 
@@ -362,47 +379,8 @@ struct QuatDisplay : Widget {
 		float yInf = module->getValue(QuatOSC::Y_POS_I_PARAM, true);
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
 
-		//gmtl::Vec3f xPoint = module->xPointSamples.back();
-		//gmtl::Vec3f yPoint = module->yPointSamples.back();
-		//gmtl::Vec3f zPoint = module->zPointSamples.back();
-
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgStrokeWidth(args.vg, 1.f);
-
-		/*nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, centerX, centerY);
-		nvgLineTo(args.vg, centerX + xPoint[0], centerY + xPoint[1]);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-		
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, centerX, centerY);
-		nvgLineTo(args.vg, centerX + yPoint[0], centerY + yPoint[1]);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, centerX, centerY);
-		nvgLineTo(args.vg, centerX + zPoint[0], centerY + zPoint[1]);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-
-		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + xPoint[0], centerY + xPoint[1], 1.5);
-		nvgFill(args.vg);
-
-		nvgFillColor(args.vg, nvgRGB(250, 250, 15));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + yPoint[0], centerY + yPoint[1], 1.5);
-		nvgFill(args.vg);
-
-		nvgFillColor(args.vg, nvgRGB(15, 255, 250));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
-		nvgFill(args.vg);*/
-
-
 
 		if (layer == 1) {
 			reading = true;
@@ -544,6 +522,19 @@ struct QuatOSCWidget : QuestionableWidget {
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::MONO_OUT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		QuatOSC* mod = (QuatOSC*)module;
+		menu->addChild(new MenuSeparator);
+		menu->addChild(rack::createSubmenuItem("Projection Axis", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("X", "",[=]() { mod->projection = "X"; }));
+			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
+			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
+		}));
+
+		QuestionableWidget::appendContextMenu(menu);
 	}
 };
 
