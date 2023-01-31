@@ -259,15 +259,15 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
-		gmtl::normalize(xRotated);
-		gmtl::normalize(yRotated);
-		gmtl::normalize(zRotated);
-
 		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
 			zPointSamples.push(zRotated);
 		}
+
+		gmtl::normalize(xRotated);
+		gmtl::normalize(yRotated);
+		gmtl::normalize(zRotated);
 
 		//dephase
 		lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
@@ -355,8 +355,6 @@ struct QuatDisplay : Widget {
 		nvgBeginPath(vg);
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
 			gmtl::Vec3f point = rot * localHistory.history[i];
-			gmtl::normalize(point);
-			point *= 65.f;
 			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
 			//else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
 			else nvgLineTo(vg, centerX + point[0], centerY + point[1]);
