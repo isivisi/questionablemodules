@@ -405,25 +405,25 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->addText("SLURP OSC", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
-		color->addText("X VOCT", "OpenSans-Bold.ttf", c, 6, Vec(37, 209), "descriptor");
-		color->addText("Y VOCT", "OpenSans-Bold.ttf", c, 6, Vec(90, 209), "descriptor");
-		color->addText("Z VOCT", "OpenSans-Bold.ttf", c, 6, Vec(144, 209), "descriptor");
+		color->addText("X VOCT", "OpenSans-Bold.ttf", c, 6, Vec(37, 209.5), "descriptor");
+		color->addText("Y VOCT", "OpenSans-Bold.ttf", c, 6, Vec(90, 209.5), "descriptor");
+		color->addText("Z VOCT", "OpenSans-Bold.ttf", c, 6, Vec(144, 209.5), "descriptor");
 
-		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 237), "descriptor");
-		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 237), "descriptor");
-		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 237), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 238.5), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 238.5), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 238.5), "descriptor");
 
-		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37, 267), "descriptor");
-		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 267), "descriptor");
-		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 267), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37, 268), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 268), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 268), "descriptor");
 
-		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37, 296), "descriptor");
-		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 296), "descriptor");
-		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 296), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37, 297.5), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 297.5), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 297.5), "descriptor");
 
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 326), "descriptor");
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 326), "descriptor");
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 326), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 327), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 327), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 327), "descriptor");
 
 		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
 		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358), "descriptor");

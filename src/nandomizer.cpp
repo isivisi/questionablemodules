@@ -149,6 +149,17 @@ struct Nandomizer : QuestionableModule {
 
 struct NandomizerWidget : QuestionableWidget {
 
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+		color->textList.clear();
+
+		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(45.35, 257), "descriptor");
+
+		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(24.5, 315), "descriptor");
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(24.5, 353), "descriptor");
+		color->addText("OUT", "OpenSans-Bold.ttf", c, 7, Vec(66, 353), "descriptor");
+	}
+
 	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
@@ -161,6 +172,7 @@ struct NandomizerWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
+		setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;

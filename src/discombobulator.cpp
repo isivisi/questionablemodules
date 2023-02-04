@@ -156,6 +156,17 @@ struct Discombobulator : QuestionableModule {
 
 struct DiscombobulatorWidget : QuestionableWidget {
 
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+		color->textList.clear();
+
+		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(30, 257), "descriptor");
+		color->addText("OUTS", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 257), "descriptor");
+
+		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(30, 353), "descriptor");
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 353), "descriptor");
+	}
+
 	DiscombobulatorWidget(Discombobulator* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
@@ -168,6 +179,7 @@ struct DiscombobulatorWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
+		setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
