@@ -1055,10 +1055,33 @@ struct TreequencerWidget : QuestionableWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
 
-	void setText(NVGcolor c) {
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
 		color->addText("TREEQUENCER", "OpenSans-ExtraBold.ttf", c, 14, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 20));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 48), "descriptor"); // 38
+		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(69, 48), "descriptor");
+		color->addText("RESET", "OpenSans-Bold.ttf", c, 7, Vec(108, 48), "descriptor");
+
+		color->addText("SEQ COM", "OpenSans-Bold.ttf", c, 7, Vec(261.5, 48), "descriptor");
+		color->addText("VOCT OUT", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 48), "descriptor");
+
+		color->addText("CHANCE MOD", "OpenSans-Bold.ttf", c, 7, Vec(31, 314), "descriptor");
+
+		color->addText("HOLD", "OpenSans-Bold.ttf", c, 7, Vec(223, 314), "descriptor");
+		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
+		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
+
+		color->addText("1", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
+		color->addText("2", "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
+		color->addText("3", "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
+		color->addText("4", "OpenSans-Bold.ttf", c, 7, Vec(146, 353), "descriptor");
+		color->addText("5", "OpenSans-Bold.ttf", c, 7, Vec(184.5, 353), "descriptor");
+		color->addText("6", "OpenSans-Bold.ttf", c, 7, Vec(223, 353), "descriptor");
+		color->addText("7", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 353), "descriptor");
+		color->addText("8", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 353), "descriptor");
 	}
 
 	TreequencerWidget(Treequencer* module) {
@@ -1090,7 +1113,7 @@ struct TreequencerWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		setText(nvgRGB(255,255,255));
+		setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;

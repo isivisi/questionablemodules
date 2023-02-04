@@ -398,7 +398,9 @@ struct QuatOSCWidget : QuestionableWidget {
 	ImagePanel *fade;
 	QuatDisplay *display;
 
-	void setText(NVGcolor c) {
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+
 		color->textList.clear();
 		color->addText("SLURP OSC", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
@@ -421,7 +423,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 326), "descriptor");
 		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 326), "descriptor");
-		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 326)), "descriptor";
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 326), "descriptor");
 
 		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
 		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358), "descriptor");
@@ -453,7 +455,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		setText(nvgRGB(255,255,255));
+		setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
