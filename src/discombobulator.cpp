@@ -179,7 +179,7 @@ struct DiscombobulatorWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		setText();
+		if (module) setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
