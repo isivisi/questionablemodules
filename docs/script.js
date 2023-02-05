@@ -1,6 +1,10 @@
 // Settings
-var DocVersion = "v2.1.6";
+var DocVersion = "v2.1.7";
 var previousVersions = [
+    {
+        verison: "v2.1.6",
+        commit: "doc2.1.6"
+    },
     {
         verison: "v2.1.5",
         commit: "doc2.1.5"
@@ -28,3 +32,19 @@ function runEmbeddedScripts(text) {
         eval(scripts[i].innerHTML);
     }
 }
+
+// highlight logic for ids
+window.addEventListener('load', function () {
+    var hash = decodeURIComponent(window.location.hash.slice(1));
+    if (hash) {
+        var paragraphsWithIds = document.querySelectorAll("p[id]");
+        for (var i = 0; i < paragraphsWithIds.length; i++) {
+            console.log(hash, paragraphsWithIds[i].id)
+            if (hash.includes(paragraphsWithIds[i].id)) {
+                window.location.hash = "#" + paragraphsWithIds[i].id;
+
+                paragraphsWithIds[i].classList.add("hashSelected");
+            }
+        }
+    } 
+});

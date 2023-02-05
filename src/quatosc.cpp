@@ -75,6 +75,14 @@ struct QuatOSC : QuestionableModule {
 		LIGHTS_LEN
 	};
 
+	std::unordered_map<std::string, gmtl::Vec3f> projectionPlanes = {
+		{"X", gmtl::Vec3f{0.f, 1.f, 1.f}},
+		{"Y", gmtl::Vec3f{1.f, 0.f, 1.f}},
+		{"Z", gmtl::Vec3f{1.f, 1.f, 0.f}}
+	};
+
+	std::string projection = "Z";
+
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
     gmtl::Vec3f xPointOnSphere;
@@ -156,7 +164,8 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float VecCombine(gmtl::Vec3f vector) {
-		return vector[0] + vector[1];// + vector[2];
+		gmtl::Vec3f proj = projectionPlanes[projection];
+		return (vector[0]*proj[0]) + (vector[1]*proj[1]) + (vector[2]*proj[2]);
 	}
 
 	inline float calcVOctFreq(int input) {
@@ -192,8 +201,14 @@ struct QuatOSC : QuestionableModule {
 		}
 	}
 
+	float smoothDephase(float offset, float phase, float sampleTime) {
+		float phaseError = std::asin(phase) - std::asin(offset);
+		if (phaseError > M_PI) phaseError -= 2*M_PI;
+		else if (phaseError < -M_PI) phaseError += 2*M_PI;
+		return flerp(phase, phase - (phaseError), sampleTime);
+	}
+
 	void process(const ProcessArgs& args) override {
-		gmtl::Quatf newRot;
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
 			oct1Connected = inputs[VOCT].isConnected();
@@ -220,15 +235,18 @@ struct QuatOSC : QuestionableModule {
 			}
 		} else clockFreq = 2.f;
 
-		float lfo1Val = getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT)));
-		float lfo2Val = getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2)));
-		float lfo3Val = getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)));
-
-		gmtl::Vec3f angle = gmtl::Vec3f(lfo1Val, lfo2Val, lfo3Val);
-		gmtl::Quatf rotOffset = gmtl::makePure(angle);
+		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
+			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT))), 
+			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2))), 
+			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)))
+		));
 		gmtl::normalize(rotOffset);
 
-		gmtl::Quatf  rotAddition = gmtl::makePure(gmtl::Vec3f(getValue(X_FLO_ROT_PARAM) * args.sampleTime, getValue(Y_FLO_ROT_PARAM)* args.sampleTime, getValue(Z_FLO_ROT_PARAM)* args.sampleTime));
+		gmtl::Quatf rotAddition = gmtl::makePure(gmtl::Vec3f(
+			getValue(X_FLO_ROT_PARAM) * args.sampleTime, 
+			getValue(Y_FLO_ROT_PARAM)* args.sampleTime, 
+			getValue(Z_FLO_ROT_PARAM)* args.sampleTime
+		));
 		rotationAccumulation += rotAddition * rotationAccumulation;
 
 		sphereQuat = rotationAccumulation * rotOffset;
@@ -241,7 +259,7 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
-		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND))) == 0 && !reading) {
+		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
 			zPointSamples.push(zRotated);
@@ -252,27 +270,17 @@ struct QuatOSC : QuestionableModule {
 		gmtl::normalize(zRotated);
 
 		//dephase
-		float flo1PhaseError = std::asin(lfo1Phase) - std::asin(0);
-		if (flo1PhaseError > M_PI) flo1PhaseError -= 2*M_PI;
-		else if (flo1PhaseError < -M_PI) flo1PhaseError += 2*M_PI;
-		lfo1Phase = flerp(lfo1Phase, lfo1Phase - (flo1PhaseError), args.sampleTime);
-
-		float flo2PhaseError = std::asin(lfo2Phase) - std::asin(0);
-		if (flo2PhaseError > M_PI) flo2PhaseError -= 2*M_PI;
-		else if (flo2PhaseError < -M_PI) flo2PhaseError += 2*M_PI;
-		lfo2Phase = flerp(lfo2Phase, lfo2Phase - (flo2PhaseError), args.sampleTime);
-
-		float flo3PhaseError = std::asin(lfo3Phase) - std::asin(0);
-		if (flo3PhaseError > M_PI) flo3PhaseError -= 2*M_PI;
-		else if (flo3PhaseError < -M_PI) flo3PhaseError += 2*M_PI;
-		lfo3Phase = flerp(lfo3Phase, lfo3Phase - (flo3PhaseError), args.sampleTime);
+		lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
+		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
+		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
 		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))));
 
 	}
 
-	json_t* dataToJson() {
+	json_t* dataToJson() override {
 		json_t* nodeJ = QuestionableModule::dataToJson();
+		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
 		return nodeJ;
 	}
@@ -280,6 +288,7 @@ struct QuatOSC : QuestionableModule {
 	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
 		
+		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
 		
 		resetPhase(true);
@@ -318,6 +327,12 @@ struct QuatDisplay : Widget {
 	vecHistory yhistory;
 	vecHistory zhistory;
 
+	std::unordered_map<std::string, gmtl::Quatf> projRot = {
+		{"X", {0.f, 0.7071067, 0.f, 0.7071069}},
+		{"Y", {0.7071067, 0.f, 0.f, 0.7071069}},
+		{"Z", {0.f, 0.f, 0.f, 1.f}},
+	};
+
 	void addToHistory(gmtl::Vec3f& vec, vecHistory& h) {
 		h.history[h.cursor] = vec;
 		h.cursor = (h.cursor + 1) % MAX_HISTORY;
@@ -328,6 +343,8 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
+		gmtl::Quatf rot = projRot[((QuatOSC*)module)->projection];
+
 		// grab points from audio thread and clear and add it to our own history list
 		while (history.size() > 1) {
 			addToHistory(history.front(), localHistory);
@@ -337,7 +354,7 @@ struct QuatDisplay : Widget {
 		// Iterate from oldest history value to latest
 		nvgBeginPath(vg);
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
-			gmtl::Vec3f point = localHistory.history[i];
+			gmtl::Vec3f point = rot * localHistory.history[i];
 			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
 			//else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
 			else nvgLineTo(vg, centerX + point[0], centerY + point[1]);
@@ -353,10 +370,6 @@ struct QuatDisplay : Widget {
 	void drawLayer(const DrawArgs &args, int layer) override {
 
 		nvgSave(args.vg);
-		//nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
-
-		float centerX = box.size.x/2;
-		float centerY = box.size.y/2;
 
 		if (module == NULL) return;
 
@@ -364,47 +377,8 @@ struct QuatDisplay : Widget {
 		float yInf = module->getValue(QuatOSC::Y_POS_I_PARAM, true);
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
 
-		//gmtl::Vec3f xPoint = module->xPointSamples.back();
-		//gmtl::Vec3f yPoint = module->yPointSamples.back();
-		//gmtl::Vec3f zPoint = module->zPointSamples.back();
-
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgStrokeWidth(args.vg, 1.f);
-
-		/*nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, centerX, centerY);
-		nvgLineTo(args.vg, centerX + xPoint[0], centerY + xPoint[1]);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-		
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, centerX, centerY);
-		nvgLineTo(args.vg, centerX + yPoint[0], centerY + yPoint[1]);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-
-		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, centerX, centerY);
-		nvgLineTo(args.vg, centerX + zPoint[0], centerY + zPoint[1]);
-		nvgStroke(args.vg);
-		nvgClosePath(args.vg);
-
-		nvgFillColor(args.vg, nvgRGB(15, 250, 15));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + xPoint[0], centerY + xPoint[1], 1.5);
-		nvgFill(args.vg);
-
-		nvgFillColor(args.vg, nvgRGB(250, 250, 15));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + yPoint[0], centerY + yPoint[1], 1.5);
-		nvgFill(args.vg);
-
-		nvgFillColor(args.vg, nvgRGB(15, 255, 250));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, centerX + zPoint[0], centerY + zPoint[1], 1.5);
-		nvgFill(args.vg);*/
-
-
 
 		if (layer == 1) {
 			reading = true;
@@ -424,10 +398,35 @@ struct QuatOSCWidget : QuestionableWidget {
 	ImagePanel *fade;
 	QuatDisplay *display;
 
-	void setText(NVGcolor c) {
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+
 		color->textList.clear();
 		color->addText("SLURP OSC", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+
+		color->addText("X VOCT", "OpenSans-Bold.ttf", c, 6, Vec(37, 209.5), "descriptor");
+		color->addText("Y VOCT", "OpenSans-Bold.ttf", c, 6, Vec(90, 209.5), "descriptor");
+		color->addText("Z VOCT", "OpenSans-Bold.ttf", c, 6, Vec(144, 209.5), "descriptor");
+
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 238.5), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 238.5), "descriptor");
+		color->addText("INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 238.5), "descriptor");
+
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37, 268), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 268), "descriptor");
+		color->addText("ROTATION", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 268), "descriptor");
+
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37, 297.5), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 297.5), "descriptor");
+		color->addText("OCTAVE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 297.5), "descriptor");
+
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37, 327), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 53, 327), "descriptor");
+		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 327), "descriptor");
+
+		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
+		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358), "descriptor");
 	}
 
 	QuatOSCWidget(QuatOSC* module) {
@@ -456,12 +455,13 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		setText(nvgRGB(255,255,255));
+		if (module) setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -481,47 +481,60 @@ struct QuatOSCWidget : QuestionableWidget {
 		float start = 8;
 		float next = 9;
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 60 + hOff)), module, QuatOSC::X_POS_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 60+ hOff)), module, QuatOSC::Y_POS_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 60+ hOff)), module, QuatOSC::Z_POS_I_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start, 60 + hOff)), module, QuatOSC::X_POS_I_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*2), 60+ hOff)), module, QuatOSC::Y_POS_I_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*4), 60+ hOff)), module, QuatOSC::Z_POS_I_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 60+ hOff)), module, QuatOSC::X_POS_I_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 60+ hOff)), module, QuatOSC::Y_POS_I_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 60+ hOff)), module, QuatOSC::Z_POS_I_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + next, 60+ hOff)), module, QuatOSC::X_POS_I_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 60+ hOff)), module, QuatOSC::Y_POS_I_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 60+ hOff)), module, QuatOSC::Z_POS_I_INPUT));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 70+ hOff)), module, QuatOSC::X_FLO_ROT_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 70+ hOff)), module, QuatOSC::Y_FLO_ROT_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 70+ hOff)), module, QuatOSC::Z_FLO_ROT_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start, 70+ hOff)), module, QuatOSC::X_FLO_ROT_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*2), 70+ hOff)), module, QuatOSC::Y_FLO_ROT_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*4), 70+ hOff)), module, QuatOSC::Z_FLO_ROT_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 70+ hOff)), module, QuatOSC::X_FLO_F_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 70+ hOff)), module, QuatOSC::Y_FLO_F_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 70+ hOff)), module, QuatOSC::Z_FLO_F_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + next, 70+ hOff)), module, QuatOSC::X_FLO_F_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 70+ hOff)), module, QuatOSC::Y_FLO_F_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 70+ hOff)), module, QuatOSC::Z_FLO_F_INPUT));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 80+ hOff)), module, QuatOSC::VOCT1_OCT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 80+ hOff)), module, QuatOSC::VOCT2_OCT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 80+ hOff)), module, QuatOSC::VOCT3_OCT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start, 80+ hOff)), module, QuatOSC::VOCT1_OCT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*2), 80+ hOff)), module, QuatOSC::VOCT2_OCT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*4), 80+ hOff)), module, QuatOSC::VOCT3_OCT));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 80+ hOff)), module, QuatOSC::VOCT1_OCT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 80+ hOff)), module, QuatOSC::VOCT2_OCT_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 80+ hOff)), module, QuatOSC::VOCT3_OCT_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + next, 80+ hOff)), module, QuatOSC::VOCT1_OCT_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 80+ hOff)), module, QuatOSC::VOCT2_OCT_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 80+ hOff)), module, QuatOSC::VOCT3_OCT_INPUT));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start, 90+ hOff)), module, QuatOSC::X_FLO_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*2), 90+ hOff)), module, QuatOSC::Y_FLO_I_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(start + (next*4), 90+ hOff)), module, QuatOSC::Z_FLO_I_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start, 90+ hOff)), module, QuatOSC::X_FLO_I_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*2), 90+ hOff)), module, QuatOSC::Y_FLO_I_PARAM));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*4), 90+ hOff)), module, QuatOSC::Z_FLO_I_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + next, 90+ hOff)), module, QuatOSC::X_FLO_I_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 90+ hOff)), module, QuatOSC::Y_FLO_I_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 90+ hOff)), module, QuatOSC::Z_FLO_I_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + next, 90+ hOff)), module, QuatOSC::X_FLO_I_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 90+ hOff)), module, QuatOSC::Y_FLO_I_INPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 90+ hOff)), module, QuatOSC::Z_FLO_I_INPUT));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*0.5), 65)), module, QuatOSC::VOCT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*0.5), 65)), module, QuatOSC::VOCT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
 
-		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
-		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::MONO_OUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
+		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
+		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::MONO_OUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		QuatOSC* mod = (QuatOSC*)module;
+		menu->addChild(new MenuSeparator);
+		menu->addChild(rack::createSubmenuItem("Projection Axis", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("X", "",[=]() { mod->projection = "X"; }));
+			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
+			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
+		}));
+
+		QuestionableWidget::appendContextMenu(menu);
 	}
 };
 

@@ -12,7 +12,7 @@
     Light: Write with lights[...].setBrightness(brightness)
 */
 
-const int MODULE_SIZE = 8;
+const int MODULE_SIZE = 6;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
@@ -115,7 +115,6 @@ struct Nandomizer : QuestionableModule {
 		bool shouldRandomize = gateTrigger.process(inputs[8].getVoltage(), 0.1f, 2.f);
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			float voltage = inputs[i].getVoltage();
 			if (inputs[i].isConnected()) {
 				usableInputs.push_back(i);
 				lights[i].setBrightness(1.f);
@@ -150,6 +149,17 @@ struct Nandomizer : QuestionableModule {
 
 struct NandomizerWidget : QuestionableWidget {
 
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+		color->textList.clear();
+
+		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(45.35, 257), "descriptor");
+
+		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(24.5, 315), "descriptor");
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(24.5, 353), "descriptor");
+		color->addText("OUT", "OpenSans-Bold.ttf", c, 7, Vec(66, 353), "descriptor");
+	}
+
 	NandomizerWidget(Nandomizer* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
@@ -162,11 +172,13 @@ struct NandomizerWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
+		if (module) setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -176,16 +188,16 @@ struct NandomizerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 100)), module, Nandomizer::FADE_INPUT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(8.24, 100)), module, Nandomizer::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 10.478  + (10.0*float(i)))), module, i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(15.24, 10.478  + (10.0*float(i)))), module, i));
 			addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(20.24, 15.478 + (10.0*float(i)))), module, i));
 		}
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(22.24, 113)), module, Nandomizer::SINE_OUTPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.24, 113)), module, Nandomizer::TRIGGER));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(22.24, 113)), module, Nandomizer::SINE_OUTPUT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(8.24, 113)), module, Nandomizer::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 102.713)), module, Nandomizer::BLINK_LIGHT));
 	}

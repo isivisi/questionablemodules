@@ -1,14 +1,18 @@
 #include "plugin.hpp"
 
 Plugin* pluginInstance;
+
+const std::function<json_t*(json_t*)>* migrations = {};
+
 UserSettings userSettings("questionablemodules.json", [](json_t* json) {
 	// Runs at program start
 
 	UserSettings::json_create_if_not_exists(json, "theme", json_string(""));
 	UserSettings::json_create_if_not_exists(json, "treequencerScreenColor", json_integer(0));
+	UserSettings::json_create_if_not_exists(json, "showDescriptors", json_boolean(false));
 
 	return json;
-});
+}, migrations);
 
 void init(Plugin* p) {
 	pluginInstance = p;

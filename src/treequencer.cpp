@@ -12,6 +12,7 @@
 #include <memory>
 #include <queue>
 #include <algorithm>
+#include <utility>
 
 const int MAX_OUTPUTS = 8;
 const int MODULE_SIZE = 22;
@@ -78,7 +79,26 @@ struct Scale {
 	std::vector<int> notes;
 
 	// probabilities[note] = {anotherNote: probability, ...}
-	//std::map<int, std::map<int, float>> probabilities;
+	std::unordered_map<int, std::unordered_map<int, float>> probabilities;
+
+	Scale() { }
+	
+	Scale(std::string name, std::vector<int> notes) {
+		this->name = name;
+		this->notes = notes;
+	}
+
+	std::unordered_map<int, std::unordered_map<int, float>> getProbabilities() {
+		if (probabilities.empty()) {
+			probabilities.reserve(notes.size());
+			for (size_t i = 0; i < notes.size(); i++) {
+				for (size_t x = 0; x < notes.size(); x++) {
+					probabilities[i][x] = randFloat();
+				}
+			}
+		}
+		return probabilities;
+	}
 
 	std::vector<int> generateRandom(int size) {
 		std::vector<int> sequence = sequence;
@@ -92,6 +112,24 @@ struct Scale {
 
 	int getNextInSequence(std::vector<int> sequence, int maxSize) {
 		int offset = 0;
+
+		/*auto probs = getProbabilities();
+
+		std::vector<float> cumulativeProbs;
+		cumulativeProbs.resize(notes.size());
+		float maxVal = 0.f;
+		for (size_t i = 0; i < sequence.size(); i++) {
+			for (auto& notePobPair : probs[sequence[i]%12]) cumulativeProbs[notePobPair.first] += notePobPair.second;
+			maxVal = cumulativeProbs[i] > maxVal ? cumulativeProbs[i] : maxVal;
+		}
+
+		float rand = randFloat(maxVal);
+
+		int note = 0;
+		for(size_t i = 0; i < cumulativeProbs.size(); i++) {
+			if (rand <= cumulativeProbs[i]) note = notes[i];
+		}
+		return note;*/
 
 		// convert back to offset values
 		int front = toOffset(sequence.front());
@@ -126,7 +164,7 @@ struct Scale {
 	
 	// convert note to position offset
 	int toOffset(int note) {
-		for (int i = 0; i < notes.size(); i++) {
+		for (size_t i = 0; i < notes.size(); i++) {
 			if (notes[i] == abs(note % (int)notes.size())) return i * (note / (int)notes.size());
 		}
 		return 0;
@@ -135,7 +173,7 @@ struct Scale {
 	Scale getTransposedBy(int note) {
 		Scale newScale;
 		newScale.name = Scale::getNoteString(note) + std::string(" ") + name;
-		for (int i = 0; i < notes.size(); i++) {
+		for (size_t i = 0; i < notes.size(); i++) {
 			newScale.notes.push_back(notes[i] + note);
 		}
 		return newScale;
@@ -178,8 +216,7 @@ struct Node {
 	}
 
 	~Node() {
-		
-		for (int i = 0; i < children.size(); i++) delete children[i];
+		for (size_t i = 0; i < children.size(); i++) delete children[i];
 	}
 
 	void setOutput(int out) {
@@ -247,13 +284,14 @@ struct Node {
 	void remove() {
 		if (!parent) return;
 		parent->children.erase(std::find(parent->children.begin(), parent->children.end(), this));
+		delete this;
 	}
 
 	int maxDepth() {
 		if (children.size() == 0) return 0;
 
 		std::vector<int> sizes;
-		for (int i = 0; i < children.size(); i++) {
+		for (size_t i = 0; i < children.size(); i++) {
 			sizes.push_back(children[i]->maxDepth() + 1);
 		}
 		return *std::max_element(sizes.begin(), sizes.end());
@@ -278,7 +316,7 @@ struct Node {
 		}
 	}
 
-	json_t* const toJson() {
+	json_t* toJson() {
 		json_t* nodeJ = json_object();
 
 		json_object_set_new(nodeJ, "output", json_integer(output));
@@ -287,7 +325,7 @@ struct Node {
 		json_t *childrenArray = json_array();
 		json_object_set_new(nodeJ, "children", childrenArray);
 
-		for (int i = 0; i < children.size(); i++) {
+		for (size_t i = 0; i < children.size(); i++) {
 			json_array_append_new(childrenArray, children[i]->toJson());
 		}
 
@@ -301,7 +339,7 @@ struct Node {
 
 		if (json_t* arr = json_object_get(json, "children")) {
 
-			for (int i = 0; i < json_array_size(arr); i++) {
+			for (size_t i = 0; i < json_array_size(arr); i++) {
 				children.push_back(new Node(json_array_get(arr, i), this));
 			}
 
@@ -480,7 +518,7 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
-	int sequencePos = 0;
+	size_t sequencePos = 0;
 	void processSequence(bool newSequence = false) {
 		bool lastBounce = bouncing;
 		if (newSequence) {
@@ -696,8 +734,6 @@ struct NodeDisplay : Widget {
 			});
 		}));
 
-		menu->addChild(new MenuSeparator);
-
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
 				node->addChild(); 
@@ -714,7 +750,7 @@ struct NodeDisplay : Widget {
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Generate Sequence", "", [=](ui::Menu* menu) {
-			for (int i = 0; i < scales.size(); i++) {
+			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
 						node->generateSequencesToDepth(scales[i], 8);
@@ -731,7 +767,7 @@ struct NodeDisplay : Widget {
 
 		if (isInsideBox(mp, node->box)) return node;
 
-		for (int i = 0; i < node->children.size(); i++)
+		for (size_t i = 0; i < node->children.size(); i++)
     	{
 			Node* found = findNodeClicked(mp, node->children[i]);
 			if (found) return found;
@@ -776,11 +812,11 @@ struct NodeDisplay : Widget {
 
     }
 
-	void onHoverScroll(const HoverScrollEvent& e) {
+	void onHoverScroll(const HoverScrollEvent& e) override {
 		e.consume(this);
-		float posX = APP->scene->rack->getMousePos().x;
-        float posY = APP->scene->rack->getMousePos().y;
-		float oldScreenScale = screenScale;
+		//float posX = APP->scene->rack->getMousePos().x;
+        //float posY = APP->scene->rack->getMousePos().y;
+		//float oldScreenScale = screenScale;
 
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
 		module->startScreenScale = screenScale;
@@ -802,7 +838,7 @@ struct NodeDisplay : Widget {
 		},
 		{ // Tol Vibrant
 			nvgRGB(238,119,51), // orange
-			nvgRGB(51,187,338), // cyan
+			nvgRGB(51,187,82), // cyan
 			nvgRGB(0,119,187), // blue
 			nvgRGB(238,51,119), // magenta
 			nvgRGB(187,187,187) // grey
@@ -905,7 +941,7 @@ struct NodeDisplay : Widget {
 
 	void drawNodes(NVGcontext* vg) {
 
-		for (int i = 0; i < nodeCache.size(); i++) {
+		for (size_t i = 0; i < nodeCache.size(); i++) {
 			drawNode(vg, nodeCache[i].node, nodeCache[i].pos.x, nodeCache[i].pos.y, nodeCache[i].scale);
 		}
 	}
@@ -976,14 +1012,12 @@ struct NodeDisplay : Widget {
 		
 		gatherNodesForBins(&module->rootNode);
 		nodeCache.clear();
-
-		int depth = module->rootNode.maxDepth() + 2;
 		
 		float cumulativeX = -25.f;
-		for (int d = 0; d < nodeBins.size(); d++) {
+		for (size_t d = 0; d < nodeBins.size(); d++) {
 			int binLen = nodeBins[d].size();
 			float scale = calcNodeScale(binLen);
-			float prevScale = calcNodeScale(nodeBins[std::max(0, d-1)].size());
+			float prevScale = calcNodeScale(nodeBins[std::max(0, (int)d-1)].size());
 			cumulativeX += ((NODE_SIZE+1)*prevScale);
 			for(int i = 0; i < binLen; i++) {
 				Node* node = nodeBins[d][i];
@@ -1009,7 +1043,7 @@ struct NodeDisplay : Widget {
 
 		//nodeBins[depth].push_back(&node);
 
-		for (int i = 0; i < node->children.size(); i++) {
+		for (size_t i = 0; i < node->children.size(); i++) {
 			gatherNodesForBins(node->children[i], (position*2)+i, depth+1);
 		}
 
@@ -1021,10 +1055,33 @@ struct TreequencerWidget : QuestionableWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
 
-	void setText(NVGcolor c) {
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
 		color->addText("TREEQUENCER", "OpenSans-ExtraBold.ttf", c, 14, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 20));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 48), "descriptor"); // 38
+		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(69, 48), "descriptor");
+		color->addText("RESET", "OpenSans-Bold.ttf", c, 7, Vec(108, 48), "descriptor");
+
+		color->addText("SEQ COM", "OpenSans-Bold.ttf", c, 7, Vec(261.5, 48), "descriptor");
+		color->addText("VOCT OUT", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 48), "descriptor");
+
+		color->addText("CHANCE MOD", "OpenSans-Bold.ttf", c, 7, Vec(31, 314), "descriptor");
+
+		color->addText("HOLD", "OpenSans-Bold.ttf", c, 7, Vec(223, 314), "descriptor");
+		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
+		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
+
+		color->addText("1", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
+		color->addText("2", "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
+		color->addText("3", "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
+		color->addText("4", "OpenSans-Bold.ttf", c, 7, Vec(146, 353), "descriptor");
+		color->addText("5", "OpenSans-Bold.ttf", c, 7, Vec(184.5, 353), "descriptor");
+		color->addText("6", "OpenSans-Bold.ttf", c, 7, Vec(223, 353), "descriptor");
+		color->addText("7", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 353), "descriptor");
+		color->addText("8", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 353), "descriptor");
 	}
 
 	TreequencerWidget(Treequencer* module) {
@@ -1056,12 +1113,13 @@ struct TreequencerWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		setText(nvgRGB(255,255,255));
+		if (module) setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -1073,36 +1131,36 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(101.441f, 90.f)), module, Treequencer::TTYPE_GATE));
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(101.441f, 90.f)), module, Treequencer::TTYPE_GATE));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(88.424f, 100.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(88.424f, 90.f)), module, Treequencer::BOUNCE_GATE));
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(88.424f, 100.f)), module, Treequencer::BOUNCE, Treequencer::BOUNCE_LIGHT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(88.424f, 90.f)), module, Treequencer::BOUNCE_GATE));
 
-		addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(75.406f, 100.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(75.406f, 90.f)), module, Treequencer::HOLD_INPUT));
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(75.406f, 100.f)), module, Treequencer::HOLD, Treequencer::HOLD_LIGHT));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(75.406f, 90.f)), module, Treequencer::HOLD_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(88.424f, 10.f)), module, Treequencer::SEQUENCE_COMPLETE));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(101.441f, 10.f)), module, Treequencer::ALL_OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(88.424f, 10.f)), module, Treequencer::SEQUENCE_COMPLETE));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(101.441f, 10.f)), module, Treequencer::ALL_OUT));
 
 		for (int i = 0; i < MAX_OUTPUTS; i++) {
-			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
 		}
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
 
-		//addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
+		//addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
+		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
 		
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
-		//addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
+		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
+		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
 
-		//addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Treequencer::TRIGGER));
+		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 113)), module, Treequencer::TRIGGER));
 
 		//addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Treequencer::BLINK_LIGHT));
 	}
@@ -1111,6 +1169,9 @@ struct TreequencerWidget : QuestionableWidget {
   	{
 		Treequencer* mod = (Treequencer*)module;
 		menu->addChild(new MenuSeparator);
+		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
+			display->resetScreenPosition();
+		}));
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = 0; });
@@ -1131,10 +1192,6 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 
 		QuestionableWidget::appendContextMenu(menu);
-
-		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
-			display->resetScreenPosition();
-		}));
 	}
 };
 

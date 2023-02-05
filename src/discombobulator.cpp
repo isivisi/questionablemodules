@@ -14,7 +14,7 @@
     Light: Write with lights[...].setBrightness(brightness)
 */
 
-const int MODULE_SIZE = 10;
+const int MODULE_SIZE = 9;
 
 const int MAX_HISTORY = 32;
 const int MAX_INPUTS = 8;
@@ -115,7 +115,6 @@ struct Discombobulator : QuestionableModule {
 		bool shouldRandomize = gateTrigger.process(inputs[8].getVoltage(), 0.1f, 2.f);
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			float voltage = inputs[i].getVoltage();
 			if (inputs[i].isConnected()) {
 				usableInputs.push_back(i);
 			}
@@ -157,6 +156,17 @@ struct Discombobulator : QuestionableModule {
 
 struct DiscombobulatorWidget : QuestionableWidget {
 
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+		color->textList.clear();
+
+		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(30, 257), "descriptor");
+		color->addText("OUTS", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 257), "descriptor");
+
+		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(30, 353), "descriptor");
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 353), "descriptor");
+	}
+
 	DiscombobulatorWidget(Discombobulator* module) {
 		setModule(module);
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
@@ -169,11 +179,13 @@ struct DiscombobulatorWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
+		if (module) setText();
 
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
 		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -185,15 +197,15 @@ struct DiscombobulatorWidget : QuestionableWidget {
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
 
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
+		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
-			addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 10.478  + (10.0*float(i)))), module, i));
 		}
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 113)), module, Discombobulator::TRIGGER));
 
 		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(14.24, 106.713)), module, Discombobulator::BLINK_LIGHT));
 	}

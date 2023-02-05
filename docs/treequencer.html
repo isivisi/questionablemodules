@@ -70,7 +70,7 @@
               <h2>Node Context Menu</h2>
               <img src="./images/contextmenu.svg" width="50%"/>   
 
-              <p class=""><span class="fw-bold">Node Output</span> The whole number output value, values 1 to 8 output to the corresponding <a href="#outputs">1-8 outputs</a>. Values higer than 8 will still output through the <a href="#voct">VOct out.</a></p>
+              <p class=""><span class="fw-bold">Node Output</span> The whole number output value, values 1 to 8 output to the corresponding <a href="#Output">1-8 outputs</a>. Values higer than 8 will still output through the <a href="#VOct">VOct out.</a></p>
               <p class=""><span class="fw-bold">Node Chance</span> Lets the chance for each child node to be randomly selected. 0.0 means no chance for child 1 to be selected and 1.0 means 100% chance.</p>
               <p class=""><span class="fw-bold">Preview</span> Sets the selected node to the active node and enables hold. This allows you to easily preview the node output.</p>
               <p class=""><span class="fw-bold">Add Child</span> Adds a child to this node, maximum 2 children.</p>
@@ -81,15 +81,15 @@
             
               <h2>Inputs</h2>
 
-              <p class=""><span class="fw-bold">Clock</span> is the trigger that moves the sequence forward.</p>
-              <p class=""><span class="fw-bold">Gate</span> changes the current sequence if in <a href="#trigger">sequence trigger mode.</a> If not it acts the same as the clock.</p>
-              <p class=""><span class="fw-bold">Reset</span> resets to the first node.</p>
+              <p id="Clock"><span class="fw-bold">Clock</span> is the trigger that moves the sequence forward.</p>
+              <p id="Gate"><span class="fw-bold">Gate</span> changes the current sequence if in <a href="#trigger">sequence trigger mode.</a> If not it acts the same as the clock.</p>
+              <p id="Reset"><span class="fw-bold">Reset</span> resets to the first node.</p>
 
               <h2>Parameters</h2>
 
-              <p class=""><span class="fw-bold">Hold</span> overrides the clock value and keeps outputting current node values.</p>
+              <p id="Hold"><span class="fw-bold">Hold</span> overrides the clock value and keeps outputting current node values.</p>
               
-              <p class=""><span class="fw-bold">Bounce</span> When bounce is enabled the sequence will iterate backwards once it has reached the end instead of just restarting back to the first node. </p>
+              <p id="Bounce"><span class="fw-bold">Bounce</span> When bounce is enabled the sequence will iterate backwards once it has reached the end instead of just restarting back to the first node. </p>
               <div class="row">
                 <div class="col-6">
                   <object id="animatingSvg" data="./images/sequence.svg" width="100%"> </object>
@@ -99,14 +99,14 @@
                 </div>
               </div>
 
-              <p id="trigger" class=""><span class="fw-bold">Trigger Mode</span> The Step trigger mode will randomly select one child node and move to it when the Gate trigger is activated. The Sequence mode instead limits the movement to one sequence and activating the Gate will change the selected sequence. You can iterate the sequence with the clock input.</p>
-              <p class=""><span class="fw-bold">Chance Modifier</span> Globally offsets all node chance values. Can be controlled with voltage.</p>
+              <p id="Trigger" class=""><span class="fw-bold">Trigger Mode</span> The Step trigger mode will randomly select one child node and move to it when the Gate trigger is activated. The Sequence mode instead limits the movement to one sequence and activating the Gate will change the selected sequence. You can iterate the sequence with the clock input.</p>
+              <p id="Chance"><span class="fw-bold">Chance Modifier</span> Globally offsets all node chance values. Can be controlled with voltage.</p>
 
               <h2>Outputs</h2>
 
-              <p class=""><span class="fw-bold">Sequence Completed</span> triggers when the end of a sequence has been hit. The end of a sequence is when the node is set back to the first or when the sequence begins to move backwards.</p>
-              <p id="voct" class=""><span class="fw-bold">VOct Out</span> outputs the current node value divided by 12 to be used as octave control (This uses the 1V/oct standard). Node values higher than 8 will still output here.</p>
-              <p id="outputs" class=""><span class="fw-bold">Outputs 1-8</span>, values 1 through 8 will activate these corresponding output triggers. Values higher and lower than 8 will not be output here but will still output to VOct.</p>
+              <p id="Sequence Complete"><span class="fw-bold">Sequence Completed</span> triggers when the end of a sequence has been hit. The end of a sequence is when the node is set back to the first or when the sequence begins to move backwards.</p>
+              <p id="VOct" class=""><span class="fw-bold">VOct Out</span> outputs the current node value divided by 12 to be used as octave control (This uses the 1V/oct standard). Node values higher than 8 will still output here.</p>
+              <p id="Sequence" class=""><span class="fw-bold">Outputs 1-8</span>, values 1 through 8 will activate these corresponding output triggers. Values higher and lower than 8 will not be output here but will still output to VOct.</p>
  
             </div>
            </div> 
@@ -128,7 +128,7 @@
         var layers = [];
         var layersBouncing = [];
 
-          window.onload = function () {
+          window.addEventListener('load', function () {
             var svg = document.getElementById("animatingSvg").contentDocument;
             layers.push(svg.getElementById("layer1"));
             layers.push(svg.getElementById("layer2"));
@@ -143,7 +143,7 @@
             layersBouncing.push(svg.getElementById("layer4"));
             layersBouncing.push(svg.getElementById("layer5"));
 
-          }
+          });
           
           var currentLayer = 0;
           setInterval(function(){
