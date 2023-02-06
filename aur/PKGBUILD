@@ -1,0 +1,41 @@
+# Maintainer: John Iannandrea <github.com/isivisi>
+
+_rackver=2.2.0
+
+pkgname='vcvrack-questionablemodules'
+pkgver=2.1.7
+pkgrel=1
+pkgdesc="Questionable Modules for VCVRack"
+url='https://github.com/isivisi/questionablemodules'
+license=(GPL)
+arch=(x86_64 aarch64)
+groups=(vcvrack-plugins)
+depends=('vcvrack>=2.2.0' | 'vcvrack-bin>=2.2.0')
+makedepends=(git zip simde zstd)
+
+source=(
+    "git+https://github.com/isivisi/questionablemodules.git#tag=v$pkgver"
+    "https://vcvrack.com/downloads/Rack-SDK-$_rackver-lin-x64.zip"
+)
+sha256sums=(
+    SKIP
+    SKIP
+)
+
+prepare() {
+    cd questionablemodules
+    git submodule update --init --recursive
+
+}
+
+build() {
+    cd questionablemodules
+    export RACK_DIR=../Rack-SDK
+    make dist
+}
+
+package() {
+    cd questionablemodules/dist
+	mkdir -p ~/.Rack2/plugins/
+	cp ./*.vcvplugin ~/.Rack2/plugins/
+}
