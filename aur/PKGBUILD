@@ -10,7 +10,7 @@ url='https://github.com/isivisi/questionablemodules'
 license=(GPL)
 arch=(x86_64 aarch64)
 groups=(vcvrack-plugins)
-depends=('vcvrack>=2.2.0' | 'vcvrack-bin>=2.2.0')
+depends=(vcvrack)
 makedepends=(git zip simde zstd)
 
 source=(
