@@ -39,6 +39,13 @@
       "description": "Oscillator that uses quaternion rotation to oscillate",
       "manualUrl": "https://isivisi.github.io/questionablemodules/slurp",
       "tags": ["Synth voice", "Oscillator", "Low-frequency oscillator"]
+    },
+    {
+      "slug": "watcher",
+      "name": "Watcher",
+      "description": "Watches module values to testing",
+      "manualUrl": "https://isivisi.github.io/questionablemodules/watcher",
+      "tags": ["Utility"]
     }
   ]
 }
