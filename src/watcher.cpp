@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 
-const int MODULE_SIZE = 6;
+const int MODULE_SIZE = 12;
 
 struct Watcher : QuestionableModule {
 	enum ParamId {
@@ -23,6 +23,7 @@ struct Watcher : QuestionableModule {
 		INPUTS_LEN
 	};
 	enum OutputId {
+		OUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -78,17 +79,56 @@ struct Watcher : QuestionableModule {
 
 	void process(const ProcessArgs& args) override {
 
-		
+		/*if (!APP->engine->getMasterModule()) {
+			APP->engine->setMasterModule(this);
+		}*/
 
 	}
 
 };
 
+struct WatchersEye : Widget {
+
+	float eyeLidPos = 25.f;
+	Vec eyePos = Vec(0,0);
+
+	WatchersEye() {
+
+	}
+
+	void draw(const DrawArgs &args) override {
+		//if (module == NULL) return;
+
+
+		nvgFillColor(args.vg, nvgRGB(255,255,255));
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, eyePos.x, eyePos.y, 10);
+		nvgFill(args.vg);
+
+		nvgStrokeColor(args.vg, nvgRGB(0,0,0));
+		nvgStrokeWidth(args.vg, 10.f);
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, 25, 0);
+		nvgQuadTo(args.vg, 0, eyeLidPos, -25, 0);
+		nvgStroke(args.vg);
+
+		nvgBeginPath(args.vg);
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, 25, 0);
+		nvgQuadTo(args.vg, 0, -eyeLidPos, -25, 0);
+		nvgStroke(args.vg);
+
+	}
+};
+
 struct WatcherWidget : QuestionableWidget {
+	WatchersEye* eye;
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
+		color->addText("WATCHER", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
 		//color->addText("", "OpenSans-Bold.ttf", c, 7, Vec(45.35, 257), "descriptor");
 	}
@@ -98,10 +138,13 @@ struct WatcherWidget : QuestionableWidget {
 		//setPanel(createPanel(asset::plugin(pluginInstance, "res/nrandomizer.svg")));
 
 		backdrop = new ImagePanel();
-		backdrop->box.size = Vec(6 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.jpg");
+		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/watcher.jpg");
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
+
+		eye = new WatchersEye();
+		eye->box.pos = Vec(140, 250);
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
@@ -115,6 +158,7 @@ struct WatcherWidget : QuestionableWidget {
 		
 		setPanel(backdrop);
 		addChild(color);
+		addChild(eye);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -122,7 +166,7 @@ struct WatcherWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		for (int i = 0; i < 8; i++) {
-			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(15.24, 10.478  + (10.0*float(i)))), module, i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(12.24, 20.478  + (12.0*float(i)))), module, i));
 			//addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(20.24, 15.478 + (10.0*float(i)))), module, i));
 		}
 
