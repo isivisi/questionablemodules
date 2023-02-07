@@ -41,7 +41,7 @@ struct Watcher : QuestionableModule {
 		double playbackSamplePos = 0.0;
 
 		// for playback feature
-		float sampleAtRate(float sampleRate) {
+		float sampleAtRate(float incomingSampleRate) {
 			if (!samples.size() > 0) return 0.f;
 			float s = 0.f;
 
@@ -49,7 +49,7 @@ struct Watcher : QuestionableModule {
 			if (fabs(playbackSamplePos - round(playbackSamplePos)) < 0.00001) s = samples[floor(playbackSamplePos)];
 			else s = lerp<double>(samples[floor(playbackSamplePos)], samples[ceil(playbackSamplePos)], fabs(playbackSamplePos - floor(playbackSamplePos)));
 
-			float sampleRateRatio = (float)sampleRate / (float)sRate;
+			float sampleRateRatio = (float)sampleRate / (float)incomingSampleRate;
 			
 			playbackSamplePos += sampleRateRatio;
 			playbackSamplePos = std::max(0.0, playbackSamplePos);
