@@ -13,4 +13,4 @@ extern Model* modelNandomizer;
 extern Model* modelDiscombobulator;
 extern Model* modelTreequencer;
 extern Model* modelQuatOSC;
-extern Model* modelWatcher
+extern Model* modelWatcher;

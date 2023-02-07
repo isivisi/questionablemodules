@@ -27,6 +27,40 @@ struct Watcher : QuestionableModule {
 	enum LightId {
 		LIGHTS_LEN
 	};
+	
+	template <typename T>
+	static T lerp(T point1, T point2, T t) {
+		float diff = point2 - point1;
+		return point1 + diff * t;
+	}
+
+	struct sampleSet {
+		float sampleRate;
+		std::vector<float> samples;
+
+		double playbackSamplePos = 0.0;
+
+		// for playback feature
+		float sampleAtRate(float sampleRate) {
+			if (!samples.size() > 0) return 0.f;
+			float s = 0.f;
+
+			// check if value is whole number, if not interpolate between values
+			if (fabs(playbackSamplePos - round(playbackSamplePos)) < 0.00001) s = samples[floor(playbackSamplePos)];
+			else s = lerp<double>(samples[floor(playbackSamplePos)], samples[ceil(playbackSamplePos)], fabs(playbackSamplePos - floor(playbackSamplePos)));
+
+			float sampleRateRatio = (float)sampleRate / (float)sRate;
+			
+			playbackSamplePos += sampleRateRatio;
+			playbackSamplePos = std::max(0.0, playbackSamplePos);
+
+			if (playbackSamplePos >= samples.size()-1) playbackSamplePos = 0.0;
+
+			return s;
+		}
+	};
+
+	std::vector<sampleSet> sampleData[8];
 
 	Watcher() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -86,7 +120,7 @@ struct WatcherWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		for (int i = 0; i < MAX_INPUTS; i++) {
+		for (int i = 0; i < 8; i++) {
 			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(15.24, 10.478  + (10.0*float(i)))), module, i));
 			//addChild(createLightCentered<MediumLight<GreenLight>>(mm2px(Vec(20.24, 15.478 + (10.0*float(i)))), module, i));
 		}
