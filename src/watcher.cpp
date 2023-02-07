@@ -3,6 +3,7 @@
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
 #include <vector>
+#include <algorithm>
 
 const int MODULE_SIZE = 6;
 
@@ -42,7 +43,7 @@ struct Watcher : QuestionableModule {
 
 		// for playback feature
 		float sampleAtRate(float incomingSampleRate) {
-			if (!samples.size() > 0) return 0.f;
+			if (!samples.size()) return 0.f;
 			float s = 0.f;
 
 			// check if value is whole number, if not interpolate between values
