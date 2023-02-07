@@ -394,7 +394,7 @@ struct QuatDisplay : Widget {
 
 };
 
-struct QuatOSCWidget : QuestionableWidget {
+struct QuatOSCWidget : QuestionableModuleWidget {
 	ImagePanel *fade;
 	QuatDisplay *display;
 
@@ -534,7 +534,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
 
-		QuestionableWidget::appendContextMenu(menu);
+		QuestionableModuleWidget::appendContextMenu(menu);
 	}
 };
 

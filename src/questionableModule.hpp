@@ -6,6 +6,7 @@
 #include <cctype>
 #include <iomanip>
 #include <sstream>
+#include <chrono>
 
 struct QuestionableModule : Module {
 	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
@@ -24,11 +25,11 @@ struct QuestionableModule : Module {
     }
 };
 
-struct QuestionableWidget : ModuleWidget {
+struct QuestionableModuleWidget : ModuleWidget {
     ImagePanel *backdrop;
     ColorBG* color;
 
-    QuestionableWidget() {
+    QuestionableModuleWidget() {
 		
     }
 
@@ -91,6 +92,33 @@ struct QuestionableWidget : ModuleWidget {
 		free(jsondump);
 		return body;
 	}
+};
+
+struct QuestionableWidget : Widget {
+	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+
+	double fps = 60;
+	double deltaTime = 0.016;
+	int64_t frame = 0;
+
+	QuestionableWidget() {
+		startTime = std::chrono::high_resolution_clock::now();
+	}
+
+	virtual void draw(const DrawArgs&, float);
+
+    void draw(const DrawArgs &args) override {
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsedTime = currentTime - startTime;
+		fps = 1 / elapsedTime.count();
+		deltaTime = elapsedTime.count();
+		frame += 1;
+
+		startTime = currentTime;
+
+		draw(args, deltaTime);
+	}
+
 };
 
 template <typename T>

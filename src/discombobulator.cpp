@@ -154,7 +154,7 @@ struct Discombobulator : QuestionableModule {
 	}
 };
 
-struct DiscombobulatorWidget : QuestionableWidget {
+struct DiscombobulatorWidget : QuestionableModuleWidget {
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);

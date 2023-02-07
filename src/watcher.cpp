@@ -87,7 +87,7 @@ struct Watcher : QuestionableModule {
 
 };
 
-struct WatchersEye : Widget {
+struct WatchersEye : QuestionableWidget {
 
 	float eyeLidPos = 25.f;
 	Vec eyePos = Vec(0,0);
@@ -96,9 +96,10 @@ struct WatchersEye : Widget {
 
 	}
 
-	void draw(const DrawArgs &args) override {
+	void draw(const DrawArgs &args, float deltaTime) override {
 		//if (module == NULL) return;
 
+		//eyeLidPos = std::sin(frame * deltaTime * M_PI) * 25;
 
 		nvgFillColor(args.vg, nvgRGB(255,255,255));
 		nvgBeginPath(args.vg);
@@ -121,7 +122,7 @@ struct WatchersEye : Widget {
 	}
 };
 
-struct WatcherWidget : QuestionableWidget {
+struct WatcherWidget : QuestionableModuleWidget {
 	WatchersEye* eye;
 
 	void setText() {

@@ -1051,7 +1051,7 @@ struct NodeDisplay : Widget {
 
 };
 
-struct TreequencerWidget : QuestionableWidget {
+struct TreequencerWidget : QuestionableModuleWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
 
@@ -1191,7 +1191,7 @@ struct TreequencerWidget : QuestionableWidget {
 			}));
 		}));
 
-		QuestionableWidget::appendContextMenu(menu);
+		QuestionableModuleWidget::appendContextMenu(menu);
 	}
 };
 

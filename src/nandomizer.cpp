@@ -147,7 +147,7 @@ struct Nandomizer : QuestionableModule {
 
 };
 
-struct NandomizerWidget : QuestionableWidget {
+struct NandomizerWidget : QuestionableModuleWidget {
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
