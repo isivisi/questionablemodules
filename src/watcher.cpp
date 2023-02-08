@@ -89,8 +89,9 @@ inline gmtl::Vec2f VecToVec2f(const Vec data){
 
 struct WatchersEye : QuestionableWidget {
 
-	float eyeLidPos = 15.f;
+	float eyeLidPos = 15.0;
 	Vec eyePos = Vec(0,0);
+	int64_t eyeTarget = 0;
 
 	gmtl::Vec2f eyeDirection;
 	bool closeEye = false;
@@ -103,15 +104,27 @@ struct WatchersEye : QuestionableWidget {
 
 	}
 
+	void findNewTarget() {
+		std::vector<int64_t> modIds = APP->engine->getModuleIds();
+		eyeTarget = randomInt<int>(0, modIds.size());
+		if (eyeTarget == 0) return;
+		eyeTarget = modIds[eyeTarget-1];
+	}
+
 	void draw(const DrawArgs &args) override {
 		//if (module == NULL) return;
 		QuestionableWidget::draw(args);
 
-		Vec mp = APP->scene->getMousePos();
+		if (frame % (int)fps*30 == 0 && randomReal<float>() > 0.5) findNewTarget();
+
+		Vec lookPos;
+		if (eyeTarget) {
+			if (ModuleWidget* mod = APP->scene->rack->getModule(eyeTarget)) lookPos = mod->getAbsoluteOffset(Vec());
+		} else lookPos = APP->scene->getMousePos();
 		Vec epos = getAbsoluteOffset(Vec());
 
 		// calculate pupil position
-		eyeDirection = VecToVec2f(mp - epos);
+		eyeDirection = VecToVec2f(lookPos - epos);
 		float magnitude = clamp<float>(0.0, 8.0, gmtl::length(eyeDirection)/100);
 		gmtl::normalize(eyeDirection);
 		eyePos = lerp<Vec>(eyePos, Vec(eyeDirection[0] * magnitude, eyeDirection[1] * magnitude), deltaTime*5);
@@ -119,33 +132,36 @@ struct WatchersEye : QuestionableWidget {
 		// deterime when to blink
 		if (closeEye) {
 			eyeLidPos = lerp<float>(eyeLidPos, 9.f, deltaTime*7.f);
-			if (eyeLidPos < 12.0) closeEye = false;
+			if (eyeLidPos < 15.0) closeEye = false;
 		} else {
-			eyeLidPos = lerp<float>(eyeLidPos, 45.f, deltaTime*3.f);
-			if (frame % (int)fps == 0&& randomReal<float>() > 0.95) closeEye = true;
+			eyeLidPos = lerp<float>(eyeLidPos, 50.f, deltaTime*3.f);
+			if (frame % (int)fps == 0 && randomReal<float>() > 0.95) closeEye = true;
 		}
 
-		nvgFillColor(args.vg, eyeColor);
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, eyePos.x, eyePos.y, 10);
-		nvgFill(args.vg);
+		if (eyeLidPos > 20.0) {
+			nvgFillColor(args.vg, eyeColor);
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, eyePos.x, eyePos.y, 10);
+			nvgFill(args.vg);
 
-		nvgFillColor(args.vg, pupilColor);
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, eyePos.x * 1.2, eyePos.y * 1.2, 8);
-		nvgFill(args.vg);
+			nvgFillColor(args.vg, pupilColor);
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, eyePos.x * 1.2, eyePos.y * 1.2, 8);
+			nvgFill(args.vg);
+		}
 
+		float eyeLength = 35;
 		nvgStrokeColor(args.vg, eyeLidColor);
 		nvgStrokeWidth(args.vg, 20.f);
 		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, 30, 0);
-		nvgQuadTo(args.vg, 0, eyeLidPos, -30, 0);
+		nvgMoveTo(args.vg, eyeLength, 0);
+		nvgQuadTo(args.vg, 0, eyeLidPos, -eyeLength, 0);
 		nvgStroke(args.vg);
 
 		nvgBeginPath(args.vg);
 		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, 30, 0);
-		nvgQuadTo(args.vg, 0, -eyeLidPos, -30, 0);
+		nvgMoveTo(args.vg, eyeLength, 0);
+		nvgQuadTo(args.vg, 0, -eyeLidPos, -eyeLength, 0);
 		nvgStroke(args.vg);
 
 	}
@@ -174,7 +190,7 @@ struct WatcherWidget : QuestionableModuleWidget {
 		backdrop->visible = true;
 
 		eye = new WatchersEye();
-		eye->box.pos = Vec(135, 240);
+		eye->box.pos = Vec(130, 235);
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
