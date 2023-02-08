@@ -19,22 +19,6 @@ const int MODULE_SIZE = 22;
 
 const int DEFAULT_NODE_DEPTH = 3;
 
-// make sure module thread and widget threads cooperate :)
-//std::recursive_mutex treeMutex;
-
-float randFloat(float max = 1.f) {
-	std::uniform_real_distribution<float> distribution(0, max);
-	std::random_device rd;
-	return distribution(rd);
-}
-
-int randomInteger(int min, int max) {
-	std::random_device rd; // obtain a random number from hardware
-	std::mt19937 gen(rd()); // seed the generator
-	std::uniform_int_distribution<> distr(min, max); // define the range
-	return distr(gen);
-}
-
 inline bool isInteger(const std::string& s)
 {
    if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
@@ -88,7 +72,7 @@ struct Scale {
 			probabilities.reserve(notes.size());
 			for (size_t i = 0; i < notes.size(); i++) {
 				for (size_t x = 0; x < notes.size(); x++) {
-					probabilities[i][x] = randFloat();
+					probabilities[i][x] = randomReal<float>();
 				}
 			}
 		}
@@ -118,7 +102,7 @@ struct Scale {
 			maxVal = cumulativeProbs[i] > maxVal ? cumulativeProbs[i] : maxVal;
 		}
 
-		float rand = randFloat(maxVal);
+		float rand = randomReal<float>(maxVal);
 
 		int note = 0;
 		for(size_t i = 0; i < cumulativeProbs.size(); i++) {
@@ -130,21 +114,21 @@ struct Scale {
 		int front = toOffset(sequence.front());
 		int back = toOffset(sequence.back());
 
-		if (!sequence.size()) offset = randomInteger(0, maxSize);
+		if (!sequence.size()) offset = randomInt(0, maxSize);
 		else {
-			int randomType = randomInteger(0, 3);
+			int randomType = randomInt(0, 3);
 			switch (randomType) {
 				case 0: // random number nearby
-					offset = randomInteger(back-9, back+9);
+					offset = randomInt(back-9, back+9);
 					break;
 				case 1: // move a 3rd
-					offset = (randomInteger(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
+					offset = (randomInt(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
 					break;
 				case 2: // move a 5th
-					offset = (randomInteger(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
+					offset = (randomInt(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
 					break;
 				case 3: // move a 7th
-					offset = (randomInteger(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
+					offset = (randomInt(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
 					break;
 			}
 		}
@@ -197,7 +181,7 @@ struct Node {
 
 	Rect box;
 
-	Node(Node* p = nullptr, int out = randomInteger(-1, 7), float c = randFloat(0.9f)) {
+	Node(Node* p = nullptr, int out = randomInt(-1, 7), float c = randomReal<float>(0, 0.9f)) {
 		output = out;
 		chance = c;
 		parent = p;
@@ -268,8 +252,8 @@ struct Node {
 
 		Node* child = new Node(this);
 		child->parent = this;
-		child->chance = randFloat(0.9f);
-		child->output = randomInteger(-1, 7);
+		child->chance = randomReal<float>(0, 0.9f);
+		child->output = randomInt(-1, 7);
 		children.push_back(child);
 
 		return child;
@@ -465,7 +449,7 @@ struct Treequencer : QuestionableModule {
 	std::vector<Node*> getWholeSequence(Node* node, std::vector<Node*> sequence = std::vector<Node*>()) {
 		sequence.push_back(node);
 		if (node->children.size() > 1) {
-			float r = randFloat();
+			float r = randomReal<float>();
 			float chance = std::min(1.f, std::max(0.0f, node->chance - getChanceMod()));
 			Node* foundNode = node->children[r < chance ? 0 : 1];
 			return getWholeSequence(foundNode, sequence);
@@ -493,7 +477,7 @@ struct Treequencer : QuestionableModule {
 			}
 			else {
 				if (activeNode->children.size() > 1) {
-					float r = randFloat();
+					float r = randomReal<float>();
 					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
 					activeNode = activeNode->children[r < chance ? 0 : 1];
 				} else {
