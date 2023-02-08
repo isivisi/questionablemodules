@@ -100,6 +100,7 @@ struct QuestionableWidget : Widget {
 
 	double fps = 60;
 	double deltaTime = 0.016;
+	double time;
 	int64_t frame = 0;
 
 	QuestionableWidget() {
@@ -113,6 +114,7 @@ struct QuestionableWidget : Widget {
 		std::chrono::duration<double> elapsedTime = currentTime - startTime;
 		fps = 1 / elapsedTime.count();
 		deltaTime = elapsedTime.count();
+		time += deltaTime;
 		frame += 1;
 
 		startTime = currentTime;

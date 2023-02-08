@@ -87,6 +87,45 @@ inline gmtl::Vec2f VecToVec2f(const Vec data){
 	return gmtl::Vec2f(data.x, data.y);
 }
 
+struct Tentacle : QuestionableWidget {
+	float wiggle = 20;
+	float stretch = 0.f;
+
+	float offset = randomReal<float>(0, 15);
+
+	float rotAngle = 90.f;
+
+	Tentacle() {
+
+	}
+
+	void draw(const DrawArgs &args) override {
+		//if (module == NULL) return;
+		QuestionableWidget::draw(args);
+
+		nvgSave(args.vg);
+
+		nvgRotate(args.vg, (M_PI / 180) * rotAngle);
+
+		wiggle = sin(offset+time * 0.2 * M_PI) * 20.f;
+		stretch = sin(offset+time * 0.1 * M_PI) * 15.f;
+
+		nvgStrokeColor(args.vg, nvgRGB(0,0,0));
+		nvgStrokeWidth(args.vg, 10.f);
+		nvgLineCap(args.vg, NVG_ROUND);
+		nvgLineJoin(args.vg, NVG_BEVEL);
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, 0, 0);
+		nvgQuadTo(args.vg, 10+stretch, -wiggle, 20+stretch, 0);
+		nvgQuadTo(args.vg, 30+stretch, wiggle, 40+stretch, wiggle);
+		nvgQuadTo(args.vg, 60+stretch, -wiggle, 80+stretch, wiggle/2);
+		nvgStroke(args.vg);
+
+		nvgRestore(args.vg);
+
+	}
+};
+
 struct WatchersEye : QuestionableWidget {
 
 	float eyeLidPos = 15.0;
@@ -170,6 +209,8 @@ struct WatchersEye : QuestionableWidget {
 struct WatcherWidget : QuestionableModuleWidget {
 	WatchersEye* eye;
 
+	std::vector<Tentacle*> t;
+
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
@@ -203,6 +244,14 @@ struct WatcherWidget : QuestionableModuleWidget {
 		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
+
+		for (int i = 0; i < 15; i++) {
+			Tentacle* tentacle = new Tentacle();
+			tentacle->rotAngle = i * 24;
+			tentacle->box.pos = Vec(130, 235);
+			addChild(tentacle);
+		}
+
 		addChild(color);
 		addChild(eye);
 
