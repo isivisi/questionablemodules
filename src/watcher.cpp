@@ -95,6 +95,10 @@ struct WatchersEye : QuestionableWidget {
 	gmtl::Vec2f eyeDirection;
 	bool closeEye = false;
 
+	NVGcolor eyeColor = nvgRGB(255,255,255);
+	NVGcolor pupilColor = nvgRGB(0,0,0);
+	NVGcolor eyeLidColor = nvgRGB(0,0,0);
+
 	WatchersEye() {
 
 	}
@@ -106,27 +110,32 @@ struct WatchersEye : QuestionableWidget {
 		Vec mp = APP->scene->getMousePos();
 		Vec epos = getAbsoluteOffset(Vec());
 
+		// calculate pupil position
 		eyeDirection = VecToVec2f(mp - epos);
 		float magnitude = clamp<float>(0.0, 8.0, gmtl::length(eyeDirection)/100);
 		gmtl::normalize(eyeDirection);
+		eyePos = lerp<Vec>(eyePos, Vec(eyeDirection[0] * magnitude, eyeDirection[1] * magnitude), deltaTime*5);
 
-		eyePos = Vec(eyeDirection[0] * magnitude, eyeDirection[1] * magnitude);
-
+		// deterime when to blink
 		if (closeEye) {
 			eyeLidPos = lerp<float>(eyeLidPos, 9.f, deltaTime*7.f);
 			if (eyeLidPos < 12.0) closeEye = false;
 		} else {
 			eyeLidPos = lerp<float>(eyeLidPos, 45.f, deltaTime*3.f);
-
 			if (frame % (int)fps == 0&& randomReal<float>() > 0.95) closeEye = true;
 		}
 
-		nvgFillColor(args.vg, nvgRGB(255,255,255));
+		nvgFillColor(args.vg, eyeColor);
 		nvgBeginPath(args.vg);
 		nvgCircle(args.vg, eyePos.x, eyePos.y, 10);
 		nvgFill(args.vg);
 
-		nvgStrokeColor(args.vg, nvgRGB(0,0,0));
+		nvgFillColor(args.vg, pupilColor);
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, eyePos.x * 1.2, eyePos.y * 1.2, 8);
+		nvgFill(args.vg);
+
+		nvgStrokeColor(args.vg, eyeLidColor);
 		nvgStrokeWidth(args.vg, 20.f);
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, 30, 0);

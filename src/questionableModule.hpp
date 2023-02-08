@@ -158,7 +158,7 @@ struct QuestionablePort : T {
 
 template <typename T>
 static T lerp(T point1, T point2, T t) {
-	float diff = point2 - point1;
+	T diff = point2 - point1;
 	return point1 + diff * t;
 }
 
