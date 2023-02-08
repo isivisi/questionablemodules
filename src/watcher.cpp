@@ -99,12 +99,12 @@ struct WatchersEye : QuestionableWidget {
 		QuestionableWidget::draw(args);
 
 		if (closeEye) {
-			eyeLidPos = lerp<float>(eyeLidPos, 9.0, deltaTime*3);
+			eyeLidPos = lerp<float>(eyeLidPos, 9.f, deltaTime*7.f);
 			if (eyeLidPos < 10.0) closeEye = false;
 		} else {
-			eyeLidPos = lerp<float>(eyeLidPos, 35, deltaTime*3);
+			eyeLidPos = lerp<float>(eyeLidPos, 35.f, deltaTime*3.f);
 
-			
+			if (frame % (int)fps == 0&& randomReal<float>() > 0.95) closeEye = true;
 		}
 
 		nvgFillColor(args.vg, nvgRGB(255,255,255));

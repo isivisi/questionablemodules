@@ -114,21 +114,21 @@ struct Scale {
 		int front = toOffset(sequence.front());
 		int back = toOffset(sequence.back());
 
-		if (!sequence.size()) offset = randomInt(0, maxSize);
+		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
-			int randomType = randomInt(0, 3);
+			int randomType = randomInt<int>(0, 3);
 			switch (randomType) {
 				case 0: // random number nearby
-					offset = randomInt(back-9, back+9);
+					offset = randomInt<int>(back-9, back+9);
 					break;
 				case 1: // move a 3rd
-					offset = (randomInt(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
 					break;
 				case 2: // move a 5th
-					offset = (randomInt(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
 					break;
 				case 3: // move a 7th
-					offset = (randomInt(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
 					break;
 			}
 		}
@@ -181,7 +181,7 @@ struct Node {
 
 	Rect box;
 
-	Node(Node* p = nullptr, int out = randomInt(-1, 7), float c = randomReal<float>(0, 0.9f)) {
+	Node(Node* p = nullptr, int out = randomInt<int>(-1, 7), float c = randomReal<float>(0, 0.9f)) {
 		output = out;
 		chance = c;
 		parent = p;
@@ -253,7 +253,7 @@ struct Node {
 		Node* child = new Node(this);
 		child->parent = this;
 		child->chance = randomReal<float>(0, 0.9f);
-		child->output = randomInt(-1, 7);
+		child->output = randomInt<int>(-1, 7);
 		children.push_back(child);
 
 		return child;

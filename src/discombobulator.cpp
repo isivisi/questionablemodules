@@ -120,7 +120,7 @@ struct Discombobulator : QuestionableModule {
 			std::vector<int> usableInputPool(usableInputs);
 			//std::random_shuffle(usableInputPool, usableInputPool.size());
 			for (int i = usableInputs.size() -1; i >= 0; i--) {
-				int randomInput = randomInt(0, usableInputPool.size()-1);
+				int randomInput = randomInt<int>(0, usableInputPool.size()-1);
 				fadingInputs[usableInputs[i]][outputSwaps[usableInputs[i]]] = 1.f; // set full fade before swapping
 				outputSwaps[usableInputs[i]] = usableInputPool[randomInput];
 				usableInputPool.erase(usableInputPool.begin()+randomInput);

@@ -99,7 +99,7 @@ struct Nandomizer : QuestionableModule {
 
 		if (!usableInputs.size()) return;
 
-		if (shouldRandomize) activeOutput = usableInputs[randomInt(0, usableInputs.size()-1)];
+		if (shouldRandomize) activeOutput = usableInputs[randomInt<int>(0, usableInputs.size()-1)];
 
 		float fadingInputs = 0.f;
 		for (int i = 0; i < MAX_INPUTS; i++) {
