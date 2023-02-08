@@ -131,6 +131,7 @@ struct WatchersEye : QuestionableWidget {
 	float eyeLidPos = 15.0;
 	Vec eyePos = Vec(0,0);
 	int64_t eyeTarget = 0;
+	float eyeRotation = 0.0;
 
 	gmtl::Vec2f eyeDirection;
 	bool closeEye = false;
@@ -154,7 +155,7 @@ struct WatchersEye : QuestionableWidget {
 		//if (module == NULL) return;
 		QuestionableWidget::draw(args);
 
-		if (frame % (int)fps*30 == 0 && randomReal<float>() > 0.5) findNewTarget();
+		if ((frame % (int)60*30) == 0 && randomReal<float>() > 0.5) findNewTarget();
 
 		Vec lookPos;
 		if (eyeTarget) {
@@ -174,7 +175,7 @@ struct WatchersEye : QuestionableWidget {
 			if (eyeLidPos < 15.0) closeEye = false;
 		} else {
 			eyeLidPos = lerp<float>(eyeLidPos, 50.f, deltaTime*3.f);
-			if (frame % (int)fps == 0 && randomReal<float>() > 0.95) closeEye = true;
+			if ((frame % 60) == 0 && randomReal<float>() > 0.95) closeEye = true;
 		}
 
 		if (eyeLidPos > 20.0) {
@@ -187,6 +188,18 @@ struct WatchersEye : QuestionableWidget {
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, eyePos.x * 1.2, eyePos.y * 1.2, 8);
 			nvgFill(args.vg);
+
+			nvgSave(args.vg);
+			eyeRotation = std::fmod(eyeRotation + deltaTime, 360);
+			nvgTranslate(args.vg, eyePos.x * 1.2, eyePos.y * 1.2);
+			nvgRotate(args.vg, eyeRotation);
+			for (int i = 0; i < 8; i++) {
+				nvgFillColor(args.vg, eyeColor);
+				nvgBeginPath(args.vg);
+				nvgCircle(args.vg,sin(i *((M_PI / 180) * (360/8)))*6, cos(i *((M_PI / 180) * (360/8)))*6, 1);
+				nvgFill(args.vg);
+			}
+			nvgRestore(args.vg);
 		}
 
 		float eyeLength = 35;
@@ -208,8 +221,7 @@ struct WatchersEye : QuestionableWidget {
 
 struct WatcherWidget : QuestionableModuleWidget {
 	WatchersEye* eye;
-
-	std::vector<Tentacle*> t;
+	std::vector<Tentacle*> ts;
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
@@ -249,6 +261,7 @@ struct WatcherWidget : QuestionableModuleWidget {
 			Tentacle* tentacle = new Tentacle();
 			tentacle->rotAngle = i * 24;
 			tentacle->box.pos = Vec(130, 235);
+			ts.push_back(tentacle);
 			addChild(tentacle);
 		}
 
