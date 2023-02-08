@@ -105,7 +105,7 @@ struct QuestionableWidget : Widget {
 		startTime = std::chrono::high_resolution_clock::now();
 	}
 
-	virtual void draw(const DrawArgs&, float);
+	//virtual void draw(const DrawArgs&, float);
 
     void draw(const DrawArgs &args) override {
 		auto currentTime = std::chrono::high_resolution_clock::now();
@@ -116,7 +116,7 @@ struct QuestionableWidget : Widget {
 
 		startTime = currentTime;
 
-		draw(args, deltaTime);
+		//draw(args, deltaTime);
 	}
 
 };
@@ -152,3 +152,14 @@ struct QuestionablePort : T {
 		}));
 	}
 };
+
+template <typename T>
+static T lerp(T point1, T point2, T t) {
+	float diff = point2 - point1;
+	return point1 + diff * t;
+}
+
+template <typename T>
+float clamp(T min, T max, T value) {
+	return std::min(max, std::max(min, value));
+}

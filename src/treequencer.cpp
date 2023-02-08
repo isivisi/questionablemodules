@@ -22,11 +22,6 @@ const int DEFAULT_NODE_DEPTH = 3;
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
-Vec lerp(Vec& point1, Vec& point2, float t) {
-	Vec diff = point2 - point1;
-	return point1 + diff * t;
-}
-
 float randFloat(float max = 1.f) {
 	std::uniform_real_distribution<float> distribution(0, max);
 	std::random_device rd;
@@ -459,10 +454,6 @@ struct Treequencer : QuestionableModule {
 		rootNode.enabled = true;
 		activeNode = &rootNode;
 		
-	}
-
-	float fclamp(float min, float max, float value) {
-		return std::min(min, std::max(max, value));
 	}
 
 	void resetActiveNode() {

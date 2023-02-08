@@ -2,6 +2,7 @@
 #include "imagepanel.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
+#include <gmtl/Vec.h>
 #include <vector>
 #include <algorithm>
 
@@ -29,12 +30,6 @@ struct Watcher : QuestionableModule {
 	enum LightId {
 		LIGHTS_LEN
 	};
-	
-	template <typename T>
-	static T lerp(T point1, T point2, T t) {
-		float diff = point2 - point1;
-		return point1 + diff * t;
-	}
 
 	struct sampleSet {
 		float sampleRate;
@@ -92,14 +87,25 @@ struct WatchersEye : QuestionableWidget {
 	float eyeLidPos = 25.f;
 	Vec eyePos = Vec(0,0);
 
+	gmtl::Vec3f eyeDirection;
+	bool closeEye = false;
+
 	WatchersEye() {
 
 	}
 
-	void draw(const DrawArgs &args, float deltaTime) override {
+	void draw(const DrawArgs &args) override {
 		//if (module == NULL) return;
+		QuestionableWidget::draw(args);
 
-		//eyeLidPos = std::sin(frame * deltaTime * M_PI) * 25;
+		if (closeEye) {
+			eyeLidPos = lerp<float>(eyeLidPos, 9.0, deltaTime*3);
+			if (eyeLidPos < 10.0) closeEye = false;
+		} else {
+			eyeLidPos = lerp<float>(eyeLidPos, 35, deltaTime*3);
+
+			
+		}
 
 		nvgFillColor(args.vg, nvgRGB(255,255,255));
 		nvgBeginPath(args.vg);
@@ -107,16 +113,16 @@ struct WatchersEye : QuestionableWidget {
 		nvgFill(args.vg);
 
 		nvgStrokeColor(args.vg, nvgRGB(0,0,0));
-		nvgStrokeWidth(args.vg, 10.f);
+		nvgStrokeWidth(args.vg, 15.f);
 		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, 25, 0);
-		nvgQuadTo(args.vg, 0, eyeLidPos, -25, 0);
+		nvgMoveTo(args.vg, 30, 0);
+		nvgQuadTo(args.vg, 0, eyeLidPos, -30, 0);
 		nvgStroke(args.vg);
 
 		nvgBeginPath(args.vg);
 		nvgBeginPath(args.vg);
-		nvgMoveTo(args.vg, 25, 0);
-		nvgQuadTo(args.vg, 0, -eyeLidPos, -25, 0);
+		nvgMoveTo(args.vg, 30, 0);
+		nvgQuadTo(args.vg, 0, -eyeLidPos, -30, 0);
 		nvgStroke(args.vg);
 
 	}

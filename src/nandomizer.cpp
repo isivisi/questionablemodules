@@ -88,25 +88,6 @@ struct Nandomizer : QuestionableModule {
 		return distr(gen);
 	}
 
-	float rmsValue(float arr[], int n) {
-		int square = 0;
-		float mean = 0.0, root = 0.0;
-
-		for (int i = 0; i < n; i++) {
-			square += pow(arr[i], 2);
-		}
-
-		mean = (square / (float)(n));
-
-		root = sqrt(mean);
-
-		return root;
-	}
-
-	float fclamp(float min, float max, float value) {
-		return std::min(min, std::max(max, value));
-	}
-
 	void process(const ProcessArgs& args) override {
 
 		std::vector<int> usableInputs;
