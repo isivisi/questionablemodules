@@ -2,6 +2,7 @@
 #include "imagepanel.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
+#include <gmtl/gmtl.h>
 #include <gmtl/Vec.h>
 #include <vector>
 #include <algorithm>
@@ -82,12 +83,16 @@ struct Watcher : QuestionableModule {
 
 };
 
+inline gmtl::Vec2f VecToVec2f(const Vec data){
+	return gmtl::Vec2f(data.x, data.y);
+}
+
 struct WatchersEye : QuestionableWidget {
 
-	float eyeLidPos = 25.f;
+	float eyeLidPos = 15.f;
 	Vec eyePos = Vec(0,0);
 
-	gmtl::Vec3f eyeDirection;
+	gmtl::Vec2f eyeDirection;
 	bool closeEye = false;
 
 	WatchersEye() {
@@ -98,11 +103,20 @@ struct WatchersEye : QuestionableWidget {
 		//if (module == NULL) return;
 		QuestionableWidget::draw(args);
 
+		Vec mp = APP->scene->getMousePos();
+		Vec epos = getAbsoluteOffset(Vec());
+
+		eyeDirection = VecToVec2f(mp - epos);
+		float magnitude = clamp<float>(0.0, 8.0, gmtl::length(eyeDirection)/100);
+		gmtl::normalize(eyeDirection);
+
+		eyePos = Vec(eyeDirection[0] * magnitude, eyeDirection[1] * magnitude);
+
 		if (closeEye) {
 			eyeLidPos = lerp<float>(eyeLidPos, 9.f, deltaTime*7.f);
-			if (eyeLidPos < 10.0) closeEye = false;
+			if (eyeLidPos < 12.0) closeEye = false;
 		} else {
-			eyeLidPos = lerp<float>(eyeLidPos, 35.f, deltaTime*3.f);
+			eyeLidPos = lerp<float>(eyeLidPos, 45.f, deltaTime*3.f);
 
 			if (frame % (int)fps == 0&& randomReal<float>() > 0.95) closeEye = true;
 		}
@@ -113,7 +127,7 @@ struct WatchersEye : QuestionableWidget {
 		nvgFill(args.vg);
 
 		nvgStrokeColor(args.vg, nvgRGB(0,0,0));
-		nvgStrokeWidth(args.vg, 15.f);
+		nvgStrokeWidth(args.vg, 20.f);
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, 30, 0);
 		nvgQuadTo(args.vg, 0, eyeLidPos, -30, 0);
@@ -151,7 +165,7 @@ struct WatcherWidget : QuestionableModuleWidget {
 		backdrop->visible = true;
 
 		eye = new WatchersEye();
-		eye->box.pos = Vec(140, 250);
+		eye->box.pos = Vec(135, 240);
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
