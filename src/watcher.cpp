@@ -213,7 +213,7 @@ struct WatchersEye : QuestionableWidget {
 			for (int i = 0; i < 8; i++) {
 				nvgFillColor(args.vg, pupilColor);
 				nvgBeginPath(args.vg);
-				nvgCircle(args.vg,sin(i *((M_PI / 180) * (360/8)))*5, cos(i *((M_PI / 180) * (360/8)))*5, 0.75);
+				nvgCircle(args.vg,sin(dtor(i*(360/8)))*5, cos(dtor(i*(360/8)))*5, 0.75);
 				nvgFill(args.vg);
 			}
 			nvgRestore(args.vg);
