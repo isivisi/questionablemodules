@@ -128,6 +128,7 @@ struct Tentacle : QuestionableWidget {
 
 struct WatchersEye : QuestionableWidget {
 
+	float eyeLength = 35;
 	float eyeLidPos = 15.0;
 	Vec eyePos = Vec(0,0);
 	int64_t eyeTarget = 0;
@@ -136,8 +137,8 @@ struct WatchersEye : QuestionableWidget {
 	gmtl::Vec2f eyeDirection;
 	bool closeEye = false;
 
-	NVGcolor eyeColor = nvgRGB(255,255,255);
-	NVGcolor pupilColor = nvgRGB(0,0,0);
+	NVGcolor eyeColor = nvgRGB(0,0,0);
+	NVGcolor pupilColor = nvgRGB(255,255,255);
 	NVGcolor eyeLidColor = nvgRGB(0,0,0);
 
 	WatchersEye() {
@@ -159,7 +160,8 @@ struct WatchersEye : QuestionableWidget {
 
 		Vec lookPos;
 		if (eyeTarget) {
-			if (ModuleWidget* mod = APP->scene->rack->getModule(eyeTarget)) lookPos = mod->getAbsoluteOffset(Vec());
+			if (ModuleWidget* mod = APP->scene->rack->getModule(eyeTarget)) 
+				lookPos = mod->getAbsoluteOffset(Vec()) + mod->box.size.x/2 + mod->box.size.y/2;
 		} else lookPos = APP->scene->getMousePos();
 		Vec epos = getAbsoluteOffset(Vec());
 
@@ -178,6 +180,21 @@ struct WatchersEye : QuestionableWidget {
 			if ((frame % 60) == 0 && randomReal<float>() > 0.95) closeEye = true;
 		}
 
+		// eye background
+		nvgStrokeColor(args.vg, pupilColor);
+		nvgStrokeWidth(args.vg, 20.f);
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, eyeLength, 0);
+		nvgQuadTo(args.vg, 0, eyeLidPos/4, -eyeLength, 0);
+		nvgStroke(args.vg);
+
+		nvgBeginPath(args.vg);
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, eyeLength, 0);
+		nvgQuadTo(args.vg, 0, -eyeLidPos/4, -eyeLength, 0);
+		nvgStroke(args.vg);
+
+		// pupil
 		if (eyeLidPos > 20.0) {
 			nvgFillColor(args.vg, eyeColor);
 			nvgBeginPath(args.vg);
@@ -186,7 +203,7 @@ struct WatchersEye : QuestionableWidget {
 
 			nvgFillColor(args.vg, pupilColor);
 			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, eyePos.x * 1.2, eyePos.y * 1.2, 8);
+			nvgCircle(args.vg, eyePos.x * 1.2, eyePos.y * 1.2, 3);
 			nvgFill(args.vg);
 
 			nvgSave(args.vg);
@@ -194,15 +211,15 @@ struct WatchersEye : QuestionableWidget {
 			nvgTranslate(args.vg, eyePos.x * 1.2, eyePos.y * 1.2);
 			nvgRotate(args.vg, eyeRotation);
 			for (int i = 0; i < 8; i++) {
-				nvgFillColor(args.vg, eyeColor);
+				nvgFillColor(args.vg, pupilColor);
 				nvgBeginPath(args.vg);
-				nvgCircle(args.vg,sin(i *((M_PI / 180) * (360/8)))*6, cos(i *((M_PI / 180) * (360/8)))*6, 1);
+				nvgCircle(args.vg,sin(i *((M_PI / 180) * (360/8)))*5, cos(i *((M_PI / 180) * (360/8)))*5, 0.75);
 				nvgFill(args.vg);
 			}
 			nvgRestore(args.vg);
 		}
 
-		float eyeLength = 35;
+		// eyelids
 		nvgStrokeColor(args.vg, eyeLidColor);
 		nvgStrokeWidth(args.vg, 20.f);
 		nvgBeginPath(args.vg);
