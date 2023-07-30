@@ -274,6 +274,16 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
+		/*outputs[MONO_OUT].setChannels(2);
+		float stereo[2] = {0.0f, 0.0f};
+
+		stereo[0] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
+		stereo[0] += fclamp(0, 1, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
+		stereo[0] += fclamp(0, 1, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+
+		outputs[MONO_OUT].setVoltage(stereo[0], 0);
+		outputs[MONO_OUT].setVoltage(stereo[1], 1);*/
+
 		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))));
 
 	}
