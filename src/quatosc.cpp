@@ -169,7 +169,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float flerp(float point1, float point2, float t) {
