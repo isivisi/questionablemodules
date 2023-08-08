@@ -12,3 +12,10 @@ https://library.vcvrack.com/questionablemodules
 - [Discombobulator](https://isivisi.github.io/questionablemodules/discombobulator)
 - [Treequencer](https://isivisi.github.io/questionablemodules/treequencer)
 - [SLURP](https://isivisi.github.io/questionablemodules/slurp)
+
+
+## Pulling source
+```
+git clone git@github.com:isivisi/questionablemodules.git
+git submodule update --init --recursive
+```

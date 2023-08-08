@@ -65,7 +65,7 @@ struct QuatOSC : QuestionableModule {
 		INPUTS_LEN
 	};
 	enum OutputId {
-		MONO_OUT,
+		OUT,
 		//LEFT_OUT,
 		//RIGHT_OUT,
 		OUTPUTS_LEN
@@ -82,6 +82,8 @@ struct QuatOSC : QuestionableModule {
 	};
 
 	std::string projection = "Z";
+
+	bool stereo = false;
 
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
@@ -145,7 +147,7 @@ struct QuatOSC : QuestionableModule {
 		configInput(CLOCK_INPUT, "Clock");
 		//configOutput(LEFT_OUT, "Left");
 		//configOutput(RIGHT_OUT, "Right");
-		configOutput(MONO_OUT, "Mono");
+		configOutput(OUT, "Mono");
 		configInput(TRIGGER, "Gate");
 
 		xPointOnSphere = gmtl::Vec3f(65.f, 0.f, 0.f);
@@ -274,17 +276,34 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
-		/*outputs[MONO_OUT].setChannels(2);
-		float stereo[2] = {0.0f, 0.0f};
+		if (stereo) {
 
-		stereo[0] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
-		stereo[0] += fclamp(0, 1, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
-		stereo[0] += fclamp(0, 1, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+			outputs[OUT].setChannels(2);
+			float stereo[2] = {0.0f, 0.0f};
 
-		outputs[MONO_OUT].setVoltage(stereo[0], 0);
-		outputs[MONO_OUT].setVoltage(stereo[1], 1);*/
+			stereo[1] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
+			stereo[1] += fclamp(0, 1, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
+			stereo[1] += fclamp(0, 1, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
 
-		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))));
+			stereo[0] += fclamp(-1, 0, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
+			stereo[0] += fclamp(-1, 0, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
+			stereo[0] += fclamp(-1, 0, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+
+			outputs[OUT].setVoltage(stereo[0], 0);
+			outputs[OUT].setVoltage(stereo[1], 1);
+
+		} else {
+
+			outputs[OUT].setChannels(1);
+
+			outputs[OUT].setVoltage((
+				((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
+				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
+				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))
+			));
+		
+		}
+
 
 	}
 
@@ -292,6 +311,7 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
+		json_object_set_new(nodeJ, "stereo", json_boolean(stereo));
 		return nodeJ;
 	}
 
@@ -300,6 +320,7 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
+		if (json_t* st = json_object_get(rootJ, "stereo")) stereo = json_real_value(st);
 		
 		resetPhase(true);
 	}
@@ -529,7 +550,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
 		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
-		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::MONO_OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
 	}
@@ -543,6 +564,8 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
+
+		menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}
