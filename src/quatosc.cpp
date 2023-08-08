@@ -148,7 +148,7 @@ struct QuatOSC : QuestionableModule {
 		configInput(CLOCK_INPUT, "Clock");
 		//configOutput(LEFT_OUT, "Left");
 		//configOutput(RIGHT_OUT, "Right");
-		configOutput(OUT, "Mono");
+		configOutput(OUT, "");
 		configInput(TRIGGER, "Gate");
 
 		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
