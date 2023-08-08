@@ -17,8 +17,6 @@
 const int MAX_OUTPUTS = 8;
 const int MODULE_SIZE = 22;
 
-const int DEFAULT_NODE_DEPTH = 3;
-
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
