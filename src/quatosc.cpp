@@ -175,11 +175,6 @@ struct QuatOSC : QuestionableModule {
 		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
-	float flerp(float point1, float point2, float t) {
-		float diff = point2 - point1;
-		return point1 + diff * t;
-	}
-
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
 
 		float voctFreq = calcVOctFreq(voct);
@@ -208,7 +203,7 @@ struct QuatOSC : QuestionableModule {
 		float phaseError = std::asin(phase) - std::asin(offset);
 		if (phaseError > M_PI) phaseError -= 2*M_PI;
 		else if (phaseError < -M_PI) phaseError += 2*M_PI;
-		return flerp(phase, phase - (phaseError), sampleTime);
+		return lerp<float>(phase, phase - (phaseError), sampleTime);
 	}
 
 	void process(const ProcessArgs& args) override {

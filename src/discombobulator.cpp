@@ -100,13 +100,6 @@ struct Discombobulator : QuestionableModule {
 		
 	}
 
-	int randomInteger(int min, int max) {
-		std::random_device rd; // obtain a random number from hardware
-		std::mt19937 gen(rd()); // seed the generator
-		std::uniform_int_distribution<> distr(min, max); // define the range
-		return distr(gen);
-	}
-
 	void process(const ProcessArgs& args) override {
 
 		std::vector<int> usableInputs;
@@ -127,7 +120,7 @@ struct Discombobulator : QuestionableModule {
 			std::vector<int> usableInputPool(usableInputs);
 			//std::random_shuffle(usableInputPool, usableInputPool.size());
 			for (int i = usableInputs.size() -1; i >= 0; i--) {
-				int randomInput = randomInteger(0, usableInputPool.size()-1);
+				int randomInput = randomInt<int>(0, usableInputPool.size()-1);
 				fadingInputs[usableInputs[i]][outputSwaps[usableInputs[i]]] = 1.f; // set full fade before swapping
 				outputSwaps[usableInputs[i]] = usableInputPool[randomInput];
 				usableInputPool.erase(usableInputPool.begin()+randomInput);
