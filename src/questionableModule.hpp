@@ -124,3 +124,9 @@ struct QuestionablePort : T {
 		}));
 	}
 };
+
+// normalize range
+template <typename T>
+T normalizeRange(T min, T max, T value) {
+	return (max-min)/(max-min)*(value-max)+max;
+}

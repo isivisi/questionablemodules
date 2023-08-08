@@ -23,6 +23,7 @@
 int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
 const int SAMPLES_PER_SECOND = 44100;
+const float VECLENGTH = 65.f;
 
 const float HALF_SEMITONE = 1.029302;
 
@@ -150,9 +151,9 @@ struct QuatOSC : QuestionableModule {
 		configOutput(OUT, "Mono");
 		configInput(TRIGGER, "Gate");
 
-		xPointOnSphere = gmtl::Vec3f(65.f, 0.f, 0.f);
-		yPointOnSphere = gmtl::Vec3f(0.f, 65.f, 0.f);
-		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, 65.f);
+		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
+		yPointOnSphere = gmtl::Vec3f(0.f, VECLENGTH, 0.f);
+		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, VECLENGTH);
 		
 	}
 
@@ -320,7 +321,7 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
-		if (json_t* st = json_object_get(rootJ, "stereo")) stereo = json_real_value(st);
+		if (json_t* st = json_object_get(rootJ, "stereo")) stereo = json_boolean_value(st);
 		
 		resetPhase(true);
 	}
