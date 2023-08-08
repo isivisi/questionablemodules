@@ -83,7 +83,7 @@ struct Scale {
 	}
 
 	std::vector<int> generateRandom(int size) {
-		std::vector<int> sequence = sequence;
+		std::vector<int> sequence;
 
 		for (int i = 0; i < size; i++) {
 			sequence.push_back(getNextInSequence(sequence, size));
