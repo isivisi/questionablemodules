@@ -81,13 +81,6 @@ struct Nandomizer : QuestionableModule {
 		
 	}
 
-	int randomInteger(int min, int max) {
-		std::random_device rd; // obtain a random number from hardware
-		std::mt19937 gen(rd()); // seed the generator
-		std::uniform_int_distribution<> distr(min, max); // define the range
-		return distr(gen);
-	}
-
 	float rmsValue(float arr[], int n) {
 		int square = 0;
 		float mean = 0.0, root = 0.0;
@@ -125,7 +118,7 @@ struct Nandomizer : QuestionableModule {
 
 		if (!usableInputs.size()) return;
 
-		if (shouldRandomize) activeOutput = usableInputs[randomInteger(0, usableInputs.size()-1)];
+		if (shouldRandomize) activeOutput = usableInputs[randomInt<int>(0, usableInputs.size()-1)];
 
 		float fadingInputs = 0.f;
 		for (int i = 0; i < MAX_INPUTS; i++) {

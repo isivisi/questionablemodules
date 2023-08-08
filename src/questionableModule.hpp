@@ -124,3 +124,42 @@ struct QuestionablePort : T {
 		}));
 	}
 };
+
+//helpers
+
+template <typename T>
+static T lerp(T point1, T point2, T t) {
+	T diff = point2 - point1;
+	return point1 + diff * t;
+}
+
+template <typename T>
+T clamp(T min, T max, T value) {
+	return std::min(max, std::max(min, value));
+}
+
+template <typename T>
+T randomReal(T min = 0.0, T max = 1.0) {
+	std::uniform_real_distribution<T> distribution(0, max);
+	std::random_device rd;
+	return distribution(rd);
+}
+
+template <typename T>
+T randomInt(T min, T max) {
+	std::random_device rd; // obtain a random number from hardware
+	std::mt19937 gen(rd()); // seed the generator
+	std::uniform_int_distribution<T> distr(min, max); // define the range
+	return distr(gen);
+}
+
+// Deg to Rad
+template <typename T>
+T dtor(T deg) {
+	return deg  * (M_PI / 180);
+}
+
+template <typename T>
+T normalizeRange(T min, T max, T value) {
+	return (max-min)/(max-min)*(value-max)+max;
+}

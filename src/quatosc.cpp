@@ -23,6 +23,7 @@
 int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
 const int SAMPLES_PER_SECOND = 44100;
+const float VECLENGTH = 65.f;
 
 const float HALF_SEMITONE = 1.029302;
 
@@ -65,7 +66,7 @@ struct QuatOSC : QuestionableModule {
 		INPUTS_LEN
 	};
 	enum OutputId {
-		MONO_OUT,
+		OUT,
 		//LEFT_OUT,
 		//RIGHT_OUT,
 		OUTPUTS_LEN
@@ -82,6 +83,8 @@ struct QuatOSC : QuestionableModule {
 	};
 
 	std::string projection = "Z";
+
+	bool stereo = false;
 
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
@@ -145,12 +148,12 @@ struct QuatOSC : QuestionableModule {
 		configInput(CLOCK_INPUT, "Clock");
 		//configOutput(LEFT_OUT, "Left");
 		//configOutput(RIGHT_OUT, "Right");
-		configOutput(MONO_OUT, "Mono");
+		configOutput(OUT, "");
 		configInput(TRIGGER, "Gate");
 
-		xPointOnSphere = gmtl::Vec3f(65.f, 0.f, 0.f);
-		yPointOnSphere = gmtl::Vec3f(0.f, 65.f, 0.f);
-		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, 65.f);
+		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
+		yPointOnSphere = gmtl::Vec3f(0.f, VECLENGTH, 0.f);
+		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, VECLENGTH);
 		
 	}
 
@@ -169,12 +172,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
-	}
-
-	float flerp(float point1, float point2, float t) {
-		float diff = point2 - point1;
-		return point1 + diff * t;
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
@@ -205,7 +203,7 @@ struct QuatOSC : QuestionableModule {
 		float phaseError = std::asin(phase) - std::asin(offset);
 		if (phaseError > M_PI) phaseError -= 2*M_PI;
 		else if (phaseError < -M_PI) phaseError += 2*M_PI;
-		return flerp(phase, phase - (phaseError), sampleTime);
+		return lerp<float>(phase, phase - (phaseError), sampleTime);
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -274,7 +272,34 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
-		outputs[MONO_OUT].setVoltage((((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))));
+		if (stereo) {
+
+			outputs[OUT].setChannels(2);
+			float stereo[2] = {0.0f, 0.0f};
+
+			stereo[1] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
+			stereo[1] += fclamp(0, 1, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
+			stereo[1] += fclamp(0, 1, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+
+			stereo[0] += fclamp(-1, 0, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
+			stereo[0] += fclamp(-1, 0, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
+			stereo[0] += fclamp(-1, 0, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+
+			outputs[OUT].setVoltage(stereo[0], 0);
+			outputs[OUT].setVoltage(stereo[1], 1);
+
+		} else {
+
+			outputs[OUT].setChannels(1);
+
+			outputs[OUT].setVoltage((
+				((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
+				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
+				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))
+			));
+		
+		}
+
 
 	}
 
@@ -282,6 +307,7 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
+		json_object_set_new(nodeJ, "stereo", json_boolean(stereo));
 		return nodeJ;
 	}
 
@@ -290,6 +316,7 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
+		if (json_t* st = json_object_get(rootJ, "stereo")) stereo = json_boolean_value(st);
 		
 		resetPhase(true);
 	}
@@ -519,7 +546,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
 		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
-		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::MONO_OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
 	}
@@ -533,6 +560,8 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
+
+		menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}

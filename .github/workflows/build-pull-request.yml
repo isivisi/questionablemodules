@@ -4,7 +4,7 @@ on:
     types: [ready_for_review, synchronize]
 
 env:
-  rack-sdk-version: 2.2.3
+  rack-sdk-version: 2.3.0
   rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
 
 defaults:
