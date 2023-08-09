@@ -43,6 +43,7 @@ struct QuatOSC : QuestionableModule {
 		X_POS_I_PARAM,
 		Y_POS_I_PARAM,
 		Z_POS_I_PARAM,
+		STEREO,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -67,12 +68,12 @@ struct QuatOSC : QuestionableModule {
 	};
 	enum OutputId {
 		OUT,
-		//LEFT_OUT,
-		//RIGHT_OUT,
+		OUT2,
 		OUTPUTS_LEN
 	};
 	enum LightId {
 		BLINK_LIGHT,
+		STEREO_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -130,6 +131,7 @@ struct QuatOSC : QuestionableModule {
 		configSwitch(VOCT1_OCT, 0.f, 8.f, 0.f, "VOct 1 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT2_OCT, 0.f, 8.f, 6.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(STEREO, 0.f, 1.f, 0.f, "Stereo", {"Off", "On"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT2, "VOct 2");
 		configInput(VOCT3, "VOct 3");
@@ -149,6 +151,7 @@ struct QuatOSC : QuestionableModule {
 		//configOutput(LEFT_OUT, "Left");
 		//configOutput(RIGHT_OUT, "Right");
 		configOutput(OUT, "");
+		configOutput(OUT2, "");
 		configInput(TRIGGER, "Gate");
 
 		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
@@ -207,6 +210,8 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	void process(const ProcessArgs& args) override {
+
+		lights[STEREO_LIGHT].setBrightness(params[STEREO].getValue());
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
 			oct1Connected = inputs[VOCT].isConnected();
@@ -274,7 +279,7 @@ struct QuatOSC : QuestionableModule {
 
 		if (stereo) {
 
-			outputs[OUT].setChannels(2);
+			//outputs[OUT].setChannels(2);
 			float stereo[2] = {0.0f, 0.0f};
 
 			stereo[1] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
@@ -285,18 +290,19 @@ struct QuatOSC : QuestionableModule {
 			stereo[0] += fclamp(-1, 0, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
 			stereo[0] += fclamp(-1, 0, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
 
-			outputs[OUT].setVoltage(stereo[0], 0);
-			outputs[OUT].setVoltage(stereo[1], 1);
+			outputs[OUT].setVoltage(stereo[0]);
+			outputs[OUT2].setVoltage(stereo[1]);
 
 		} else {
 
-			outputs[OUT].setChannels(1);
+			//outputs[OUT].setChannels(1);
 
 			outputs[OUT].setVoltage((
 				((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
 				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
 				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))
 			));
+			outputs[OUT2].setVoltage(outputs[OUT].getVoltage());
 		
 		}
 
@@ -453,7 +459,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 327), "descriptor");
 
 		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
-		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358), "descriptor");
+		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(143.3, 358), "descriptor");
 	}
 
 	QuatOSCWidget(QuatOSC* module) {
@@ -544,9 +550,11 @@ struct QuatOSCWidget : QuestionableWidget {
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
 
-		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
-		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
-		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 115)), module, QuatOSC::OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT2));
+
+		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(start + (next*3.01), 115)), module, QuatOSC::STEREO, QuatOSC::STEREO_LIGHT));
+
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
 	}
