@@ -43,6 +43,27 @@
         "xstddef": "cpp",
         "xstring": "cpp",
         "xtr1common": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "atomic": "cpp",
+        "bit": "cpp",
+        "clocale": "cpp",
+        "compare": "cpp",
+        "ctime": "cpp",
+        "deque": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "list": "cpp",
+        "mutex": "cpp",
+        "optional": "cpp",
+        "queue": "cpp",
+        "ranges": "cpp",
+        "ratio": "cpp",
+        "span": "cpp",
+        "sstream": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp",
+        "xhash": "cpp",
+        "xlocmon": "cpp",
+        "xloctime": "cpp"
     }
 }

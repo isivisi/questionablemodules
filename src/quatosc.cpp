@@ -540,6 +540,15 @@ struct QuatOSCWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
+		// Output greybox
+		addChild(new QuestionableDrawWidget(Vec(115, 325), [module](const DrawArgs &args) {
+			if (module->theme == "Dark") nvgFillColor(args.vg, nvgRGB(200, 200, 200));
+			else nvgFillColor(args.vg, nvgRGB(30, 30, 30));
+			nvgBeginPath(args.vg);
+			nvgRoundedRect(args.vg, 0, 0, 56, 30, 3);
+			nvgFill(args.vg);
+		}));
+
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Z, Treequencer::SEND_VOCT_Z_LIGHT));

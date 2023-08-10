@@ -125,6 +125,20 @@ struct QuestionablePort : T {
 	}
 };
 
+// Quick inline draw helper
+struct QuestionableDrawWidget : Widget {
+	std::function<void(const DrawArgs&)> func;
+
+	QuestionableDrawWidget(math::Vec pos, std::function<void(const DrawArgs&)> drawFunc) {
+		box.pos = pos;
+		func = drawFunc;
+	}
+
+	void draw(const DrawArgs &args) override {
+		func(args);
+	}
+};
+
 //helpers
 
 template <typename T>
