@@ -542,7 +542,8 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		// visuals links
 		addChild(new QuestionableDrawWidget(Vec(25, 219), [module](const DrawArgs &args) {
-			NVGcolor color = (module->theme == "Dark" || module->theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30);
+			std::string theme = (module) ? module->theme : "";
+			NVGcolor color = (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, 100) : nvgRGBA(30, 30, 30, 100);
 			for (size_t i = 0; i < 3; i++) {
 				for (size_t x = 0; x < 4; x++) {
 					nvgFillColor(args.vg, color);
@@ -550,6 +551,13 @@ struct QuatOSCWidget : QuestionableWidget {
 					nvgRoundedRect(args.vg, 55 * i, 29.6 * x, 20, 5, 3);
 					nvgFill(args.vg);
 				}
+			}
+
+			if (!module || (module && module->params[QuatOSC::STEREO].getValue() < 1)) {
+					nvgFillColor(args.vg, color);
+					nvgBeginPath(args.vg);
+					nvgRoundedRect(args.vg, 55 * 2, 29.6 * 4, 20, 5, 3);
+					nvgFill(args.vg);
 			}
 		}));
 
