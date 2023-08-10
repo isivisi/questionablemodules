@@ -493,7 +493,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 327), "descriptor");
 
 		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
-		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(143.3, 358), "descriptor");
+		color->addText("OUTS", "OpenSans-Bold.ttf", c, 6, Vec(143.3, 358), "descriptor");
 	}
 
 	QuatOSCWidget(QuatOSC* module) {
@@ -542,7 +542,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		// visuals links
 		addChild(new QuestionableDrawWidget(Vec(25, 219), [module](const DrawArgs &args) {
-			NVGcolor color = (module->theme == "Dark") ? nvgRGB(200, 200, 200) : nvgRGB(30, 30, 30);
+			NVGcolor color = (module->theme == "Dark" || module->theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30);
 			for (size_t i = 0; i < 3; i++) {
 				for (size_t x = 0; x < 4; x++) {
 					nvgFillColor(args.vg, color);
