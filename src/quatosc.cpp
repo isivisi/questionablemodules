@@ -85,8 +85,6 @@ struct QuatOSC : QuestionableModule {
 
 	std::string projection = "Z";
 
-	bool stereo = false;
-
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
     gmtl::Vec3f xPointOnSphere;
@@ -321,7 +319,6 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
-		json_object_set_new(nodeJ, "stereo", json_boolean(stereo));
 		return nodeJ;
 	}
 
@@ -330,7 +327,6 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
-		if (json_t* st = json_object_get(rootJ, "stereo")) stereo = json_boolean_value(st);
 		
 		resetPhase(true);
 	}
@@ -446,7 +442,6 @@ struct SLURPStereoSwitch : QuestionableParam<SvgSwitch> {
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSides.svg")));
 	}
 
-	//void onDragStart(const DragStartEvent& )
 };
 
 struct QuatOSCWidget : QuestionableWidget {
@@ -575,7 +570,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 115)), module, QuatOSC::OUT));
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT2));
 
-		addParam(createParamCentered<SLURPStereoSwitch>(mm2px(Vec(start + (next*4.5), 121)), module, QuatOSC::STEREO));
+		addParam(createParamCentered<SLURPStereoSwitch>(mm2px(Vec(start + (next*3), 115)), module, QuatOSC::STEREO));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
@@ -591,7 +586,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
 
-		menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
+		//menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}
