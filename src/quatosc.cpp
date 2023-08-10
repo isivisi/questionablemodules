@@ -289,7 +289,7 @@ struct QuatOSC : QuestionableModule {
 
 			if (params[STEREO].getValue() == 1) {
 				// add center influence
-				for (int i = 0; i < 2; i++) {
+				for (size_t i = 0; i < 2; i++) {
 					stereo[i] += (1-fclamp(0, 1, abs(xRotated[0]))) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
 					stereo[i] += (1-fclamp(0, 1, abs(yRotated[0]))) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
 					stereo[i] += (1-fclamp(0, 1, abs(zRotated[0]))) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
@@ -540,14 +540,18 @@ struct QuatOSCWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		// Output greybox
-		/*addChild(new QuestionableDrawWidget(Vec(115, 325), [module](const DrawArgs &args) {
-			if (module->theme == "Dark") nvgFillColor(args.vg, nvgRGB(200, 200, 200));
-			else nvgFillColor(args.vg, nvgRGB(30, 30, 30));
-			nvgBeginPath(args.vg);
-			nvgRoundedRect(args.vg, 0, 0, 56, 30, 3);
-			nvgFill(args.vg);
-		}));*/
+		// visuals links
+		addChild(new QuestionableDrawWidget(Vec(25, 219), [module](const DrawArgs &args) {
+			NVGcolor color = (module->theme == "Dark") ? nvgRGB(200, 200, 200) : nvgRGB(30, 30, 30);
+			for (size_t i = 0; i < 3; i++) {
+				for (size_t x = 0; x < 4; x++) {
+					nvgFillColor(args.vg, color);
+					nvgBeginPath(args.vg);
+					nvgRoundedRect(args.vg, 55 * i, 29.6 * x, 20, 5, 3);
+					nvgFill(args.vg);
+				}
+			}
+		}));
 
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
