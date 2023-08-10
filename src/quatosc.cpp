@@ -550,14 +550,14 @@ struct QuatOSCWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		// visuals links
-		addChild(new QuestionableDrawWidget(Vec(25, 219), [module](const DrawArgs &args) {
+		addChild(new QuestionableDrawWidget(Vec(25, 220), [module](const DrawArgs &args) {
 			std::string theme = (module) ? module->theme : "";
-			NVGcolor color = (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, 100) : nvgRGBA(30, 30, 30, 100);
+			NVGcolor color = (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, 200) : nvgRGBA(30, 30, 30, 200);
 			for (size_t i = 0; i < 3; i++) {
 				for (size_t x = 0; x < 4; x++) {
 					nvgFillColor(args.vg, color);
 					nvgBeginPath(args.vg);
-					nvgRoundedRect(args.vg, 55 * i, 29.6 * x, 20, 5, 3);
+					nvgRoundedRect(args.vg, 55 * i, 29.6 * x, 20, 3, 3);
 					nvgFill(args.vg);
 				}
 			}
@@ -565,7 +565,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			if (!module || (module && module->params[QuatOSC::STEREO].getValue() < 1)) {
 					nvgFillColor(args.vg, color);
 					nvgBeginPath(args.vg);
-					nvgRoundedRect(args.vg, 55 * 2, 29.6 * 4, 20, 5, 3);
+					nvgRoundedRect(args.vg, 55 * 2, 29.6 * 4, 20, 3, 3);
 					nvgFill(args.vg);
 			}
 		}));
