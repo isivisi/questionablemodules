@@ -10,7 +10,7 @@
             "preLaunchTask": "BuildWinApp",
             "program": "C://Program Files//VCV//Rack2Pro//Rack.exe",
             "cwd": "C://Program Files//VCV//Rack2Pro//",
-            "type":"cppdbg"
+            "type":"cppvsdbg"
         }
     ]
 }
