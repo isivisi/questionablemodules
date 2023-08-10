@@ -13,5 +13,10 @@
 		"recommendations": [
 			"ms-vscode.cpptools",
 		]
+	},
+	"settings": {
+		"files.associations": {
+			"unordered_map": "cpp"
+		}
 	}
 }

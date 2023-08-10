@@ -380,7 +380,7 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
-		gmtl::Quatf rot = projRot[((QuatOSC*)module)->projection];
+		gmtl::Quatf rot = (module) ? projRot[((QuatOSC*)module)->projection] : projRot["Z"];
 
 		// grab points from audio thread and clear and add it to our own history list
 		while (history.size() > 1) {
@@ -408,14 +408,23 @@ struct QuatDisplay : Widget {
 
 		nvgSave(args.vg);
 
-		if (module == NULL) return;
+		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
+		nvgStrokeWidth(args.vg, 1.f);
+
+		if (module == NULL) {
+			// draw example visual
+			std::queue<gmtl::Vec3f> fakeHistory;
+			fakeHistory.push(gmtl::Vec3f(0, VECLENGTH, 0));
+			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
+			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
+			drawHistory(args.vg, fakeHistory, nvgRGBA(15, 250, 250, 255), zhistory);
+			nvgRestore(args.vg);
+			return;
+		};
 
 		float xInf = module->getValue(QuatOSC::X_POS_I_PARAM, true);
 		float yInf = module->getValue(QuatOSC::Y_POS_I_PARAM, true);
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
-
-		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
-		nvgStrokeWidth(args.vg, 1.f);
 
 		if (layer == 1) {
 			reading = true;
