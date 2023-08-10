@@ -331,6 +331,12 @@ struct QuatOSC : QuestionableModule {
 		resetPhase(true);
 	}
 
+	void fromJson(json_t* rootJ) override {
+		QuestionableModule::fromJson(rootJ);
+		// reset phase on preset load even if data attribute not found
+		resetPhase(true);
+	}
+
 };
 
 struct QuatDisplay : Widget {
