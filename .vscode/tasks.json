@@ -2,16 +2,18 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Builds application",
+            "label": "BuildWinApp",
             "type": "shell",
-            "command": "make",
+            "command":  "make",
             "windows":{
-                "command": "make"
+                "command": "make",
+                "args": ["install"]
             },
             "options": {
                 "cwd": "${workspaceRoot}",
                 "env":{
-                    "PATH": "C:\\msys64\\usr\\bin\\;C:\\msys64\\mingw64\\bin"
+                    "PATH": "C:\\msys64\\usr\\bin\\;C:\\msys64\\mingw64\\bin",
+                    "RACK_DIR": "../Rack-SDK"
                 }
             },
             "group": {

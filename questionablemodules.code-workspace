@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"name": "Questionable Modules",
+			"path": "."
+		},
+		{
+			"name": "VCVRack",
+			"path": "../Rack-SDK/"
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools",
+		]
+	},
+	"settings": {
+		"files.associations": {
+			"unordered_map": "cpp"
+		}
+	}
+}

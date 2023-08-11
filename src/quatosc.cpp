@@ -43,6 +43,7 @@ struct QuatOSC : QuestionableModule {
 		X_POS_I_PARAM,
 		Y_POS_I_PARAM,
 		Z_POS_I_PARAM,
+		STEREO,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -67,12 +68,12 @@ struct QuatOSC : QuestionableModule {
 	};
 	enum OutputId {
 		OUT,
-		//LEFT_OUT,
-		//RIGHT_OUT,
+		OUT2,
 		OUTPUTS_LEN
 	};
 	enum LightId {
 		BLINK_LIGHT,
+		STEREO_LIGHT,
 		LIGHTS_LEN
 	};
 
@@ -83,8 +84,6 @@ struct QuatOSC : QuestionableModule {
 	};
 
 	std::string projection = "Z";
-
-	bool stereo = false;
 
     gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
@@ -130,6 +129,7 @@ struct QuatOSC : QuestionableModule {
 		configSwitch(VOCT1_OCT, 0.f, 8.f, 0.f, "VOct 1 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT2_OCT, 0.f, 8.f, 6.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(STEREO, 0.f, 2.f, 0.f, "Stereo", {"Mono", "Full Stereo", "Sides"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT2, "VOct 2");
 		configInput(VOCT3, "VOct 3");
@@ -149,6 +149,7 @@ struct QuatOSC : QuestionableModule {
 		//configOutput(LEFT_OUT, "Left");
 		//configOutput(RIGHT_OUT, "Right");
 		configOutput(OUT, "");
+		configOutput(OUT2, "");
 		configInput(TRIGGER, "Gate");
 
 		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
@@ -272,11 +273,12 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
-		if (stereo) {
+		if (params[STEREO].getValue() >= 1) {
 
-			outputs[OUT].setChannels(2);
+			//outputs[OUT].setChannels(2);
 			float stereo[2] = {0.0f, 0.0f};
 
+			// add each sides influence
 			stereo[1] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
 			stereo[1] += fclamp(0, 1, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
 			stereo[1] += fclamp(0, 1, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
@@ -285,18 +287,28 @@ struct QuatOSC : QuestionableModule {
 			stereo[0] += fclamp(-1, 0, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
 			stereo[0] += fclamp(-1, 0, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
 
-			outputs[OUT].setVoltage(stereo[0], 0);
-			outputs[OUT].setVoltage(stereo[1], 1);
+			if (params[STEREO].getValue() == 1) {
+				// add center influence
+				for (size_t i = 0; i < 2; i++) {
+					stereo[i] += (1-fclamp(0, 1, abs(xRotated[0]))) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
+					stereo[i] += (1-fclamp(0, 1, abs(yRotated[0]))) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
+					stereo[i] += (1-fclamp(0, 1, abs(zRotated[0]))) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+				}
+			}
+
+			outputs[OUT].setVoltage(stereo[0]);
+			outputs[OUT2].setVoltage(stereo[1]);
 
 		} else {
 
-			outputs[OUT].setChannels(1);
+			//outputs[OUT].setChannels(1);
 
 			outputs[OUT].setVoltage((
 				((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
 				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
 				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))
 			));
+			outputs[OUT2].setVoltage(outputs[OUT].getVoltage());
 		
 		}
 
@@ -307,7 +319,6 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
-		json_object_set_new(nodeJ, "stereo", json_boolean(stereo));
 		return nodeJ;
 	}
 
@@ -316,8 +327,13 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
-		if (json_t* st = json_object_get(rootJ, "stereo")) stereo = json_boolean_value(st);
 		
+		resetPhase(true);
+	}
+
+	void fromJson(json_t* rootJ) override {
+		QuestionableModule::fromJson(rootJ);
+		// reset phase on preset load even if data attribute not found
 		resetPhase(true);
 	}
 
@@ -370,7 +386,7 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 		bool f = true;
 
-		gmtl::Quatf rot = projRot[((QuatOSC*)module)->projection];
+		gmtl::Quatf rot = (module) ? projRot[((QuatOSC*)module)->projection] : projRot["Z"];
 
 		// grab points from audio thread and clear and add it to our own history list
 		while (history.size() > 1) {
@@ -398,14 +414,23 @@ struct QuatDisplay : Widget {
 
 		nvgSave(args.vg);
 
-		if (module == NULL) return;
+		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
+		nvgStrokeWidth(args.vg, 1.f);
+
+		if (module == NULL) {
+			// draw example visual
+			std::queue<gmtl::Vec3f> fakeHistory;
+			fakeHistory.push(gmtl::Vec3f(0, VECLENGTH, 0));
+			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
+			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
+			drawHistory(args.vg, fakeHistory, nvgRGBA(15, 250, 250, 255), zhistory);
+			nvgRestore(args.vg);
+			return;
+		};
 
 		float xInf = module->getValue(QuatOSC::X_POS_I_PARAM, true);
 		float yInf = module->getValue(QuatOSC::Y_POS_I_PARAM, true);
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
-
-		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
-		nvgStrokeWidth(args.vg, 1.f);
 
 		if (layer == 1) {
 			reading = true;
@@ -417,6 +442,36 @@ struct QuatDisplay : Widget {
 
 		nvgRestore(args.vg);
 	
+	}
+
+};
+
+// our three way switch for mono, stereo, and stereo - middle
+struct SLURPStereoSwitch : QuestionableParam<SvgSwitch> {
+	bool allowDraw = false;
+
+	SLURPStereoSwitch() {
+		QuestionableParam();
+
+		fb->removeChild(shadow); // we don't need this
+
+		momentary = false;
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpMono.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpFullStereo.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSides.svg")));
+	}
+
+	// force draw on light layer
+	void drawLayer(const DrawArgs &args, int layer) override {
+		if (layer == 1) {
+			allowDraw = true;
+			draw(args);
+			allowDraw = false;
+		}
+	}
+
+	void draw(const DrawArgs &args) override {
+		if (allowDraw) SvgSwitch::draw(args);
 	}
 
 };
@@ -453,7 +508,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->addText("LFO INFLUENCE", "OpenSans-Bold.ttf", c, 6, Vec(37 + 106, 327), "descriptor");
 
 		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 6, Vec(24, 358), "descriptor");
-		color->addText("OUT", "OpenSans-Bold.ttf", c, 6, Vec(156.5, 358), "descriptor");
+		color->addText("OUTS", "OpenSans-Bold.ttf", c, 6, Vec(143.3, 358), "descriptor");
 	}
 
 	QuatOSCWidget(QuatOSC* module) {
@@ -500,6 +555,27 @@ struct QuatOSCWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
+		// visuals links
+		addChild(new QuestionableDrawWidget(Vec(25, 220), [module](const DrawArgs &args) {
+			std::string theme = (module) ? module->theme : "";
+			NVGcolor color = (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, 200) : nvgRGBA(30, 30, 30, 200);
+			for (size_t i = 0; i < 3; i++) {
+				for (size_t x = 0; x < 4; x++) {
+					nvgFillColor(args.vg, color);
+					nvgBeginPath(args.vg);
+					nvgRoundedRect(args.vg, 55 * i, 29.6 * x, 20, 3, 3);
+					nvgFill(args.vg);
+				}
+			}
+
+			if (!module || (module && module->params[QuatOSC::STEREO].getValue() < 1)) {
+					nvgFillColor(args.vg, color);
+					nvgBeginPath(args.vg);
+					nvgRoundedRect(args.vg, 55 * 2, 29.6 * 4, 20, 3, 3);
+					nvgFill(args.vg);
+			}
+		}));
+
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(10, 90)), module, Treequencer::SEND_VOCT_X, Treequencer::SEND_VOCT_X_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Y, Treequencer::SEND_VOCT_Y_LIGHT));
 		//addParam(createLightParamCentered<VCVLightLatch<MediumSimpleLight<WhiteLight>>>(mm2px(Vec(20, 90)), module, Treequencer::SEND_VOCT_Z, Treequencer::SEND_VOCT_Z_LIGHT));
@@ -544,9 +620,11 @@ struct QuatOSCWidget : QuestionableWidget {
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
 
-		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 113)), module, QuatOSC::LEFT_OUT));
-		//addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 113)), module, QuatOSC::RIGHT_OUT));
-		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 115)), module, QuatOSC::OUT));
+		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT2));
+
+		addParam(createParamCentered<SLURPStereoSwitch>(mm2px(Vec(start + (next*3), 115)), module, QuatOSC::STEREO));
+
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
 	}
@@ -561,7 +639,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
 
-		menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
+		//menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}
