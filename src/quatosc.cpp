@@ -95,6 +95,9 @@ struct QuatOSC : QuestionableModule {
 	dsp::SchmittTrigger clockTrigger;
 	dsp::Timer clockTimer;
 
+	// logically linked to VOCT{N}_OCT param
+	std::vector<bool> quantizedVOCT {true,true,true};
+
 	float clockFreq = 2.f;
 	
 	// when manipulating the lfos they will always be sligtly out of phase.
@@ -173,7 +176,8 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	inline float calcVOctFreq(int input) {
-		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + std::round(getValue(input))) + 30.f) / std::pow(2.f, 30.f);
+		float voctOffset = quantizedVOCT[input] ? std::round(getValue(input)) : getValue(input);
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
@@ -319,6 +323,11 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
+
+		json_t* qtArray = json_array();
+		for (size_t i = 0; i < quantizedVOCT.size(); i++) json_array_append_new(qtArray, json_boolean(quantizedVOCT[i]));
+		json_object_set_new(nodeJ, "quantizedVOCT", qtArray);
+
 		return nodeJ;
 	}
 
@@ -327,6 +336,9 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
+		if (json_t* qtArray = json_object_get(rootJ, "quantizedVOCT")) {
+			for (size_t i = 0; i < quantizedVOCT.size(); i++) { quantizedVOCT[i] = json_boolean_value(json_array_get(qtArray, i)); }
+		}
 		
 		resetPhase(true);
 	}
@@ -476,6 +488,19 @@ struct SLURPStereoSwitch : QuestionableParam<SvgSwitch> {
 
 };
 
+// Adds option to disable quantization for the voct offset knob
+template <typename T>
+struct SLURPOCTParamWidget : QuestionableParam<T> {
+	void appendContextMenu(Menu* menu) override {
+		if (!this->module) return;
+		QuatOSC* quatMod = (QuatOSC*)this->module;
+		menu->addChild(createMenuItem(quatMod->quantizedVOCT[this->paramId] ? "Disable Quantization" : "Enable Quantization", "", [=]() {
+			quatMod->quantizedVOCT[this->paramId] = !quatMod->quantizedVOCT[this->paramId];
+		}));
+		QuestionableParam<T>::appendContextMenu(menu);
+	}
+};
+
 struct QuatOSCWidget : QuestionableWidget {
 	ImagePanel *fade;
 	QuatDisplay *display;
@@ -600,9 +625,9 @@ struct QuatOSCWidget : QuestionableWidget {
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 70+ hOff)), module, QuatOSC::Y_FLO_F_INPUT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 70+ hOff)), module, QuatOSC::Z_FLO_F_INPUT));
 
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start, 80+ hOff)), module, QuatOSC::VOCT1_OCT));
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*2), 80+ hOff)), module, QuatOSC::VOCT2_OCT));
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*4), 80+ hOff)), module, QuatOSC::VOCT3_OCT));
+		addParam(createParamCentered<SLURPOCTParamWidget<RoundSmallBlackKnob>>(mm2px(Vec(start, 80+ hOff)), module, QuatOSC::VOCT1_OCT));
+		addParam(createParamCentered<SLURPOCTParamWidget<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*2), 80+ hOff)), module, QuatOSC::VOCT2_OCT));
+		addParam(createParamCentered<SLURPOCTParamWidget<RoundSmallBlackKnob>>(mm2px(Vec(start + (next*4), 80+ hOff)), module, QuatOSC::VOCT3_OCT));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + next, 80+ hOff)), module, QuatOSC::VOCT1_OCT_INPUT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 80+ hOff)), module, QuatOSC::VOCT2_OCT_INPUT));
