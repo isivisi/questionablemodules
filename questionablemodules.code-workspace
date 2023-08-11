@@ -16,7 +16,9 @@
 	},
 	"settings": {
 		"files.associations": {
-			"unordered_map": "cpp"
+			"unordered_map": "cpp",
+			"vector": "cpp",
+			"utility": "cpp"
 		}
 	}
 }
