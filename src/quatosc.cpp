@@ -106,10 +106,6 @@ struct QuatOSC : QuestionableModule {
 	float lfo2Phase = 0.435f;
 	float lfo3Phase = 0.3234f;
 
-	float freqHistory1;
-	float freqHistory2;
-	float freqHistory3;
-
 	std::queue<gmtl::Vec3f> xPointSamples;
 	std::queue<gmtl::Vec3f> yPointSamples;
 	std::queue<gmtl::Vec3f> zPointSamples;
@@ -161,11 +157,11 @@ struct QuatOSC : QuestionableModule {
 		
 	}
 
-	float fclamp(float min, float max, float value) {
+	inline float fclamp(float min, float max, float value) {
 		return std::min(max, std::max(min, value));
 	}
 
-	float getValue(int value, bool c=false) {
+	inline float getValue(int value, bool c=false) {
 		if (c) return fclamp(0.f, 1.f, params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage());
 		else return params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage();
 	}
@@ -180,14 +176,9 @@ struct QuatOSC : QuestionableModule {
 		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
 	}
 
-	float processLFO(float &phase, float frequency, float deltaTime, float &freqHistory, int voct = -1) {
+	inline float processLFO(float &phase, float frequency, float deltaTime, int voct = -1) {
 
 		float voctFreq = calcVOctFreq(voct);
-
-		if (fabs(voctFreq - freqHistory) > 0.1) {
-			resetPhase(); 
-			freqHistory = voctFreq;
-		}
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * deltaTime;
 		phase -= trunc(phase);
@@ -204,7 +195,7 @@ struct QuatOSC : QuestionableModule {
 		}
 	}
 
-	float smoothDephase(float offset, float phase, float sampleTime) {
+	inline float smoothDephase(float offset, float phase, float sampleTime) {
 		float phaseError = std::asin(phase) - std::asin(offset);
 		if (phaseError > M_PI) phaseError -= 2*M_PI;
 		else if (phaseError < -M_PI) phaseError += 2*M_PI;
@@ -239,16 +230,16 @@ struct QuatOSC : QuestionableModule {
 		} else clockFreq = 2.f;
 
 		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
-			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, freqHistory1, VOCT))), 
-			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, freqHistory2, VOCT2))), 
-			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, freqHistory3, VOCT3)))
+			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, VOCT))), 
+			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, VOCT2))), 
+			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, VOCT3)))
 		));
 		gmtl::normalize(rotOffset);
 
 		gmtl::Quatf rotAddition = gmtl::makePure(gmtl::Vec3f(
 			getValue(X_FLO_ROT_PARAM) * args.sampleTime, 
-			getValue(Y_FLO_ROT_PARAM)* args.sampleTime, 
-			getValue(Z_FLO_ROT_PARAM)* args.sampleTime
+			getValue(Y_FLO_ROT_PARAM) * args.sampleTime, 
+			getValue(Z_FLO_ROT_PARAM) * args.sampleTime
 		));
 		rotationAccumulation += rotAddition * rotationAccumulation;
 
@@ -347,6 +338,9 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	void fromJson(json_t* rootJ) override {
+		// reset
+		projection = "Z";
+		quantizedVOCT = {true,true,true};
 		QuestionableModule::fromJson(rootJ);
 		// reset phase on preset load even if data attribute not found
 		resetPhase(true);
