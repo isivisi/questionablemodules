@@ -277,26 +277,29 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
+		float posInfluence[3] = {getValue(X_POS_I_PARAM, true), getValue(Y_POS_I_PARAM, true), getValue(Z_POS_I_PARAM, true)};
+		float vecProjected[3] = {VecCombine(xRotated), VecCombine(yRotated), VecCombine(zRotated)};
+
 		if (params[STEREO].getValue() >= 1) {
 
 			//outputs[OUT].setChannels(2);
 			float stereo[2] = {0.0f, 0.0f};
 
 			// add each sides influence
-			stereo[1] += fclamp(0, 1, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
-			stereo[1] += fclamp(0, 1, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
-			stereo[1] += fclamp(0, 1, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+			stereo[1] += fclamp(0, 1, xRotated[0]) * (vecProjected[0] * posInfluence[0]);
+			stereo[1] += fclamp(0, 1, yRotated[0]) * (vecProjected[1] * posInfluence[1]);
+			stereo[1] += fclamp(0, 1, zRotated[0]) * (vecProjected[2] * posInfluence[2]);
 
-			stereo[0] += fclamp(-1, 0, xRotated[0]) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
-			stereo[0] += fclamp(-1, 0, yRotated[0]) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
-			stereo[0] += fclamp(-1, 0, zRotated[0]) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+			stereo[0] += fclamp(-1, 0, xRotated[0]) * (vecProjected[0] * posInfluence[0]);
+			stereo[0] += fclamp(-1, 0, yRotated[0]) * (vecProjected[1] * posInfluence[1]);
+			stereo[0] += fclamp(-1, 0, zRotated[0]) * (vecProjected[2] * posInfluence[2]);
 
 			if (params[STEREO].getValue() == 1) {
 				// add center influence
 				for (size_t i = 0; i < 2; i++) {
-					stereo[i] += (1-fclamp(0, 1, abs(xRotated[0]))) * (VecCombine(xRotated) * getValue(X_POS_I_PARAM, true));
-					stereo[i] += (1-fclamp(0, 1, abs(yRotated[0]))) * (VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true));
-					stereo[i] += (1-fclamp(0, 1, abs(zRotated[0]))) * (VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true));
+					stereo[i] += (1-fclamp(0, 1, abs(xRotated[0]))) * (vecProjected[0] * posInfluence[0]);
+					stereo[i] += (1-fclamp(0, 1, abs(yRotated[0]))) * (vecProjected[1] * posInfluence[1]);
+					stereo[i] += (1-fclamp(0, 1, abs(zRotated[0]))) * (vecProjected[2] * posInfluence[2]);
 				}
 			}
 
@@ -308,9 +311,9 @@ struct QuatOSC : QuestionableModule {
 			//outputs[OUT].setChannels(1);
 
 			outputs[OUT].setVoltage((
-				((VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
-				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
-				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true)))
+				(vecProjected[0] * posInfluence[0]) + 
+				(vecProjected[1] * posInfluence[1]) + 
+				(vecProjected[2] * posInfluence[2])
 			));
 			outputs[OUT2].setVoltage(outputs[OUT].getVoltage());
 		
