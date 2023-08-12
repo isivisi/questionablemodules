@@ -348,7 +348,7 @@ struct QuatOSC : QuestionableModule {
 						((VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
 						(VecCombine(newY) * getValue(Y_POS_I_PARAM, true)) + 
 						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true)))
-					), i+spread+1);
+					), i);
 					outputs[OUT2].setVoltage(outputs[OUT].getVoltage(i), i);
 				}
 			}
