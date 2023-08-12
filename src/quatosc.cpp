@@ -166,6 +166,7 @@ struct QuatOSC : QuestionableModule {
 		else return params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage();
 	}
 
+	// Covert a 3d point in space to a 1d high value on a plane.
 	inline float VecCombine(gmtl::Vec3f vector) {
 		gmtl::Vec3f proj = projectionPlanes[projection];
 		return (vector[0]*proj[0]) + (vector[1]*proj[1]) + (vector[2]*proj[2]);
@@ -200,6 +201,28 @@ struct QuatOSC : QuestionableModule {
 		if (phaseError > M_PI) phaseError -= 2*M_PI;
 		else if (phaseError < -M_PI) phaseError += 2*M_PI;
 		return lerp<float>(phase, phase - (phaseError), sampleTime);
+	}
+
+	// Convert a 3 point set of 3d positions to stereo data
+	inline std::vector<float> projectedToStereo(gmtl::Vec3f* points) {
+		std::vector<float> stereo = {0.0f, 0.0f};
+
+		for (size_t i = 0; i < 3; i++) {
+			float vecProjected = VecCombine(points[i]);
+			// add each sides influence
+			// TODO: double check to see if this changes when projected differently. it shoud.
+			stereo[0] += fclamp(-1, 0, points[i][0]) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
+			stereo[1] += fclamp(0, 1, points[i][0]) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
+
+			if (params[STEREO].getValue() == 1) {
+				// add center influence
+				for (size_t x = 0; x < 2; x++) {
+					stereo[i] += (1-fclamp(0, 1, abs(points[i][0]))) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
+				}
+			}
+		}
+
+		return stereo;
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -253,6 +276,13 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
+		// spread
+		/*for (size_t i = -6; i < 6; i++) {
+			gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*10, i*10, i*10)) * sphereQuat;
+			gmtl::normalize(offsetRot);
+			std::vector<gmtl::Vec3f> points = {sphereQuat * xPointOnSphere, sphereQuat * yPointOnSphere, sphereQuat * zPointOnSphere};
+		}*/
+
 		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
@@ -274,25 +304,8 @@ struct QuatOSC : QuestionableModule {
 		if (params[STEREO].getValue() >= 1) {
 
 			//outputs[OUT].setChannels(2);
-			float stereo[2] = {0.0f, 0.0f};
-
-			// add each sides influence
-			stereo[1] += fclamp(0, 1, xRotated[0]) * (vecProjected[0] * posInfluence[0]);
-			stereo[1] += fclamp(0, 1, yRotated[0]) * (vecProjected[1] * posInfluence[1]);
-			stereo[1] += fclamp(0, 1, zRotated[0]) * (vecProjected[2] * posInfluence[2]);
-
-			stereo[0] += fclamp(-1, 0, xRotated[0]) * (vecProjected[0] * posInfluence[0]);
-			stereo[0] += fclamp(-1, 0, yRotated[0]) * (vecProjected[1] * posInfluence[1]);
-			stereo[0] += fclamp(-1, 0, zRotated[0]) * (vecProjected[2] * posInfluence[2]);
-
-			if (params[STEREO].getValue() == 1) {
-				// add center influence
-				for (size_t i = 0; i < 2; i++) {
-					stereo[i] += (1-fclamp(0, 1, abs(xRotated[0]))) * (vecProjected[0] * posInfluence[0]);
-					stereo[i] += (1-fclamp(0, 1, abs(yRotated[0]))) * (vecProjected[1] * posInfluence[1]);
-					stereo[i] += (1-fclamp(0, 1, abs(zRotated[0]))) * (vecProjected[2] * posInfluence[2]);
-				}
-			}
+			gmtl::Vec3f xyz[3] = {xRotated, yRotated, zRotated};
+			std::vector<float> stereo = projectedToStereo(xyz);
 
 			outputs[OUT].setVoltage(stereo[0]);
 			outputs[OUT2].setVoltage(stereo[1]);
