@@ -326,9 +326,13 @@ struct QuatOSC : QuestionableModule {
 			outputs[OUT2].setChannels(spread);
 			for (int i = 0; i < spread; i++) {
 				gmtl::Quatf offsetRot = gmtl::Quatf();
-				gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/2)*0.34, (i-spread/2)*0.34, (i-spread/2)*0.34));
+
+				if (spread%2) gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/2)*(M_PI/spread), (i-spread/2)*(M_PI/spread), (i-spread/2)*(M_PI/spread)));
+				else gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/M_PI)*(M_PI/spread), (i-spread/M_PI)*(M_PI/spread), (i-spread/M_PI)*(M_PI/spread)));
+
 				offsetRot = sphereQuat * offsetRot;
 				gmtl::normalize(offsetRot);
+				
 				gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 				gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 				gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
