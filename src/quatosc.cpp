@@ -76,6 +76,12 @@ struct QuatOSC : QuestionableModule {
 		STEREO_LIGHT,
 		LIGHTS_LEN
 	};
+	
+	enum Stereo {
+		OFF,
+		FULL,
+		SIDES
+	};
 
 	std::unordered_map<std::string, gmtl::Vec3f> projectionPlanes = {
 		{"X", gmtl::Vec3f{0.f, 1.f, 1.f}},
@@ -97,6 +103,8 @@ struct QuatOSC : QuestionableModule {
 
 	// logically linked to VOCT{N}_OCT param
 	std::vector<bool> quantizedVOCT {true,true,true};
+
+	int spread = 2;
 
 	float clockFreq = 2.f;
 	
@@ -214,7 +222,7 @@ struct QuatOSC : QuestionableModule {
 			stereo[0] += fclamp(-1, 0, points[i][0]) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
 			stereo[1] += fclamp(0, 1, points[i][0]) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
 
-			if (params[STEREO].getValue() == 1) {
+			if (params[STEREO].getValue() == Stereo::FULL) {
 				// add center influence
 				for (size_t x = 0; x < 2; x++) {
 					stereo[x] += (1-fclamp(0, 1, abs(points[i][0]))) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
@@ -291,15 +299,18 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
-		if (params[STEREO].getValue() >= 1) {
+		if (params[STEREO].getValue() != Stereo::OFF) {
 
-			outputs[OUT].setChannels(13);
-			outputs[OUT2].setChannels(13);
+			outputs[OUT].setChannels(spread*2);
+			outputs[OUT2].setChannels(spread*2);
 			gmtl::Vec3f xyz[3] = {xRotated, yRotated, zRotated};
 			std::vector<float> stereo = pointToStereo(xyz);
 
+			outputs[OUT].setVoltage(stereo[0], 0);
+			outputs[OUT2].setVoltage(stereo[1], 0);
+
 			// spread
-			for (size_t i = -6; i < 6; i++) {
+			for (int i = -spread; i < spread; i++) {
 				gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*10, i*10, i*10)) * sphereQuat;
 				gmtl::normalize(offsetRot);
 				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
@@ -307,16 +318,14 @@ struct QuatOSC : QuestionableModule {
 				gmtl::Vec3f newZ = offsetRot * zPointOnSphere; gmtl::normalize(newZ);
 				gmtl::Vec3f points[3] = {newX, newY, newZ};
 				std::vector<float> sStereo = pointToStereo(points);
-				outputs[OUT].setVoltage(sStereo[0], i+7);
-				outputs[OUT2].setVoltage(sStereo[1], i+7);
+				outputs[OUT].setVoltage(sStereo[0], i + spread+1);
+				outputs[OUT2].setVoltage(sStereo[1], i + spread+1);
 			}
-
-			outputs[OUT].setVoltage(stereo[0], 0);
-			outputs[OUT2].setVoltage(stereo[1], 0);
 
 		} else {
 
-			//outputs[OUT].setChannels(1);
+			outputs[OUT].setChannels(1);
+			outputs[OUT2].setChannels(1);
 
 			outputs[OUT].setVoltage((
 				(VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
