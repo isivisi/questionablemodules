@@ -323,7 +323,9 @@ struct QuatOSC : QuestionableModule {
 			outputs[OUT].setChannels(spread+1);
 			outputs[OUT2].setChannels(spread+1);
 			for (int i = -spread; i < spread; i++) {
-				gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*35, i*35, i*35)) * sphereQuat;
+				gmtl::Quatf offsetRot = gmtl::Quatf();
+				gmtl::set(offsetRot, gmtl::EulerAngleXYZf(i*35.f, i*35.f, i*35.f));
+				offsetRot = sphereQuat * offsetRot;
 				gmtl::normalize(offsetRot);
 				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
 				gmtl::Vec3f newY = offsetRot * yPointOnSphere; gmtl::normalize(newY);
@@ -331,10 +333,15 @@ struct QuatOSC : QuestionableModule {
 				gmtl::Vec3f points[3] = {newX, newY, newZ};
 				if (params[STEREO].getValue() != Stereo::OFF) {
 					std::vector<float> sStereo = pointToStereo(points);
-					outputs[OUT].setVoltage(sStereo[0], i + spread+1);
-					outputs[OUT2].setVoltage(sStereo[1], i + spread+1);
+					outputs[OUT].setVoltage(sStereo[0], i+spread+1);
+					outputs[OUT2].setVoltage(sStereo[1], i+spread+1);
 				} else {
-					
+					outputs[OUT].setVoltage((
+						(VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
+						(VecCombine(newY) * getValue(Y_POS_I_PARAM, true)) + 
+						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true))
+					), i+spread+1);
+					outputs[OUT2].setVoltage(outputs[OUT].getVoltage(), i+spread+1);
 				}
 			}
 		}
