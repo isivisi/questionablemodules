@@ -455,6 +455,12 @@ struct QuatDisplay : Widget {
 		nvgBeginPath(vg);
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
 			gmtl::Vec3f point = rot * localHistory.history[i];
+			/*if (module && module->params[QuatOSC::STEREO].getValue() != QuatOSC::Stereo::OFF) {
+				color.r = clamp<float>(0, 1, color.r + (point[0] / (VECLENGTH)) * 0.003);
+				color.g = clamp<float>(0, 1, color.r + (point[0] / (VECLENGTH)) * 0.003);
+				color.b = clamp<float>(0, 1, color.r + (point[0] / (VECLENGTH)) * 0.003);
+			}
+			nvgStrokeColor(vg, color);*/
 			if (f) nvgMoveTo(vg, centerX + point[0], centerY + point[1]);
 			//else nvgQuadTo(vg, centerX + point[0], centerY + point[1], centerX + point[0], centerY + point[1]);
 			else nvgLineTo(vg, centerX + point[0], centerY + point[1]);
