@@ -301,31 +301,13 @@ struct QuatOSC : QuestionableModule {
 
 		if (params[STEREO].getValue() != Stereo::OFF) {
 
-			outputs[OUT].setChannels(spread*2);
-			outputs[OUT2].setChannels(spread*2);
 			gmtl::Vec3f xyz[3] = {xRotated, yRotated, zRotated};
 			std::vector<float> stereo = pointToStereo(xyz);
 
 			outputs[OUT].setVoltage(stereo[0], 0);
 			outputs[OUT2].setVoltage(stereo[1], 0);
 
-			// spread
-			for (int i = -spread; i < spread; i++) {
-				gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*10, i*10, i*10)) * sphereQuat;
-				gmtl::normalize(offsetRot);
-				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
-				gmtl::Vec3f newY = offsetRot * yPointOnSphere; gmtl::normalize(newY);
-				gmtl::Vec3f newZ = offsetRot * zPointOnSphere; gmtl::normalize(newZ);
-				gmtl::Vec3f points[3] = {newX, newY, newZ};
-				std::vector<float> sStereo = pointToStereo(points);
-				outputs[OUT].setVoltage(sStereo[0], i + spread+1);
-				outputs[OUT2].setVoltage(sStereo[1], i + spread+1);
-			}
-
 		} else {
-
-			outputs[OUT].setChannels(1);
-			outputs[OUT2].setChannels(1);
 
 			outputs[OUT].setVoltage((
 				(VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
@@ -336,6 +318,26 @@ struct QuatOSC : QuestionableModule {
 		
 		}
 
+		// spread polyphonic logic
+		if (spread > 1) {
+			outputs[OUT].setChannels(spread+1);
+			outputs[OUT2].setChannels(spread+1);
+			for (int i = -spread; i < spread; i++) {
+				gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*35, i*35, i*35)) * sphereQuat;
+				gmtl::normalize(offsetRot);
+				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
+				gmtl::Vec3f newY = offsetRot * yPointOnSphere; gmtl::normalize(newY);
+				gmtl::Vec3f newZ = offsetRot * zPointOnSphere; gmtl::normalize(newZ);
+				gmtl::Vec3f points[3] = {newX, newY, newZ};
+				if (params[STEREO].getValue() != Stereo::OFF) {
+					std::vector<float> sStereo = pointToStereo(points);
+					outputs[OUT].setVoltage(sStereo[0], i + spread+1);
+					outputs[OUT2].setVoltage(sStereo[1], i + spread+1);
+				} else {
+					
+				}
+			}
+		}
 	}
 
 	json_t* dataToJson() override {
@@ -685,7 +687,10 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
-
+		menu->addChild(rack::createSubmenuItem("Spread", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Off", "",[=]() { mod->spread = 1; }));
+			for (int i = 2; i < 8; i++) menu->addChild(createMenuItem(std::to_string(i), "",[=]() { mod->spread = i; }));
+		}));
 		//menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
 
 		QuestionableWidget::appendContextMenu(menu);
