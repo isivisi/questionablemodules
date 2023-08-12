@@ -174,7 +174,7 @@ struct QuatOSC : QuestionableModule {
 
 	inline float calcVOctFreq(int input) {
 		float voctOffset = quantizedVOCT[input] ? std::round(getValue(input)) : getValue(input);
-		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::exp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
+		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
 	}
 
 	inline float processLFO(float &phase, float frequency, float deltaTime, int voct = -1) {
@@ -204,7 +204,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	// Convert a 3 point set of 3d positions to stereo data
-	inline std::vector<float> projectedToStereo(gmtl::Vec3f* points) {
+	inline std::vector<float> pointToStereo(gmtl::Vec3f* points) {
 		std::vector<float> stereo = {0.0f, 0.0f};
 
 		for (size_t i = 0; i < 3; i++) {
@@ -217,7 +217,7 @@ struct QuatOSC : QuestionableModule {
 			if (params[STEREO].getValue() == 1) {
 				// add center influence
 				for (size_t x = 0; x < 2; x++) {
-					stereo[i] += (1-fclamp(0, 1, abs(points[i][0]))) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
+					stereo[x] += (1-fclamp(0, 1, abs(points[i][0]))) * (vecProjected * getValue(X_POS_I_PARAM+i, true));
 				}
 			}
 		}
@@ -276,13 +276,6 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
-		// spread
-		/*for (size_t i = -6; i < 6; i++) {
-			gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*10, i*10, i*10)) * sphereQuat;
-			gmtl::normalize(offsetRot);
-			std::vector<gmtl::Vec3f> points = {sphereQuat * xPointOnSphere, sphereQuat * yPointOnSphere, sphereQuat * zPointOnSphere};
-		}*/
-
 		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
 			xPointSamples.push(xRotated);
 			yPointSamples.push(yRotated);
@@ -298,31 +291,41 @@ struct QuatOSC : QuestionableModule {
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
-		float posInfluence[3] = {getValue(X_POS_I_PARAM, true), getValue(Y_POS_I_PARAM, true), getValue(Z_POS_I_PARAM, true)};
-		float vecProjected[3] = {VecCombine(xRotated), VecCombine(yRotated), VecCombine(zRotated)};
-
 		if (params[STEREO].getValue() >= 1) {
 
-			//outputs[OUT].setChannels(2);
+			outputs[OUT].setChannels(13);
+			outputs[OUT2].setChannels(13);
 			gmtl::Vec3f xyz[3] = {xRotated, yRotated, zRotated};
-			std::vector<float> stereo = projectedToStereo(xyz);
+			std::vector<float> stereo = pointToStereo(xyz);
 
-			outputs[OUT].setVoltage(stereo[0]);
-			outputs[OUT2].setVoltage(stereo[1]);
+			// spread
+			for (size_t i = -6; i < 6; i++) {
+				gmtl::Quatf offsetRot = gmtl::makePure(gmtl::Vec3f(i*10, i*10, i*10)) * sphereQuat;
+				gmtl::normalize(offsetRot);
+				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
+				gmtl::Vec3f newY = offsetRot * yPointOnSphere; gmtl::normalize(newY);
+				gmtl::Vec3f newZ = offsetRot * zPointOnSphere; gmtl::normalize(newZ);
+				gmtl::Vec3f points[3] = {newX, newY, newZ};
+				std::vector<float> sStereo = pointToStereo(points);
+				outputs[OUT].setVoltage(sStereo[0], i+7);
+				outputs[OUT2].setVoltage(sStereo[1], i+7);
+			}
+
+			outputs[OUT].setVoltage(stereo[0], 0);
+			outputs[OUT2].setVoltage(stereo[1], 0);
 
 		} else {
 
 			//outputs[OUT].setChannels(1);
 
 			outputs[OUT].setVoltage((
-				(vecProjected[0] * posInfluence[0]) + 
-				(vecProjected[1] * posInfluence[1]) + 
-				(vecProjected[2] * posInfluence[2])
+				(VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
+				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
+				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true))
 			));
 			outputs[OUT2].setVoltage(outputs[OUT].getVoltage());
 		
 		}
-
 
 	}
 
