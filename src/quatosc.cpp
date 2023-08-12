@@ -324,7 +324,7 @@ struct QuatOSC : QuestionableModule {
 			outputs[OUT2].setChannels(spread+1);
 			for (int i = -spread; i < spread; i++) {
 				gmtl::Quatf offsetRot = gmtl::Quatf();
-				gmtl::set(offsetRot, gmtl::EulerAngleXYZf(i*35.f, i*35.f, i*35.f));
+				gmtl::set(offsetRot, gmtl::EulerAngleXYZf(i*0.34, i*0.34, i*0.34));
 				offsetRot = sphereQuat * offsetRot;
 				gmtl::normalize(offsetRot);
 				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
@@ -337,13 +337,16 @@ struct QuatOSC : QuestionableModule {
 					outputs[OUT2].setVoltage(sStereo[1], i+spread+1);
 				} else {
 					outputs[OUT].setVoltage((
-						(VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
+						((VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
 						(VecCombine(newY) * getValue(Y_POS_I_PARAM, true)) + 
-						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true))
+						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true)))
 					), i+spread+1);
-					outputs[OUT2].setVoltage(outputs[OUT].getVoltage(), i+spread+1);
+					outputs[OUT2].setVoltage(outputs[OUT].getVoltage(i+spread+1), i+spread+1);
 				}
 			}
+		} else {
+			outputs[OUT].setChannels(1);
+			outputs[OUT2].setChannels(1);
 		}
 	}
 
@@ -351,6 +354,7 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
+		json_object_set_new(nodeJ, "spread", json_real(spread));
 
 		json_t* qtArray = json_array();
 		for (size_t i = 0; i < quantizedVOCT.size(); i++) json_array_append_new(qtArray, json_boolean(quantizedVOCT[i]));
@@ -364,6 +368,7 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
+		if (json_t* s = json_object_get(rootJ, "spread")) spread = json_real_value(s);
 		if (json_t* qtArray = json_object_get(rootJ, "quantizedVOCT")) {
 			for (size_t i = 0; i < quantizedVOCT.size(); i++) { quantizedVOCT[i] = json_boolean_value(json_array_get(qtArray, i)); }
 		}
