@@ -113,10 +113,13 @@ struct QuatOSC : QuestionableModule {
 	float lfo1Phase = 0.8364f;
 	float lfo2Phase = 0.435f;
 	float lfo3Phase = 0.3234f;
-
-	std::queue<gmtl::Vec3f> xPointSamples;
-	std::queue<gmtl::Vec3f> yPointSamples;
-	std::queue<gmtl::Vec3f> zPointSamples;
+	
+	struct pointSampleGroup {
+		std::queue<gmtl::Vec3f> x;
+		std::queue<gmtl::Vec3f> y;
+		std::queue<gmtl::Vec3f> z;
+	};
+	pointSampleGroup pointSamples[8];
 
 	bool oct1Connected = false;
 	bool oct2Connected = false;
@@ -285,9 +288,9 @@ struct QuatOSC : QuestionableModule {
 		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
 
 		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
-			xPointSamples.push(xRotated);
-			yPointSamples.push(yRotated);
-			zPointSamples.push(zRotated);
+			pointSamples[0].x.push(xRotated);
+			pointSamples[0].y.push(yRotated);
+			pointSamples[0].z.push(zRotated);
 		}
 
 		gmtl::normalize(xRotated);
@@ -327,9 +330,15 @@ struct QuatOSC : QuestionableModule {
 				gmtl::set(offsetRot, gmtl::EulerAngleXYZf(i*0.34, i*0.34, i*0.34));
 				offsetRot = sphereQuat * offsetRot;
 				gmtl::normalize(offsetRot);
-				gmtl::Vec3f newX = offsetRot * xPointOnSphere; gmtl::normalize(newX);
-				gmtl::Vec3f newY = offsetRot * yPointOnSphere; gmtl::normalize(newY);
-				gmtl::Vec3f newZ = offsetRot * zPointOnSphere; gmtl::normalize(newZ);
+				gmtl::Vec3f newX = offsetRot * xPointOnSphere;
+				gmtl::Vec3f newY = offsetRot * yPointOnSphere;
+				gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
+				if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
+					pointSamples[i+spread+1].x.push(newX);
+					pointSamples[i+spread+1].y.push(newY);
+					pointSamples[i+spread+1].z.push(newZ);
+				}
+				gmtl::normalize(newX); gmtl::normalize(newY); gmtl::normalize(newZ);
 				gmtl::Vec3f points[3] = {newX, newY, newZ};
 				if (params[STEREO].getValue() != Stereo::OFF) {
 					std::vector<float> sStereo = pointToStereo(points);
@@ -482,9 +491,11 @@ struct QuatDisplay : Widget {
 
 		if (layer == 1) {
 			reading = true;
-			drawHistory(args.vg, module->xPointSamples, nvgRGBA(15, 250, 15, xInf*255), xhistory);
-			drawHistory(args.vg, module->yPointSamples, nvgRGBA(250, 250, 15, yInf*255), yhistory);
-			drawHistory(args.vg, module->zPointSamples, nvgRGBA(15, 250, 250, zInf*255), zhistory);
+			for (size_t i = 0; i < 8; i++) {
+				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), xhistory);
+				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), yhistory);
+				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), zhistory);
+			}
 			reading = false;
 		}
 
