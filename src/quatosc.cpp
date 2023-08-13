@@ -23,6 +23,7 @@
 int MODULE_SIZE = 12;
 const int MAX_HISTORY = 400;
 const int SAMPLES_PER_SECOND = 44100;
+const int MAX_SPREAD = 16;
 const float VECLENGTH = 65.f;
 
 const float HALF_SEMITONE = 1.029302;
@@ -119,7 +120,7 @@ struct QuatOSC : QuestionableModule {
 		std::queue<gmtl::Vec3f> y;
 		std::queue<gmtl::Vec3f> z;
 	};
-	pointSampleGroup pointSamples[8];
+	pointSampleGroup pointSamples[MAX_SPREAD];
 
 	bool oct1Connected = false;
 	bool oct2Connected = false;
@@ -498,7 +499,7 @@ struct QuatDisplay : Widget {
 
 		if (layer == 1) {
 			reading = true;
-			for (size_t i = 0; i < 8; i++) {
+			for (size_t i = 0; i < module->spread; i++) {
 				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), xhistory);
 				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), yhistory);
 				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), zhistory);
@@ -719,7 +720,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		}));
 		menu->addChild(rack::createSubmenuItem("Spread", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Off", "",[=]() { mod->spread = 1; }));
-			for (int i = 2; i < 8; i++) menu->addChild(createMenuItem(std::to_string(i), "",[=]() { mod->spread = i; }));
+			for (int i = 2; i <= MAX_SPREAD; i++) menu->addChild(createMenuItem(std::to_string(i), "",[=]() { mod->spread = i; }));
 		}));
 		//menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
 
