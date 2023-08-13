@@ -54,10 +54,13 @@
     {
       "value": 1.0,
       "id": 12
+    },
+    {
+      "value":4.0,
+      "id": 13
     }
   ],
   "data": {
-    "projection": "X",
-    "spread": 4.0,
+    "projection": "X"
   }
 }
