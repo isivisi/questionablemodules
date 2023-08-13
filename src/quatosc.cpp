@@ -323,42 +323,41 @@ struct QuatOSC : QuestionableModule {
 		}*/
 
 		// spread polyphonic logic
-			outputs[OUT].setChannels(spread);
-			outputs[OUT2].setChannels(spread);
-			float volDec = spread>1 ? 2*math::log2(spread) : 1;
-			for (int i = 0; i < spread; i++) {
-				gmtl::Quatf offsetRot = gmtl::Quatf();
+		outputs[OUT].setChannels(spread);
+		outputs[OUT2].setChannels(spread);
+		float volDec = spread>1 ? 2*math::log2(spread) : 1;
+		for (int i = 0; i < spread; i++) {
+			gmtl::Quatf offsetRot = gmtl::Quatf();
 
-				if (spread%2) gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/2)*(M_PI/spread), (i-spread/2)*(M_PI/spread), (i-spread/2)*(M_PI/spread)));
-				else gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/M_PI)*(M_PI/spread), (i-spread/M_PI)*(M_PI/spread), (i-spread/M_PI)*(M_PI/spread)));
+			if (spread%2) gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/2)*(M_PI/spread), (i-spread/2)*(M_PI/spread), (i-spread/2)*(M_PI/spread)));
+			else gmtl::set(offsetRot, gmtl::EulerAngleXYZf((i-spread/M_PI)*(M_PI/spread), (i-spread/M_PI)*(M_PI/spread), (i-spread/M_PI)*(M_PI/spread)));
 
-				offsetRot = sphereQuat * offsetRot;
-				gmtl::normalize(offsetRot);
+			offsetRot = sphereQuat * offsetRot;
+			gmtl::normalize(offsetRot);
 				
-				gmtl::Vec3f newX = offsetRot * xPointOnSphere;
-				gmtl::Vec3f newY = offsetRot * yPointOnSphere;
-				gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-				if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
-					pointSamples[i].x.push(newX);
-					pointSamples[i].y.push(newY);
-					pointSamples[i].z.push(newZ);
-				}
-				gmtl::normalize(newX); gmtl::normalize(newY); gmtl::normalize(newZ);
-				gmtl::Vec3f points[3] = {newX, newY, newZ};
-				if (params[STEREO].getValue() != Stereo::OFF) {
-					std::vector<float> sStereo = pointToStereo(points);
-					outputs[OUT].setVoltage(sStereo[0] / volDec, i);
-					outputs[OUT2].setVoltage(sStereo[1] / volDec, i);
-				} else {
-					outputs[OUT].setVoltage((
-						((VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
-						(VecCombine(newY) * getValue(Y_POS_I_PARAM, true)) + 
-						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true))) / volDec
-					), i);
-					outputs[OUT2].setVoltage(outputs[OUT].getVoltage(i), i);
-				}
+			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
+			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
+			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
+			if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
+				pointSamples[i].x.push(newX);
+				pointSamples[i].y.push(newY);
+				pointSamples[i].z.push(newZ);
 			}
-		
+			gmtl::normalize(newX); gmtl::normalize(newY); gmtl::normalize(newZ);
+			gmtl::Vec3f points[3] = {newX, newY, newZ};
+			if (params[STEREO].getValue() != Stereo::OFF) {
+				std::vector<float> sStereo = pointToStereo(points);
+				outputs[OUT].setVoltage(sStereo[0] / volDec, i);
+				outputs[OUT2].setVoltage(sStereo[1] / volDec, i);
+			} else {
+				outputs[OUT].setVoltage((
+					((VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
+					(VecCombine(newY) * getValue(Y_POS_I_PARAM, true)) + 
+					(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true))) / volDec
+				), i);
+				outputs[OUT2].setVoltage(outputs[OUT].getVoltage(i), i);
+			}
+		}
 	}
 
 	json_t* dataToJson() override {
