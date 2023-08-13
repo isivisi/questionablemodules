@@ -45,6 +45,7 @@ struct QuatOSC : QuestionableModule {
 		Y_POS_I_PARAM,
 		Z_POS_I_PARAM,
 		STEREO,
+		SPREAD,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -104,8 +105,7 @@ struct QuatOSC : QuestionableModule {
 
 	// logically linked to VOCT{N}_OCT param
 	std::vector<bool> quantizedVOCT {true,true,true};
-
-	int spread = 1;
+	bool normalizeSpreadVolume = true;
 
 	float clockFreq = 2.f;
 	
@@ -117,7 +117,7 @@ struct QuatOSC : QuestionableModule {
 
 	// statically allocated queue
 	// the less allocation going in the audio thread the better
-	template <typename T, const size_t allocation_size=SAMPLES_PER_SECOND*2>
+	template <typename T, const size_t allocation_size=SAMPLES_PER_SECOND*2> // around 1mb for 16 voices
 	struct SLURPQueue {
 		T* values;
 		size_t cursor_front = 0;
@@ -169,6 +169,7 @@ struct QuatOSC : QuestionableModule {
 		configSwitch(VOCT2_OCT, 0.f, 8.f, 6.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(STEREO, 0.f, 2.f, 0.f, "Stereo", {"Mono", "Full Stereo", "Sides"});
+		configSwitch(SPREAD, 1.f, 16.f, 1.f, "Spread", {"Off", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT2, "VOct 2");
 		configInput(VOCT3, "VOct 3");
@@ -204,6 +205,10 @@ struct QuatOSC : QuestionableModule {
 	inline float getValue(int value, bool c=false) {
 		if (c) return fclamp(0.f, 1.f, params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage());
 		else return params[value].getValue() + inputs[value + VOCT1_OCT_INPUT].getVoltage();
+	}
+
+	inline int getSpread() {
+		return (int)params[SPREAD].getValue();
 	}
 
 	// Covert a 3d point in space to a 1d high value on a plane.
@@ -244,6 +249,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	// Convert a 3 point set of 3d positions to stereo data
+	// TODO: can be optimized?
 	inline std::vector<float> pointToStereo(gmtl::Vec3f* points) {
 		std::vector<float> stereo = {0.0f, 0.0f};
 
@@ -280,6 +286,7 @@ struct QuatOSC : QuestionableModule {
 			resetPhase(true);
 		}
 
+		// clock stuff from lfo
 		if (inputs[CLOCK_INPUT].isConnected()) {
 			clockTimer.process(args.sampleTime);
 			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 2.f)) {
@@ -292,6 +299,7 @@ struct QuatOSC : QuestionableModule {
 			}
 		} else clockFreq = 2.f;
 
+		// quat rotation from lfos
 		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
 			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, VOCT))), 
 			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, VOCT2))), 
@@ -299,6 +307,7 @@ struct QuatOSC : QuestionableModule {
 		));
 		gmtl::normalize(rotOffset);
 
+		// quat constant rotation addition
 		gmtl::Quatf rotAddition = gmtl::makePure(gmtl::Vec3f(
 			getValue(X_FLO_ROT_PARAM) * args.sampleTime, 
 			getValue(Y_FLO_ROT_PARAM) * args.sampleTime, 
@@ -306,7 +315,7 @@ struct QuatOSC : QuestionableModule {
 		));
 		rotationAccumulation += rotAddition * rotationAccumulation;
 
-		sphereQuat = rotationAccumulation * rotOffset;
+		sphereQuat = rotationAccumulation * rotOffset; // add our lfo rotation to our accumulated rotation
 
 		gmtl::lerp(rotationAccumulation, args.sampleTime, rotationAccumulation, gmtl::Quatf(0,0,0,1)); // smooth dephase, less clicking :)
 
@@ -318,9 +327,10 @@ struct QuatOSC : QuestionableModule {
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
 		// spread polyphonic logic
+		int spread = getSpread();
 		outputs[OUT].setChannels(spread);
 		outputs[OUT2].setChannels(spread);
-		float volDec = 1;//spread>1 ? 2*math::log2(spread) : 1;
+		float volDec = normalizeSpreadVolume ? (spread>1 ? 2*math::log2(spread) : 1) : 1;
 		for (int i = 0; i < spread; i++) {
 			gmtl::Quatf offsetRot = gmtl::Quatf();
 
@@ -359,7 +369,7 @@ struct QuatOSC : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "projection", json_string(projection.c_str()));
 		json_object_set_new(nodeJ, "clockFreq", json_real(clockFreq));
-		json_object_set_new(nodeJ, "spread", json_real(spread));
+		json_object_set_new(nodeJ, "normalizeSpreadVolume", json_boolean(normalizeSpreadVolume));
 
 		json_t* qtArray = json_array();
 		for (size_t i = 0; i < quantizedVOCT.size(); i++) json_array_append_new(qtArray, json_boolean(quantizedVOCT[i]));
@@ -373,18 +383,17 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
-		if (json_t* s = json_object_get(rootJ, "spread")) spread = json_real_value(s);
+		if (json_t* nsv = json_object_get(rootJ, "normalizeSpreadVolume")) normalizeSpreadVolume = nsv;
 		if (json_t* qtArray = json_object_get(rootJ, "quantizedVOCT")) {
 			for (size_t i = 0; i < quantizedVOCT.size(); i++) { quantizedVOCT[i] = json_boolean_value(json_array_get(qtArray, i)); }
 		}
-		
-		resetPhase(true);
+
 	}
 
 	void fromJson(json_t* rootJ) override {
 		// reset
 		projection = "Z";
-		spread = 1;
+		normalizeSpreadVolume = true;
 		quantizedVOCT = {true,true,true};
 		QuestionableModule::fromJson(rootJ);
 		// reset phase on preset load even if data attribute not found
@@ -493,7 +502,7 @@ struct QuatDisplay : Widget {
 
 		if (layer == 1) {
 			reading = true;
-			for (size_t i = 0; i < module->spread; i++) {
+			for (size_t i = 0; i < module->getSpread(); i++) {
 				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), xhistory);
 				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), yhistory);
 				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), zhistory);
@@ -523,7 +532,9 @@ struct SLURPSpreadSwitch  : QuestionableLightSwitch {
 		QuestionableLightSwitch();
 		momentary = false;
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOff.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn.svg")));
+		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn1.svg")));
+		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn2.svg")));
+		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn.svg")));
 	}
 };
 
@@ -688,7 +699,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT2));
 
 		addParam(createParamCentered<SLURPStereoSwitch>(mm2px(Vec(start + (next*3), 115)), module, QuatOSC::STEREO));
-		addParam(createParamCentered<SLURPSpreadSwitch>(mm2px(Vec(start + (next*2), 115)), module, QuatOSC::STEREO));
+		addParam(createParamCentered<SLURPSpreadSwitch>(mm2px(Vec(start + (next*2), 115)), module, QuatOSC::SPREAD));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
@@ -703,11 +714,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
-		menu->addChild(rack::createSubmenuItem("Spread", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Off", "",[=]() { mod->spread = 1; }));
-			for (int i = 2; i <= MAX_SPREAD; i++) menu->addChild(createMenuItem(std::to_string(i), "",[=]() { mod->spread = i; }));
-		}));
-		//menu->addChild(createMenuItem(mod->stereo ? "Disable Stereo" : "Enable Stereo", "",[=]() { mod->stereo = !mod->stereo; }));
+		menu->addChild(createMenuItem(mod->normalizeSpreadVolume ? "Disable Spead Volume Normalization" : "Enable Spead Volume Normalization", "",[=]() { mod->normalizeSpreadVolume = !mod->normalizeSpreadVolume; }));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}
