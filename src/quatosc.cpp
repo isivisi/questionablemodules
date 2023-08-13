@@ -514,58 +514,22 @@ struct QuatDisplay : Widget {
 };
 
 // our three way switch for mono, stereo, and stereo - middle
-struct SLURPStereoSwitch : QuestionableParam<SvgSwitch> {
-	bool allowDraw = false;
-
+struct SLURPStereoSwitch : QuestionableLightSwitch {
 	SLURPStereoSwitch() {
-		QuestionableParam();
-
-		fb->removeChild(shadow); // we don't need this
-
+		QuestionableLightSwitch();
 		momentary = false;
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpMono.svg")));
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpFullStereo.svg")));
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSides.svg")));
 	}
-
-	// force draw on light layer
-	void drawLayer(const DrawArgs &args, int layer) override {
-		if (layer == 1) {
-			allowDraw = true;
-			draw(args);
-			allowDraw = false;
-		}
-	}
-
-	void draw(const DrawArgs &args) override {
-		if (allowDraw) SvgSwitch::draw(args);
-	}
-
 };
 
-struct SLURPSpreadSwitch  : QuestionableParam<SvgSwitch> {
-	bool allowDraw = false;
+struct SLURPSpreadSwitch  : QuestionableLightSwitch {
 	SLURPSpreadSwitch() {
-		SvgSwitch();
-
-		fb->removeChild(shadow); // we don't need this
-
+		QuestionableLightSwitch();
 		momentary = false;
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOff.svg")));
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn.svg")));
-	}
-
-	// force draw on light layer
-	void drawLayer(const DrawArgs &args, int layer) override {
-		if (layer == 1) {
-			allowDraw = true;
-			draw(args);
-			allowDraw = false;
-		}
-	}
-
-	void draw(const DrawArgs &args) override {
-		if (allowDraw) SvgSwitch::draw(args);
 	}
 };
 
