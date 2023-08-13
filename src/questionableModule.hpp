@@ -125,6 +125,29 @@ struct QuestionablePort : T {
 	}
 };
 
+struct QuestionableLightSwitch : QuestionableParam<SvgSwitch> {
+	bool allowDraw = false;
+
+	QuestionableLightSwitch() {
+		QuestionableParam();
+		fb->removeChild(shadow); // we don't need this
+	}
+
+	// force draw on light layer
+	void drawLayer(const DrawArgs &args, int layer) override {
+		if (layer == 1) {
+			allowDraw = true;
+			draw(args);
+			allowDraw = false;
+		}
+	}
+
+	void draw(const DrawArgs &args) override {
+		if (allowDraw) SvgSwitch::draw(args);
+	}
+
+};
+
 // Quick inline draw helper
 struct QuestionableDrawWidget : Widget {
 	std::function<void(const DrawArgs&)> func;
