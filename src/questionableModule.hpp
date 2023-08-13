@@ -20,6 +20,7 @@ struct QuestionableModule : Module {
 
     void dataFromJson(json_t* rootJ) override {
         if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+		else if (settings::preferDarkPanels) theme = "Dark";
 		if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
     }
 };
