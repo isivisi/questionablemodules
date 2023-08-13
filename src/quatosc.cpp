@@ -543,6 +543,32 @@ struct SLURPStereoSwitch : QuestionableParam<SvgSwitch> {
 
 };
 
+struct SLURPSpreadSwitch  : QuestionableParam<SvgSwitch> {
+	bool allowDraw = false;
+	SLURPSpreadSwitch() {
+		SvgSwitch();
+
+		fb->removeChild(shadow); // we don't need this
+
+		momentary = false;
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOff.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn.svg")));
+	}
+
+	// force draw on light layer
+	void drawLayer(const DrawArgs &args, int layer) override {
+		if (layer == 1) {
+			allowDraw = true;
+			draw(args);
+			allowDraw = false;
+		}
+	}
+
+	void draw(const DrawArgs &args) override {
+		if (allowDraw) SvgSwitch::draw(args);
+	}
+};
+
 // Adds option to disable quantization for the voct offset knob
 template <typename T>
 struct SLURPOCTParamWidget : QuestionableParam<T> {
@@ -704,6 +730,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT2));
 
 		addParam(createParamCentered<SLURPStereoSwitch>(mm2px(Vec(start + (next*3), 115)), module, QuatOSC::STEREO));
+		addParam(createParamCentered<SLURPSpreadSwitch>(mm2px(Vec(start + (next*2), 115)), module, QuatOSC::STEREO));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
