@@ -491,6 +491,7 @@ struct QuatDisplay : Widget {
 			fakeHistory.push(gmtl::Vec3f(0, VECLENGTH, 0));
 			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
 			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
+			fakeHistory.push(gmtl::Vec3f(0, VECLENGTH, 0));
 			drawHistory(args.vg, fakeHistory, nvgRGBA(15, 250, 250, 255), zhistory);
 			nvgRestore(args.vg);
 			return;
