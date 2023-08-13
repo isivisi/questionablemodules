@@ -618,7 +618,7 @@ struct QuatOSCWidget : QuestionableWidget {
 		if (module && module->theme.size()) {
 			color->drawBackground = true;
 			color->setTheme(BG_THEMES[module->theme]);
-		}
+		} //else if (settings::preferDarkPanels) { color->setTheme("Dark"); } // available in rack 2.4.0
 		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 		
 		setPanel(backdrop);
