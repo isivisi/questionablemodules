@@ -114,11 +114,39 @@ struct QuatOSC : QuestionableModule {
 	float lfo1Phase = 0.8364f;
 	float lfo2Phase = 0.435f;
 	float lfo3Phase = 0.3234f;
+
+	// statically allocated queue
+	// the less allocation going in the audio thread the better
+	template <typename T, const size_t allocation_size=SAMPLES_PER_SECOND*2>
+	struct SLURPQueue {
+		T* values;
+		size_t cursor_front = 0;
+		size_t cursor_back = 0;
+		size_t s = 0;
+		SLURPQueue() { values = new T[allocation_size]; } // not limited by stack
+		~SLURPQueue() { delete [] values; }
+		T pop() {
+			if (s > 0) {
+				size_t grab = cursor_back;
+				cursor_back = (cursor_back+1) % allocation_size;
+				s -= 1;
+				return values[grab];
+			}
+			return T();
+		}
+		void push(T obj) {
+			if (s >= allocation_size) return; // not important for us
+			cursor_front = (cursor_front+1) % allocation_size;
+			s += 1;
+			values[cursor_front] = obj;
+		}
+		size_t size() { return s; }
+	};
 	
 	struct pointSampleGroup {
-		std::queue<gmtl::Vec3f> x;
-		std::queue<gmtl::Vec3f> y;
-		std::queue<gmtl::Vec3f> z;
+		SLURPQueue<gmtl::Vec3f> x;
+		SLURPQueue<gmtl::Vec3f> y;
+		SLURPQueue<gmtl::Vec3f> z;
 	};
 	pointSampleGroup pointSamples[MAX_SPREAD];
 
@@ -284,43 +312,10 @@ struct QuatOSC : QuestionableModule {
 
 		gmtl::normalize(sphereQuat);
 
-		/*gmtl::Vec3f xRotated = sphereQuat * xPointOnSphere;
-		gmtl::Vec3f yRotated = sphereQuat * yPointOnSphere;
-		gmtl::Vec3f zRotated = sphereQuat * zPointOnSphere;
-
-		if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
-			pointSamples[0].x.push(xRotated);
-			pointSamples[0].y.push(yRotated);
-			pointSamples[0].z.push(zRotated);
-		}
-
-		gmtl::normalize(xRotated);
-		gmtl::normalize(yRotated);
-		gmtl::normalize(zRotated);*/
-
 		//dephase
 		lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
 		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
 		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
-
-		/*if (params[STEREO].getValue() != Stereo::OFF) {
-
-			gmtl::Vec3f xyz[3] = {xRotated, yRotated, zRotated};
-			std::vector<float> stereo = pointToStereo(xyz);
-
-			outputs[OUT].setVoltage(stereo[0], 0);
-			outputs[OUT2].setVoltage(stereo[1], 0);
-
-		} else {
-
-			outputs[OUT].setVoltage((
-				(VecCombine(xRotated) * getValue(X_POS_I_PARAM, true)) + 
-				(VecCombine(yRotated) * getValue(Y_POS_I_PARAM, true)) + 
-				(VecCombine(zRotated) * getValue(Z_POS_I_PARAM, true))
-			));
-			outputs[OUT2].setVoltage(outputs[OUT].getVoltage());
-		
-		}*/
 
 		// spread polyphonic logic
 		outputs[OUT].setChannels(spread);
@@ -435,12 +430,12 @@ struct QuatDisplay : Widget {
 		{"Z", {0.f, 0.f, 0.f, 1.f}},
 	};
 
-	void addToHistory(gmtl::Vec3f& vec, vecHistory& h) {
+	void addToHistory(gmtl::Vec3f vec, vecHistory& h) {
 		h.history[h.cursor] = vec;
 		h.cursor = (h.cursor + 1) % MAX_HISTORY;
 	}
 
-	void drawHistory(NVGcontext* vg, std::queue<gmtl::Vec3f> &history, NVGcolor color, vecHistory& localHistory) {
+	void drawHistory(NVGcontext* vg, QuatOSC::SLURPQueue<gmtl::Vec3f> &history, NVGcolor color, vecHistory& localHistory) {
 		float centerX = box.size.x/2;
 		float centerY = box.size.y/2;
 		bool f = true;
@@ -449,8 +444,7 @@ struct QuatDisplay : Widget {
 
 		// grab points from audio thread and clear and add it to our own history list
 		while (history.size() > 1) {
-			addToHistory(history.front(), localHistory);
-			history.pop();
+			addToHistory(history.pop(), localHistory);
 		}
 
 		// Iterate from oldest history value to latest
@@ -484,7 +478,7 @@ struct QuatDisplay : Widget {
 
 		if (module == NULL) {
 			// draw example visual
-			std::queue<gmtl::Vec3f> fakeHistory;
+			QuatOSC::SLURPQueue<gmtl::Vec3f> fakeHistory;
 			fakeHistory.push(gmtl::Vec3f(0, VECLENGTH, 0));
 			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
 			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
