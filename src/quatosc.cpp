@@ -105,7 +105,7 @@ struct QuatOSC : QuestionableModule {
 	// logically linked to VOCT{N}_OCT param
 	std::vector<bool> quantizedVOCT {true,true,true};
 
-	int spread = 2;
+	int spread = 1;
 
 	float clockFreq = 2.f;
 	
@@ -389,6 +389,7 @@ struct QuatOSC : QuestionableModule {
 	void fromJson(json_t* rootJ) override {
 		// reset
 		projection = "Z";
+		spread = 1;
 		quantizedVOCT = {true,true,true};
 		QuestionableModule::fromJson(rootJ);
 		// reset phase on preset load even if data attribute not found
