@@ -324,6 +324,7 @@ struct QuatOSC : QuestionableModule {
 		// spread polyphonic logic
 			outputs[OUT].setChannels(spread);
 			outputs[OUT2].setChannels(spread);
+			float volDec = spread>1 ? 2*math::log2(spread) : 1;
 			for (int i = 0; i < spread; i++) {
 				gmtl::Quatf offsetRot = gmtl::Quatf();
 
@@ -345,13 +346,13 @@ struct QuatOSC : QuestionableModule {
 				gmtl::Vec3f points[3] = {newX, newY, newZ};
 				if (params[STEREO].getValue() != Stereo::OFF) {
 					std::vector<float> sStereo = pointToStereo(points);
-					outputs[OUT].setVoltage(sStereo[0], i);
-					outputs[OUT2].setVoltage(sStereo[1], i);
+					outputs[OUT].setVoltage(sStereo[0] / volDec, i);
+					outputs[OUT2].setVoltage(sStereo[1] / volDec, i);
 				} else {
 					outputs[OUT].setVoltage((
 						((VecCombine(newX) * getValue(X_POS_I_PARAM, true)) + 
 						(VecCombine(newY) * getValue(Y_POS_I_PARAM, true)) + 
-						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true)))
+						(VecCombine(newZ) * getValue(Z_POS_I_PARAM, true))) / volDec
 					), i);
 					outputs[OUT2].setVoltage(outputs[OUT].getVoltage(i), i);
 				}
