@@ -320,7 +320,7 @@ struct QuatOSC : QuestionableModule {
 		// spread polyphonic logic
 		outputs[OUT].setChannels(spread);
 		outputs[OUT2].setChannels(spread);
-		float volDec = spread>1 ? 2*math::log2(spread) : 1;
+		float volDec = 1;//spread>1 ? 2*math::log2(spread) : 1;
 		for (int i = 0; i < spread; i++) {
 			gmtl::Quatf offsetRot = gmtl::Quatf();
 
