@@ -20,7 +20,6 @@ struct QuestionableModule : Module {
 
     void dataFromJson(json_t* rootJ) override {
         if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
-		else if (settings::preferDarkPanels) theme = "Dark";
 		if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
     }
 };
@@ -28,17 +27,34 @@ struct QuestionableModule : Module {
 struct QuestionableWidget : ModuleWidget {
     ImagePanel *backdrop;
     ColorBG* color;
+	bool lastPreferDark = false;
 
     QuestionableWidget() {
-		
+
     }
 
-	void setWidgetTheme(std::string theme) {
+	void step() {
+		if (settings::preferDarkPanels != lastPreferDark) {
+			lastPreferDark = settings::preferDarkPanels;
+			if (settings::preferDarkPanels && !module) setWidgetTheme("Dark");
+		}
+		ModuleWidget::step();
+	}
+
+	void backgroundColorLogic(QuestionableModule* module) {
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
+	}
+
+	void setWidgetTheme(std::string theme, bool setGlobal=true) {
 		QuestionableModule* mod = (QuestionableModule*)module;
 		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
-		userSettings.setSetting<std::string>("theme", theme);
+		if (setGlobal) userSettings.setSetting<std::string>("theme", theme);
 	}
 
 	void draw(const DrawArgs& args) override {
