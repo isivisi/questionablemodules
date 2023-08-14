@@ -711,7 +711,7 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
 			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
 		}));
-		menu->addChild(createMenuItem(mod->normalizeSpreadVolume ? "Disable Spead Volume Normalization" : "Enable Spead Volume Normalization", "",[=]() { mod->normalizeSpreadVolume = !mod->normalizeSpreadVolume; }));
+		menu->addChild(createMenuItem(mod->normalizeSpreadVolume ? "Disable Spread Volume Normalization" : "Enable Spread Volume Normalization", "",[=]() { mod->normalizeSpreadVolume = !mod->normalizeSpreadVolume; }));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}
