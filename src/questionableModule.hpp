@@ -27,17 +27,34 @@ struct QuestionableModule : Module {
 struct QuestionableWidget : ModuleWidget {
     ImagePanel *backdrop;
     ColorBG* color;
+	bool lastPreferDark = false;
 
     QuestionableWidget() {
-		
+
     }
 
-	void setWidgetTheme(std::string theme) {
+	void step() {
+		if (settings::preferDarkPanels != lastPreferDark) {
+			lastPreferDark = settings::preferDarkPanels;
+			if (settings::preferDarkPanels && !module) setWidgetTheme("Dark");
+		}
+		ModuleWidget::step();
+	}
+
+	void backgroundColorLogic(QuestionableModule* module) {
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
+	}
+
+	void setWidgetTheme(std::string theme, bool setGlobal=true) {
 		QuestionableModule* mod = (QuestionableModule*)module;
 		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
-		userSettings.setSetting<std::string>("theme", theme);
+		if (setGlobal) userSettings.setSetting<std::string>("theme", theme);
 	}
 
 	void draw(const DrawArgs& args) override {

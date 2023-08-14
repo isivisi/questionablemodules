@@ -613,14 +613,10 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		if (module) setText();
+		setText();
 
-		if (module && module->theme.size()) {
-			color->drawBackground = true;
-			color->setTheme(BG_THEMES[module->theme]);
-		}
-		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
-		
+		backgroundColorLogic(module);
+
 		setPanel(backdrop);
 		addChild(color);
 		addChild(display);

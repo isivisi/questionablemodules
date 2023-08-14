@@ -1,6 +1,6 @@
 # Maintainer: John Iannandrea <github.com/isivisi>
 
-_rackver=2.2.0
+_rackver=2.4.0
 
 pkgname='vcvrack-questionablemodules'
 pkgver=2.1.7
