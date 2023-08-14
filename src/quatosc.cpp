@@ -429,9 +429,12 @@ struct QuatDisplay : Widget {
 		int cursor = 0;
 	};
 
-	vecHistory xhistory;
-	vecHistory yhistory;
-	vecHistory zhistory;
+	struct channelHistory {
+		vecHistory x;
+		vecHistory y;
+		vecHistory z;
+	};
+	channelHistory history[MAX_SPREAD];
 
 	std::unordered_map<std::string, gmtl::Quatf> projRot = {
 		{"X", {0.f, 0.7071067, 0.f, 0.7071069}},
@@ -460,6 +463,7 @@ struct QuatDisplay : Widget {
 		nvgBeginPath(vg);
 		for (int i = (localHistory.cursor+1)%MAX_HISTORY; i != localHistory.cursor; i = (i+1)%MAX_HISTORY) {
 			gmtl::Vec3f point = rot * localHistory.history[i];
+
 			/*if (module && module->params[QuatOSC::STEREO].getValue() != QuatOSC::Stereo::OFF) {
 				color.r = clamp<float>(0, 1, color.r + (point[0] / (VECLENGTH)) * 0.003);
 				color.g = clamp<float>(0, 1, color.r + (point[0] / (VECLENGTH)) * 0.003);
@@ -492,7 +496,7 @@ struct QuatDisplay : Widget {
 			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
 			fakeHistory.push(gmtl::Vec3f(0, -VECLENGTH, 0));
 			fakeHistory.push(gmtl::Vec3f(0, VECLENGTH, 0));
-			drawHistory(args.vg, fakeHistory, nvgRGBA(15, 250, 250, 255), zhistory);
+			drawHistory(args.vg, fakeHistory, nvgRGBA(15, 250, 250, 255), history[0].z);
 			nvgRestore(args.vg);
 			return;
 		};
@@ -504,9 +508,9 @@ struct QuatDisplay : Widget {
 		if (layer == 1) {
 			reading = true;
 			for (size_t i = 0; i < module->getSpread(); i++) {
-				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), xhistory);
-				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), yhistory);
-				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), zhistory);
+				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), history[i].x);
+				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), history[i].y);
+				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), history[i].z);
 			}
 			reading = false;
 		}
