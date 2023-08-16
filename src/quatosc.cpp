@@ -192,6 +192,8 @@ struct QuatOSC : QuestionableModule {
 		configOutput(OUT2, "");
 		configInput(TRIGGER, "Gate");
 
+		supportsSampleRateOverride = true;
+
 		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
 		yPointOnSphere = gmtl::Vec3f(0.f, VECLENGTH, 0.f);
 		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, VECLENGTH);
@@ -271,7 +273,7 @@ struct QuatOSC : QuestionableModule {
 		return stereo;
 	}
 
-	void process(const ProcessArgs& args) override {
+	void processUndersampled(const ProcessArgs& args) override {
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
 			oct1Connected = inputs[VOCT].isConnected();
