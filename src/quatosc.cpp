@@ -345,7 +345,7 @@ struct QuatOSC : QuestionableModule {
 			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-			if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
+			if (((args.frame % (int)(args.sampleRate/sampleRateOverride) == 0)) && !reading) {
 				pointSamples[i].x.push(newX);
 				pointSamples[i].y.push(newY);
 				pointSamples[i].z.push(newZ);
