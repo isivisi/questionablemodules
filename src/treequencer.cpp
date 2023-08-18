@@ -17,7 +17,8 @@
 const int MAX_OUTPUTS = 8;
 const int MODULE_SIZE = 22;
 
-const int DEFAULT_NODE_DEPTH = 3;
+// make sure module thread and widget threads cooperate :)
+//std::recursive_mutex treeMutex;
 
 inline bool isInteger(const std::string& s)
 {
@@ -80,7 +81,7 @@ struct Scale {
 	}
 
 	std::vector<int> generateRandom(int size) {
-		std::vector<int> sequence = sequence;
+		std::vector<int> sequence;
 
 		for (int i = 0; i < size; i++) {
 			sequence.push_back(getNextInSequence(sequence, size));
@@ -102,7 +103,7 @@ struct Scale {
 			maxVal = cumulativeProbs[i] > maxVal ? cumulativeProbs[i] : maxVal;
 		}
 
-		float rand = randomReal<float>(maxVal);
+		float rand = randFloat(maxVal);
 
 		int note = 0;
 		for(size_t i = 0; i < cumulativeProbs.size(); i++) {
@@ -438,6 +439,10 @@ struct Treequencer : QuestionableModule {
 		rootNode.enabled = true;
 		activeNode = &rootNode;
 		
+	}
+
+	float fclamp(float min, float max, float value) {
+		return std::min(min, std::max(max, value));
 	}
 
 	void resetActiveNode() {
@@ -1026,7 +1031,7 @@ struct NodeDisplay : Widget {
 
 };
 
-struct TreequencerWidget : QuestionableModuleWidget {
+struct TreequencerWidget : QuestionableWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
 
@@ -1088,13 +1093,9 @@ struct TreequencerWidget : QuestionableModuleWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		if (module) setText();
+		setText();
 
-		if (module && module->theme.size()) {
-			color->drawBackground = true;
-			color->setTheme(BG_THEMES[module->theme]);
-		}
-		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
+		backgroundColorLogic(module);
 		
 		setPanel(backdrop);
 		addChild(color);
@@ -1166,7 +1167,7 @@ struct TreequencerWidget : QuestionableModuleWidget {
 			}));
 		}));
 
-		QuestionableModuleWidget::appendContextMenu(menu);
+		QuestionableWidget::appendContextMenu(menu);
 	}
 };
 

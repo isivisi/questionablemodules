@@ -81,6 +81,25 @@ struct Nandomizer : QuestionableModule {
 		
 	}
 
+	float rmsValue(float arr[], int n) {
+		int square = 0;
+		float mean = 0.0, root = 0.0;
+
+		for (int i = 0; i < n; i++) {
+			square += pow(arr[i], 2);
+		}
+
+		mean = (square / (float)(n));
+
+		root = sqrt(mean);
+
+		return root;
+	}
+
+	float fclamp(float min, float max, float value) {
+		return std::min(min, std::max(max, value));
+	}
+
 	void process(const ProcessArgs& args) override {
 
 		std::vector<int> usableInputs;
@@ -121,7 +140,7 @@ struct Nandomizer : QuestionableModule {
 
 };
 
-struct NandomizerWidget : QuestionableModuleWidget {
+struct NandomizerWidget : QuestionableWidget {
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
@@ -146,13 +165,9 @@ struct NandomizerWidget : QuestionableModuleWidget {
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
-		if (module) setText();
+		setText();
 
-		if (module && module->theme.size()) {
-			color->drawBackground = true;
-			color->setTheme(BG_THEMES[module->theme]);
-		}
-		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
+		backgroundColorLogic(module);
 		
 		setPanel(backdrop);
 		addChild(color);

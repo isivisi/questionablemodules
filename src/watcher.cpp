@@ -87,7 +87,7 @@ inline gmtl::Vec2f VecToVec2f(const Vec data){
 	return gmtl::Vec2f(data.x, data.y);
 }
 
-struct Tentacle : QuestionableWidget {
+struct Tentacle : QuestionableTimedWidget {
 	float wiggle = 20;
 	float stretch = 0.f;
 
@@ -101,7 +101,7 @@ struct Tentacle : QuestionableWidget {
 
 	void draw(const DrawArgs &args) override {
 		//if (module == NULL) return;
-		QuestionableWidget::draw(args);
+		QuestionableTimedWidget::draw(args);
 
 		nvgSave(args.vg);
 
@@ -126,7 +126,7 @@ struct Tentacle : QuestionableWidget {
 	}
 };
 
-struct WatchersEye : QuestionableWidget {
+struct WatchersEye : QuestionableTimedWidget {
 
 	float eyeLength = 35;
 	float eyeLidPos = 15.0;
@@ -154,7 +154,7 @@ struct WatchersEye : QuestionableWidget {
 
 	void draw(const DrawArgs &args) override {
 		//if (module == NULL) return;
-		QuestionableWidget::draw(args);
+		QuestionableTimedWidget::draw(args);
 
 		if ((frame % (int)60*30) == 0 && randomReal<float>() > 0.5) findNewTarget();
 
@@ -236,7 +236,7 @@ struct WatchersEye : QuestionableWidget {
 	}
 };
 
-struct WatcherWidget : QuestionableModuleWidget {
+struct WatcherWidget : QuestionableWidget {
 	WatchersEye* eye;
 	std::vector<Tentacle*> ts;
 

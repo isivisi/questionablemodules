@@ -6,8 +6,6 @@
 #include <cctype>
 #include <iomanip>
 #include <sstream>
-#include <random>
-#include <chrono>
 
 struct QuestionableModule : Module {
 	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
@@ -26,20 +24,37 @@ struct QuestionableModule : Module {
     }
 };
 
-struct QuestionableModuleWidget : ModuleWidget {
+struct QuestionableWidget : ModuleWidget {
     ImagePanel *backdrop;
     ColorBG* color;
+	bool lastPreferDark = false;
 
-    QuestionableModuleWidget() {
-		
+    QuestionableWidget() {
+
     }
 
-	void setWidgetTheme(std::string theme) {
+	void step() override {
+		if (settings::preferDarkPanels != lastPreferDark) {
+			lastPreferDark = settings::preferDarkPanels;
+			if (settings::preferDarkPanels && !module) setWidgetTheme("Dark");
+		}
+		ModuleWidget::step();
+	}
+
+	void backgroundColorLogic(QuestionableModule* module) {
+		if (module && module->theme.size()) {
+			color->drawBackground = true;
+			color->setTheme(BG_THEMES[module->theme]);
+		}
+		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
+	}
+
+	void setWidgetTheme(std::string theme, bool setGlobal=true) {
 		QuestionableModule* mod = (QuestionableModule*)module;
 		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
-		userSettings.setSetting<std::string>("theme", theme);
+		if (setGlobal) userSettings.setSetting<std::string>("theme", theme);
 	}
 
 	void draw(const DrawArgs& args) override {
@@ -95,7 +110,7 @@ struct QuestionableModuleWidget : ModuleWidget {
 	}
 };
 
-struct QuestionableWidget : Widget {
+struct QuestionableTimedWidget : Widget {
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 
 	double fps = 60;
@@ -103,7 +118,7 @@ struct QuestionableWidget : Widget {
 	double time;
 	int64_t frame = 0;
 
-	QuestionableWidget() {
+	QuestionableTimedWidget() {
 		startTime = std::chrono::high_resolution_clock::now();
 	}
 
@@ -156,6 +171,43 @@ struct QuestionablePort : T {
 	}
 };
 
+struct QuestionableLightSwitch : QuestionableParam<SvgSwitch> {
+	bool allowDraw = false;
+
+	QuestionableLightSwitch() {
+		QuestionableParam();
+		fb->removeChild(shadow); // we don't need this
+	}
+
+	// force draw on light layer
+	void drawLayer(const DrawArgs &args, int layer) override {
+		if (layer == 1) {
+			allowDraw = true;
+			draw(args);
+			allowDraw = false;
+		}
+	}
+
+	void draw(const DrawArgs &args) override {
+		if (allowDraw) SvgSwitch::draw(args);
+	}
+
+};
+
+// Quick inline draw helper
+struct QuestionableDrawWidget : Widget {
+	std::function<void(const DrawArgs&)> func;
+
+	QuestionableDrawWidget(math::Vec pos, std::function<void(const DrawArgs&)> drawFunc) {
+		box.pos = pos;
+		func = drawFunc;
+	}
+
+	void draw(const DrawArgs &args) override {
+		func(args);
+	}
+};
+
 //helpers
 
 template <typename T>
@@ -188,4 +240,9 @@ T randomInt(T min, T max) {
 template <typename T>
 T dtor(T deg) {
 	return deg  * (M_PI / 180);
+}
+
+template <typename T>
+T normalizeRange(T min, T max, T value) {
+	return (max-min)/(max-min)*(value-max)+max;
 }
