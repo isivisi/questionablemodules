@@ -1,10 +1,10 @@
 name: Build VCV Rack Plugin
 on:
   pull_request:
-    types: [ready_for_review, synchronize]
+    types: [ready_for_review]
 
 env:
-  rack-sdk-version: 2.2.3
+  rack-sdk-version: 2.4.0
   rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
 
 defaults:
@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [win, linux]
+        platform: [win, lin]
     steps:
       - uses: actions/checkout@v3
         with:
