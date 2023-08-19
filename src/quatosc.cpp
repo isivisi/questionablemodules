@@ -516,7 +516,6 @@ struct QuatDisplay : Widget {
 		}
 
 		nvgRestore(args.vg);
-	
 	}
 
 };

@@ -6,6 +6,8 @@ on:
       - 'releases/**'
     tags:
       - 'v**'
+    paths:
+      - 'src/**'
 
 env:
   rack-sdk-version: 2.4.0
