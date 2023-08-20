@@ -273,7 +273,7 @@ struct QuatOSC : QuestionableModule {
 		return stereo;
 	}
 
-	inline float getVisualSampleRate() {
+	inline int getVisualSampleRate() {
 		return sampleRateOverride == 0 ? SAMPLES_PER_SECOND : sampleRateOverride;
 	}
 

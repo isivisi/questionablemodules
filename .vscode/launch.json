@@ -8,9 +8,22 @@
             "request": "launch",
             "name": "Build Program",
             "preLaunchTask": "BuildWinApp",
-            "program": "C://Program Files//VCV//Rack2Pro//Rack.exe",
-            "cwd": "C://Program Files//VCV//Rack2Pro//",
-            "type":"cppvsdbg"
+            "program": "${env:RACK_LOCATION}Rack.exe",
+            "cwd": "${env:RACK_LOCATION}",
+            "type":"cppvsdbg",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            // dont forget to remove $(STRIP) -s dist/"$(SLUG)"/$(TARGET) from plugin.mk 
+            "request": "launch debug",
+            "name": "(debug) Build Program",
+            "preLaunchTask": "BuildWinApp",
+            "program": "${env:RACK_LOCATION}Rack.exe",
+            "cwd": "${env:RACK_LOCATION}",
+            "miDebuggerPath": "${env:MINGW_PREFIX}gdb.exe",
+            "MIMode": "gdb",
+            "type":"cppdbg",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

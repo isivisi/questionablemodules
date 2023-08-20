@@ -11,6 +11,7 @@ struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
 	float sampleRateOverride = 0;
 	bool runHalfRate = false;
+	int64_t frame = 0;
 	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
     std::string theme = userSettings.getSetting<std::string>("theme");
 
@@ -29,7 +30,7 @@ struct QuestionableModule : Module {
     }
 
 	void onSampleRateChange(const SampleRateChangeEvent& e) override {
-		if (supportsSampleRateOverride && runHalfRate) sampleRateOverride = e.sampleRate / 2; 
+		if (supportsSampleRateOverride && runHalfRate) sampleRateOverride = e.sampleRate / 2;
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -42,7 +43,7 @@ struct QuestionableModule : Module {
 			ProcessArgs newArgs;
 			newArgs.sampleTime = 1 / sampleRateOverride;
 			newArgs.sampleRate = sampleRateOverride;
-			newArgs.frame = args.frame;
+			newArgs.frame = frame++;
 			processUndersampled(newArgs);
 		}
 	}
