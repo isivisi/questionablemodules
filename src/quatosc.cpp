@@ -349,7 +349,7 @@ struct QuatOSC : QuestionableModule {
 			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-			if (((args.frame % (int)(args.sampleRate/getVisualSampleRate()) == 0)) && !reading) {
+			if (((args.frame % (int)(args.sampleRate/std::fmin(SAMPLES_PER_SECOND, args.sampleRate)) == 0)) && !reading) {
 				pointSamples[i].x.push(newX);
 				pointSamples[i].y.push(newY);
 				pointSamples[i].z.push(newZ);
@@ -716,9 +716,9 @@ struct QuatOSCWidget : QuestionableWidget {
 		QuatOSC* mod = (QuatOSC*)module;
 		menu->addChild(new MenuSeparator);
 		menu->addChild(rack::createSubmenuItem("Projection Axis", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("X", "",[=]() { mod->projection = "X"; }));
-			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
-			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
+			menu->addChild(createMenuItem("X", mod->projection == "X" ? "•" : "",[=]() { mod->projection = "X"; }));
+			menu->addChild(createMenuItem("Y", mod->projection == "Y" ? "•" : "", [=]() { mod->projection = "Y"; }));
+			menu->addChild(createMenuItem("Z", mod->projection == "Z" ? "•" : "", [=]() { mod->projection = "Z"; }));
 		}));
 		menu->addChild(createMenuItem(mod->normalizeSpreadVolume ? "Disable Spread Volume Normalization" : "Enable Spread Volume Normalization", "",[=]() { mod->normalizeSpreadVolume = !mod->normalizeSpreadVolume; }));
 
