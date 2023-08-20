@@ -192,6 +192,8 @@ struct QuatOSC : QuestionableModule {
 		configOutput(OUT2, "");
 		configInput(TRIGGER, "Gate");
 
+		supportsSampleRateOverride = true;
+
 		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
 		yPointOnSphere = gmtl::Vec3f(0.f, VECLENGTH, 0.f);
 		zPointOnSphere = gmtl::Vec3f(0.f, 0.f, VECLENGTH);
@@ -271,7 +273,11 @@ struct QuatOSC : QuestionableModule {
 		return stereo;
 	}
 
-	void process(const ProcessArgs& args) override {
+	inline int getVisualSampleRate() {
+		return sampleRateOverride == 0 ? SAMPLES_PER_SECOND : sampleRateOverride;
+	}
+
+	void processUndersampled(const ProcessArgs& args) override {
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
 			oct1Connected = inputs[VOCT].isConnected();
@@ -343,7 +349,7 @@ struct QuatOSC : QuestionableModule {
 			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-			if ((args.sampleRate >= SAMPLES_PER_SECOND && (args.frame % (int)(args.sampleRate/SAMPLES_PER_SECOND) == 0)) && !reading) {
+			if (((args.frame % (int)(args.sampleRate/std::fmin(SAMPLES_PER_SECOND, args.sampleRate)) == 0)) && !reading) {
 				pointSamples[i].x.push(newX);
 				pointSamples[i].y.push(newY);
 				pointSamples[i].z.push(newZ);
@@ -710,9 +716,9 @@ struct QuatOSCWidget : QuestionableWidget {
 		QuatOSC* mod = (QuatOSC*)module;
 		menu->addChild(new MenuSeparator);
 		menu->addChild(rack::createSubmenuItem("Projection Axis", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("X", "",[=]() { mod->projection = "X"; }));
-			menu->addChild(createMenuItem("Y", "", [=]() { mod->projection = "Y"; }));
-			menu->addChild(createMenuItem("Z", "", [=]() { mod->projection = "Z"; }));
+			menu->addChild(createMenuItem("X", mod->projection == "X" ? "•" : "",[=]() { mod->projection = "X"; }));
+			menu->addChild(createMenuItem("Y", mod->projection == "Y" ? "•" : "", [=]() { mod->projection = "Y"; }));
+			menu->addChild(createMenuItem("Z", mod->projection == "Z" ? "•" : "", [=]() { mod->projection = "Z"; }));
 		}));
 		menu->addChild(createMenuItem(mod->normalizeSpreadVolume ? "Disable Spread Volume Normalization" : "Enable Spread Volume Normalization", "",[=]() { mod->normalizeSpreadVolume = !mod->normalizeSpreadVolume; }));
 
