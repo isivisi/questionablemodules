@@ -10,6 +10,7 @@
 struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
 	float sampleRateOverride = 0;
+	bool runHalfRate = false;
 	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
     std::string theme = userSettings.getSetting<std::string>("theme");
 
@@ -17,14 +18,19 @@ struct QuestionableModule : Module {
 		json_t* rootJ = json_object();
         json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
 		json_object_set_new(rootJ, "showDescriptors", json_boolean(showDescriptors));
+		json_object_set_new(rootJ, "runHalfRate", json_boolean(runHalfRate));
         return rootJ;
     }
 
     void dataFromJson(json_t* rootJ) override {
         if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 		if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
+		if (json_t* hr = json_object_get(rootJ, "runHalfRate")) runHalfRate = json_boolean_value(hr);
     }
 
+	void onSampleRateChange(const SampleRateChangeEvent& e) override {
+		if (supportsSampleRateOverride && runHalfRate) sampleRateOverride = e.sampleRate / 2; 
+	}
 
 	void process(const ProcessArgs& args) override {
 		if (sampleRateOverride == 0) {
@@ -91,19 +97,24 @@ struct QuestionableWidget : ModuleWidget {
 		QuestionableModule* mod = (QuestionableModule*)module;
 
 		if (mod->supportsSampleRateOverride) menu->addChild(rack::createSubmenuItem("Sample Rate", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Full", "",[=]() { mod->sampleRateOverride = APP->engine->getSampleRate(); }));
-			menu->addChild(createMenuItem("Half", "", [=]() { mod->sampleRateOverride = APP->engine->getSampleRate() / 2; }));
-			menu->addChild(createMenuItem("Quarter", "", [=]() { mod->sampleRateOverride = APP->engine->getSampleRate() / 4; }));
+			menu->addChild(createMenuItem("Full", mod->runHalfRate ? "" : "•",[=]() { 
+				mod->sampleRateOverride = 0; 
+				mod->runHalfRate = false; 
+			}));
+			menu->addChild(createMenuItem("Half", mod->runHalfRate ? "•" : "", [=]() { 
+				mod->sampleRateOverride = APP->engine->getSampleRate() / 2; 
+				mod->runHalfRate = true; 
+			}));
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Default", "",[=]() {
+			menu->addChild(createMenuItem("Default", mod->theme == "" ? "•" : "",[=]() {
 				setWidgetTheme("");
 			}));
-			menu->addChild(createMenuItem("Boring", "", [=]() {
+			menu->addChild(createMenuItem("Boring", mod->theme == "Light" ? "•" : "", [=]() {
 				setWidgetTheme("Light");
 			}));
-			menu->addChild(createMenuItem("Boring but Dark", "", [=]() {
+			menu->addChild(createMenuItem("Boring but Dark", mod->theme == "Dark" ? "•" : "", [=]() {
 				setWidgetTheme("Dark");
 			}));
 		}));

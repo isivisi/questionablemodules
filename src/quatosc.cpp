@@ -273,6 +273,10 @@ struct QuatOSC : QuestionableModule {
 		return stereo;
 	}
 
+	inline float getVisualSampleRate() {
+		return sampleRateOverride == 0 ? SAMPLES_PER_SECOND : sampleRateOverride;
+	}
+
 	void processUndersampled(const ProcessArgs& args) override {
 
 		if (oct1Connected != inputs[VOCT].isConnected()) {
@@ -345,7 +349,7 @@ struct QuatOSC : QuestionableModule {
 			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-			if (((args.frame % (int)(args.sampleRate/sampleRateOverride) == 0)) && !reading) {
+			if (((args.frame % (int)(args.sampleRate/getVisualSampleRate()) == 0)) && !reading) {
 				pointSamples[i].x.push(newX);
 				pointSamples[i].y.push(newY);
 				pointSamples[i].z.push(newZ);
