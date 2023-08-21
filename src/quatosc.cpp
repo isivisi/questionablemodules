@@ -391,7 +391,11 @@ struct QuatOSC : QuestionableModule {
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
 		if (json_t* nsv = json_object_get(rootJ, "normalizeSpreadVolume")) normalizeSpreadVolume = nsv;
 		if (json_t* qtArray = json_object_get(rootJ, "quantizedVOCT")) {
-			for (size_t i = 0; i < quantizedVOCT.size(); i++) { quantizedVOCT[i] = json_boolean_value(json_array_get(qtArray, i)); }
+			for (size_t i = 0; i < quantizedVOCT.size(); i++) { 
+				quantizedVOCT[i] = json_boolean_value(json_array_get(qtArray, i)); 
+				this->getParamQuantity(VOCT1_OCT+i)->snapEnabled = quantizedVOCT[i];
+				this->getParamQuantity(VOCT1_OCT+i)->smoothEnabled = !quantizedVOCT[i];
+			}
 		}
 
 	}
@@ -556,6 +560,9 @@ struct SLURPOCTParamWidget : QuestionableParam<T> {
 		QuatOSC* quatMod = (QuatOSC*)this->module;
 		menu->addChild(createMenuItem(quatMod->quantizedVOCT[this->paramId] ? "Disable Quantization" : "Enable Quantization", "", [=]() {
 			quatMod->quantizedVOCT[this->paramId] = !quatMod->quantizedVOCT[this->paramId];
+
+			this->getParamQuantity()->snapEnabled = quatMod->quantizedVOCT[this->paramId];
+			this->getParamQuantity()->smoothEnabled = !quatMod->quantizedVOCT[this->paramId];
 		}));
 		QuestionableParam<T>::appendContextMenu(menu);
 	}
