@@ -420,7 +420,7 @@ struct Treequencer : QuestionableModule {
 		configInput(TTYPE_GATE, "Trigger Type Gate");
 		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 0.f, "Trigger Type", {"Step", "Sequence"});
 		configSwitch(BOUNCE, 0.f, 1.f, 0.f, "Bounce", {"Off", "On"});
-		configSwitch(CHANCE_MOD, -1.f, 1.f, 0.0f, "Chance Mod");
+		configParam(CHANCE_MOD, -1.f, 1.f, 0.0f, "Chance Mod");
 		configSwitch(HOLD, 0.f, 1.f, 0.f, "Hold", {"Off", "On"});
 		configOutput(SEQ_OUT_1, "Sequence 1");
 		configOutput(SEQ_OUT_2, "Sequence 2");
