@@ -1,5 +1,5 @@
 // Settings
-var DocVersion = "v2.1.8";
+var DocVersion = "v2.1.8 - v2.1.9";
 var previousVersions = [
     {
         verison: "v2.1.7",
