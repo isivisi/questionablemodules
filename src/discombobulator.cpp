@@ -184,6 +184,22 @@ struct DiscombobulatorWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
+		addChild(new QuestionableDrawWidget(Vec(25, 220), [&](const DrawArgs &args) {
+			if (!module) return;
+			std::string theme = module->theme;
+			for (size_t i = 0; i < MAX_INPUTS; i++) {
+					int output = module->outputSwaps[i];
+					bool connected = module->inputs[i].isConnected();
+					nvgBeginPath(args.vg);
+					nvgMoveTo(args.vg, 55, 26);
+					nvgLineTo(args.vg, 55, 55);
+					nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, connected ? 200 : 25) : nvgRGBA(30, 30, 30, connected ? 200 : 25));
+					nvgStrokeWidth(args.vg, 2.5);
+					nvgStroke(args.vg);
+					nvgClosePath(args.vg);
+			}
+		}));
+
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
 
 		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
