@@ -127,6 +127,9 @@ struct PolyphonicValue {
 
 };
 
+template <typename T>
+static T lerp(T point1, T point2, T t);
+
 struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
 	bool supportsThemes = true;
@@ -185,9 +188,9 @@ struct QuestionableModule : Module {
 				outputCache[i] = curVal;
 			}
 		} else {
-			float ticksBetweenProcess = newArgs.sampleRate * newArgs.sampleTime;
+			int ticksBetweenProcess = (int)(args.sampleRate/sampleRateOverride);
 			for (size_t i = 0; i < interpolatedOutputs.size(); i++) {
-				outputs[interpolatedOutputs[i]].setVoltage(lerp<float>(outputs[interpolatedOutputs[i]].getVoltage(), outputCache[i], ));
+				outputs[interpolatedOutputs[i]].setVoltage(lerp<float>(outputs[interpolatedOutputs[i]].getVoltage(), outputCache[i], (args.frame % ticksBetweenProcess) / ticksBetweenProcess));
 			}
 		}
 
