@@ -136,7 +136,7 @@ struct QuestionableModule : Module {
 	bool toggleableDescriptors = true;
 
 	float sampleRateOverride = 0;
-	bool runHalfRate = false;
+	int rateDivision = 0;
 	int64_t frame = 0;
 
 	std::vector<int> interpolatedOutputs;
@@ -154,18 +154,18 @@ struct QuestionableModule : Module {
 		json_t* rootJ = json_object();
 		if (supportsThemes) json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
 		if (toggleableDescriptors) json_object_set_new(rootJ, "showDescriptors", json_boolean(showDescriptors));
-		if (supportsSampleRateOverride) json_object_set_new(rootJ, "runHalfRate", json_boolean(runHalfRate));
-		return rootJ;
-	}
+		if (supportsSampleRateOverride) json_object_set_new(rootJ, "rateDivision", json_integer(rateDivision));
+        return rootJ;
+    }
 
 	void dataFromJson(json_t* rootJ) override {
 		if (supportsThemes) if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 		if (toggleableDescriptors) if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
-		if (supportsSampleRateOverride) if (json_t* hr = json_object_get(rootJ, "runHalfRate")) runHalfRate = json_boolean_value(hr);
-	}
+		if (supportsSampleRateOverride) if (json_t* hr = json_object_get(rootJ, "rateDivision")) rateDivision = json_integer_value(hr);
+    }
 
 	void onSampleRateChange(const SampleRateChangeEvent& e) override {
-		if (supportsSampleRateOverride && runHalfRate) sampleRateOverride = e.sampleRate / 2;
+		if (supportsSampleRateOverride && rateDivision) sampleRateOverride = e.sampleRate / rateDivision;
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -182,15 +182,14 @@ struct QuestionableModule : Module {
 			processUndersampled(newArgs);
 
 			for (size_t i = 0; i < interpolatedOutputs.size(); i++) {
-				engine::Output out = outputs[interpolatedOutputs[i]];
-				float curVal = out.getVoltage();
-				out.setVoltage(outputCache[i]);
+				float curVal = outputs[interpolatedOutputs[i]].getVoltage();
+				outputs[interpolatedOutputs[i]].setVoltage(outputCache[i]);
 				outputCache[i] = curVal;
 			}
 		} else {
-			int ticksBetweenProcess = (int)(args.sampleRate/sampleRateOverride);
+			float ticksBetweenProcess = (args.sampleRate/sampleRateOverride);
 			for (size_t i = 0; i < interpolatedOutputs.size(); i++) {
-				outputs[interpolatedOutputs[i]].setVoltage(lerp<float>(outputs[interpolatedOutputs[i]].getVoltage(), outputCache[i], (args.frame % ticksBetweenProcess) / ticksBetweenProcess));
+				outputs[interpolatedOutputs[i]].setVoltage(lerp<float>(outputs[interpolatedOutputs[i]].getVoltage(), outputCache[i], 1 / sampleRateOverride));
 			}
 		}
 
@@ -283,13 +282,17 @@ struct QuestionableWidget : QuestionableTimed<ModuleWidget> {
 		QuestionableModule* mod = (QuestionableModule*)module;
 
 		if (mod->supportsSampleRateOverride) menu->addChild(rack::createSubmenuItem("Sample Rate", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Full", mod->runHalfRate ? "" : "•",[=]() { 
+			menu->addChild(createMenuItem("Full", mod->rateDivision ? "" : "•",[=]() { 
 				mod->sampleRateOverride = 0; 
-				mod->runHalfRate = false; 
+				mod->rateDivision = 0; 
 			}));
-			menu->addChild(createMenuItem("Half", mod->runHalfRate ? "•" : "", [=]() { 
+			menu->addChild(createMenuItem("Half", mod->rateDivision == 2 ? "•" : "", [=]() { 
 				mod->sampleRateOverride = APP->engine->getSampleRate() / 2; 
-				mod->runHalfRate = true; 
+				mod->rateDivision = 2; 
+			}));
+			menu->addChild(createMenuItem("Quarter", mod->rateDivision == 4 ? "•" : "", [=]() { 
+				mod->sampleRateOverride = APP->engine->getSampleRate() / 4; 
+				mod->rateDivision = 4; 
 			}));
 		}));
 
