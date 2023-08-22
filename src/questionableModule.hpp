@@ -135,8 +135,17 @@ struct QuestionableModule : Module {
 	float sampleRateOverride = 0;
 	bool runHalfRate = false;
 	int64_t frame = 0;
+
+	std::vector<int> interpolatedOutputs;
+	float* outputCache = nullptr;
+	
 	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
-	std::string theme = userSettings.getSetting<std::string>("theme");
+    std::string theme = userSettings.getSetting<std::string>("theme");
+
+	void initInterpolatedOuput(std::vector<int> outputs) {
+		interpolatedOutputs = outputs;
+		outputCache = new float[outputs.size()];
+	}
 
 	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
@@ -162,13 +171,26 @@ struct QuestionableModule : Module {
 			return;
 		}
 		// only undersample logic for now
+		ProcessArgs newArgs;
+		newArgs.sampleTime = 1 / sampleRateOverride;
+		newArgs.sampleRate = sampleRateOverride;
 		if (args.sampleRate == sampleRateOverride || args.frame % (int)(args.sampleRate/sampleRateOverride) == 0) {
-			ProcessArgs newArgs;
-			newArgs.sampleTime = 1 / sampleRateOverride;
-			newArgs.sampleRate = sampleRateOverride;
 			newArgs.frame = frame++;
 			processUndersampled(newArgs);
+
+			for (size_t i = 0; i < interpolatedOutputs.size(); i++) {
+				engine::Output out = outputs[interpolatedOutputs[i]];
+				float curVal = out.getVoltage();
+				out.setVoltage(outputCache[i]);
+				outputCache[i] = curVal;
+			}
+		} else {
+			float ticksBetweenProcess = newArgs.sampleRate * newArgs.sampleTime;
+			for (size_t i = 0; i < interpolatedOutputs.size(); i++) {
+				outputs[interpolatedOutputs[i]].setVoltage(lerp<float>(outputs[interpolatedOutputs[i]].getVoltage(), outputCache[i], ));
+			}
 		}
+
 	}
 
 	// if the module needs to undersample it will use this instead and rely on parent to send process calls
