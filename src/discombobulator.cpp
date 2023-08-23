@@ -156,8 +156,8 @@ struct DiscombobulatorWidget : QuestionableWidget {
 		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(30, 257), "descriptor");
 		color->addText("OUTS", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 257), "descriptor");
 
-		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(30, 353), "descriptor");
-		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 353), "descriptor");
+		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(30, 353), "descriptor");
+		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 353), "descriptor");
 	}
 
 	DiscombobulatorWidget(Discombobulator* module) {
@@ -184,15 +184,15 @@ struct DiscombobulatorWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addChild(new QuestionableDrawWidget(Vec(25, 220), [&](const DrawArgs &args) {
+		addChild(new QuestionableDrawWidget(Vec(0, 30.5), [module](const DrawArgs &args) {
 			if (!module) return;
 			std::string theme = module->theme;
 			for (size_t i = 0; i < MAX_INPUTS; i++) {
 					int output = module->outputSwaps[i];
 					bool connected = module->inputs[i].isConnected();
 					nvgBeginPath(args.vg);
-					nvgMoveTo(args.vg, 55, 26);
-					nvgLineTo(args.vg, 55, 55);
+					nvgMoveTo(args.vg, 30, 29.5 * i);
+					nvgLineTo(args.vg, 100, 29.5 * output);
 					nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, connected ? 200 : 25) : nvgRGBA(30, 30, 30, connected ? 200 : 25));
 					nvgStrokeWidth(args.vg, 2.5);
 					nvgStroke(args.vg);
