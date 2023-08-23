@@ -185,14 +185,13 @@ struct DiscombobulatorWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addChild(new QuestionableDrawWidget(Vec(0, 30.5), [module](const DrawArgs &args) {
-			if (!module) return;
 			std::string theme = module->theme;
 			for (size_t i = 0; i < MAX_INPUTS; i++) {
-					int output = module->outputSwaps[i];
+					int output = module ? module->outputSwaps[i] : i;
 					bool connected = module->inputs[i].isConnected();
 					nvgBeginPath(args.vg);
 					nvgMoveTo(args.vg, 30, 29.5 * i);
-					nvgLineTo(args.vg, 100, 29.5 * output);
+					nvgLineTo(args.vg, 104, 29.5 * output);
 					nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGBA(250, 250, 250, connected ? 200 : 25) : nvgRGBA(30, 30, 30, connected ? 200 : 25));
 					nvgStrokeWidth(args.vg, 2.5);
 					nvgStroke(args.vg);
