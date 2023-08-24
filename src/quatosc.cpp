@@ -561,14 +561,14 @@ struct SLURPSpreadSwitch : QuestionableLightSwitch, QuestionableThemed {
 		initializeFrames(module ? ((QuatOSC*)module)->theme : "");
 	}
 
-	void onThemeChange(std::string theme) override {
-		initializeFrames(theme);
+	void onThemeChange(std::string t) override {
+		initializeFrames(t);
 		onChange(ChangeEvent());
 	}
 
-	void initializeFrames(std::string theme) {
+	void initializeFrames(std::string t) {
 		frames.clear();
-		bool useLight = theme == "Dark" || theme == "";
+		bool useLight = t == "Dark" || t == "";
 		addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSpreadOff-white.svg" : "res/slurpSpreadOff.svg")));
 		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSpreadOn1-white.svg" : "res/slurpSpreadOn1.svg")));
 		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSpreadOn2-white.svg" : "res/slurpSpreadOn2.svg")));
@@ -655,8 +655,6 @@ struct QuatOSCWidget : QuestionableWidget {
 		color->drawBackground = false;
 		setText();
 
-		backgroundColorLogic(module);
-
 		setPanel(backdrop);
 		addChild(color);
 		addChild(display);
@@ -740,6 +738,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start, 115)), module, QuatOSC::CLOCK_INPUT));
 
+		backgroundColorLogic(module);
 	}
 
 	void appendContextMenu(Menu *menu) override

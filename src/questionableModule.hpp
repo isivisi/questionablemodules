@@ -76,8 +76,7 @@ struct QuestionableWidget : ModuleWidget {
 
 	void backgroundColorLogic(QuestionableModule* module) {
 		if (module && module->theme.size()) {
-			color->drawBackground = true;
-			color->setTheme(BG_THEMES[module->theme]);
+			setWidgetTheme(module->theme, false);
 		}
 		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 	}
@@ -88,7 +87,10 @@ struct QuestionableWidget : ModuleWidget {
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
 		if (setGlobal) userSettings.setSetting<std::string>("theme", theme);
+		propigateThemeToChildren(theme);
+	}
 
+	void propigateThemeToChildren(std::string theme) {
 		for (auto it = children.begin(); it != children.end(); it++) {
 			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) themedWidget->onThemeChange(theme);
 		}
