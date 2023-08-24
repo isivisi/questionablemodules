@@ -531,13 +531,24 @@ struct QuatDisplay : Widget {
 };
 
 // our three way switch for mono, stereo, and stereo - middle
-struct SLURPStereoSwitch : QuestionableLightSwitch {
+struct SLURPStereoSwitch : QuestionableLightSwitch, QuestionableThemed {
 	SLURPStereoSwitch() {
 		QuestionableLightSwitch();
 		momentary = false;
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpMono.svg")));
+		initializeFrames(module ? ((QuatOSC*)module)->theme : "");
+	}
+
+	void onThemeChange(std::string theme) override {
+		initializeFrames(theme);
+		onChange(ChangeEvent());
+	}
+
+	void initializeFrames(std::string theme) {
+		frames.clear();
+		bool useLight = theme == "Dark" || theme == "";
+		addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpMono-white.svg" : "res/slurpMono.svg")));
 		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpFullStereo.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSides.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSides-white.svg" : "res/slurpSides.svg")));
 	}
 };
 
@@ -552,6 +563,7 @@ struct SLURPSpreadSwitch : QuestionableLightSwitch, QuestionableThemed {
 
 	void onThemeChange(std::string theme) override {
 		initializeFrames(theme);
+		onChange(ChangeEvent());
 	}
 
 	void initializeFrames(std::string theme) {
