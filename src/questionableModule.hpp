@@ -53,6 +53,10 @@ struct QuestionableModule : Module {
 
 };
 
+struct QuestionableThemed {
+	virtual void onThemeChange(std::string theme) = 0;
+};
+
 struct QuestionableWidget : ModuleWidget {
     ImagePanel *backdrop;
     ColorBG* color;
@@ -84,6 +88,10 @@ struct QuestionableWidget : ModuleWidget {
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
 		if (setGlobal) userSettings.setSetting<std::string>("theme", theme);
+
+		for (auto it = children.begin(); it != children.end(); it++) {
+			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) themedWidget->onThemeChange(theme);
+		}
 	}
 
 	void draw(const DrawArgs& args) override {

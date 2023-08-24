@@ -541,13 +541,25 @@ struct SLURPStereoSwitch : QuestionableLightSwitch {
 	}
 };
 
-struct SLURPSpreadSwitch  : QuestionableLightSwitch {
+struct SLURPSpreadSwitch : QuestionableLightSwitch, QuestionableThemed {
+
 	SLURPSpreadSwitch() {
 		QuestionableLightSwitch();
 		momentary = false;
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOff.svg")));
-		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn1.svg")));
-		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn2.svg")));
+
+		initializeFrames(module ? ((QuatOSC*)module)->theme : "");
+	}
+
+	void onThemeChange(std::string theme) override {
+		initializeFrames(theme);
+	}
+
+	void initializeFrames(std::string theme) {
+		frames.clear();
+		bool useLight = theme == "Dark" || theme == "";
+		addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSpreadOff-white.svg" : "res/slurpSpreadOff.svg")));
+		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSpreadOn1-white.svg" : "res/slurpSpreadOn1.svg")));
+		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, useLight ? "res/slurpSpreadOn2-white.svg" : "res/slurpSpreadOn2.svg")));
 		for (size_t i = 0; i < 5; i++) addFrame(Svg::load(asset::plugin(pluginInstance, "res/slurpSpreadOn.svg")));
 	}
 };
