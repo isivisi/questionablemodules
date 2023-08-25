@@ -5,94 +5,94 @@
 #include <unordered_map>
 
 struct ColorBGTheme {
-    std::string name;
-    NVGcolor color;
-    NVGcolor stroke;
-    NVGcolor fontColor;
+	std::string name;
+	NVGcolor color;
+	NVGcolor stroke;
+	NVGcolor fontColor;
 };
 
 static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
-    {"", ColorBGTheme{"", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}}, // just for light text
-    {"Light", ColorBGTheme{"Light", nvgRGB(225, 225, 225), nvgRGB(195, 195, 195), nvgRGB(15,15,15)}},
-    {"Dark", ColorBGTheme{"Dark", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
+	{"", ColorBGTheme{"", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}}, // just for light text
+	{"Light", ColorBGTheme{"Light", nvgRGB(225, 225, 225), nvgRGB(195, 195, 195), nvgRGB(15,15,15)}},
+	{"Dark", ColorBGTheme{"Dark", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
 };
 
 struct ColorBG : Widget {
 	NVGcolor color = nvgRGB(225, 225, 225);
-    NVGcolor stroke = nvgRGB(215, 215, 215);
-    Vec size;
+	NVGcolor stroke = nvgRGB(215, 215, 215);
+	Vec size;
 
-    bool drawBackground = true;
-    bool drawText = true;
+	bool drawBackground = true;
+	bool drawText = true;
 
-    std::string currTheme = "";
+	std::string currTheme = "";
 
-    struct drawableText {
-        std::string text;
-        std::string font;
-        std::string group = "default";
-        bool enabled = true;
-        NVGcolor color;
-        float size;
-        Vec pos;
-    };
-    std::vector<drawableText> textList;
+	struct drawableText {
+		std::string text;
+		std::string font;
+		std::string group = "default";
+		bool enabled = true;
+		NVGcolor color;
+		float size;
+		Vec pos;
+	};
+	std::vector<drawableText> textList;
 
-    std::function<void(const DrawArgs&, std::string)> onDraw;
+	std::function<void(const DrawArgs&, std::string)> onDraw;
 
-    ColorBG(Vec s) {
-        size = s;
-    }
+	ColorBG(Vec s) {
+		size = s;
+	}
 
-    void setTheme(ColorBGTheme theme) {
-        currTheme = theme.name;
-        color = theme.color;
-        stroke = theme.stroke;
+	void setTheme(ColorBGTheme theme) {
+		currTheme = theme.name;
+		color = theme.color;
+		stroke = theme.stroke;
 
-        for (size_t i = 0; i < textList.size(); i++) {
-            textList[i].color = theme.fontColor;
-        }
-    }
+		for (size_t i = 0; i < textList.size(); i++) {
+			textList[i].color = theme.fontColor;
+		}
+	}
 
-    void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default") {
-        textList.push_back(drawableText{text,font,group,true,color,size,pos});
-    }
+	void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default") {
+		textList.push_back(drawableText{text,font,group,true,color,size,pos});
+	}
 
-    void setTextGroupVisibility(std::string group, bool visibility) {
-        for (size_t i = 0; i < textList.size(); i++) {
-            if (textList[i].group == group) textList[i].enabled = visibility;
-        }
-    }
+	void setTextGroupVisibility(std::string group, bool visibility) {
+		for (size_t i = 0; i < textList.size(); i++) {
+			if (textList[i].group == group) textList[i].enabled = visibility;
+		}
+	}
 
 	void draw(const DrawArgs &args) override {
 
-        if (drawBackground) {
-            nvgFillColor(args.vg, color);
-            nvgBeginPath(args.vg);
-            nvgRect(args.vg, 0,0, size.x, size.y);
-            nvgStrokeColor(args.vg, stroke);
-            nvgStrokeWidth(args.vg, 2.0);
-            nvgFill(args.vg);
-            nvgStroke(args.vg);
-        }
+		if (drawBackground) {
+			nvgFillColor(args.vg, color);
+			nvgBeginPath(args.vg);
+			nvgRect(args.vg, 0,0, size.x, size.y);
+			nvgStrokeColor(args.vg, stroke);
+			nvgStrokeWidth(args.vg, 2.0);
+			nvgFill(args.vg);
+			nvgStroke(args.vg);
+		}
 
-        if (onDraw) onDraw(args, currTheme);
+		if (onDraw) onDraw(args, currTheme);
 
-        if (drawText) {
-            
-            for (size_t i = 0; i < textList.size(); i++) {
-                drawableText textDef = textList[i];
-                if (textDef.enabled) {
-                    std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
-                    if (!font) return;
-                    nvgFontFaceId(args.vg, font->handle);
-                    nvgTextLetterSpacing(args.vg, 0.0);
-                    nvgFontSize(args.vg, textDef.size);
-                    nvgFillColor(args.vg, textDef.color);
-                    nvgTextAlign(args.vg, NVGalign::NVG_ALIGN_CENTER);
-                    nvgText(args.vg, textDef.pos.x, textDef.pos.y, textDef.text.c_str(), NULL);
-                }
-            }
-        }
+		if (drawText) {
+			
+			for (size_t i = 0; i < textList.size(); i++) {
+				drawableText textDef = textList[i];
+				if (textDef.enabled) {
+					std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
+					if (!font) return;
+					nvgFontFaceId(args.vg, font->handle);
+					nvgTextLetterSpacing(args.vg, 0.0);
+					nvgFontSize(args.vg, textDef.size);
+					nvgFillColor(args.vg, textDef.color);
+					nvgTextAlign(args.vg, NVGalign::NVG_ALIGN_CENTER);
+					nvgText(args.vg, textDef.pos.x, textDef.pos.y, textDef.text.c_str(), NULL);
+				}
+			}
+		}
 	}
 };

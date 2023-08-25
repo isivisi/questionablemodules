@@ -330,7 +330,7 @@ struct Node {
 };
 
 /*for (const auto& child : node->children) {
-    
+	
 }*/
 
 struct Treequencer : QuestionableModule {
@@ -748,17 +748,17 @@ struct NodeDisplay : Widget {
 		if (isInsideBox(mp, node->box)) return node;
 
 		for (size_t i = 0; i < node->children.size(); i++)
-    	{
+		{
 			Node* found = findNodeClicked(mp, node->children[i]);
 			if (found) return found;
-    	}
+		}
 
 		return nullptr;
 	}
 
 	void onButton(const event::Button &e) override {
-        if (e.action == GLFW_PRESS) {
-            e.consume(this);
+		if (e.action == GLFW_PRESS) {
+			e.consume(this);
 			Vec mousePos = e.pos / screenScale;
 
 			if (e.button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -773,13 +773,13 @@ struct NodeDisplay : Widget {
 	}
 
 	void onDragStart(const event::DragStart &e) override {
-        dragX = APP->scene->rack->getMousePos().x;
-        dragY = APP->scene->rack->getMousePos().y;
-    }
+		dragX = APP->scene->rack->getMousePos().x;
+		dragY = APP->scene->rack->getMousePos().y;
+	}
 
-    void onDragMove(const event::DragMove &e) override {
-        float newDragX = APP->scene->rack->getMousePos().x;
-        float newDragY = APP->scene->rack->getMousePos().y;
+	void onDragMove(const event::DragMove &e) override {
+		float newDragX = APP->scene->rack->getMousePos().x;
+		float newDragY = APP->scene->rack->getMousePos().y;
 
 		xOffset += (newDragX - dragX) / screenScale;
 		yOffset += (newDragY - dragY) / screenScale;
@@ -790,12 +790,12 @@ struct NodeDisplay : Widget {
 		dragX = newDragX;
 		dragY = newDragY;
 
-    }
+	}
 
 	void onHoverScroll(const HoverScrollEvent& e) override {
 		e.consume(this);
 		//float posX = APP->scene->rack->getMousePos().x;
-        //float posY = APP->scene->rack->getMousePos().y;
+		//float posY = APP->scene->rack->getMousePos().y;
 		//float oldScreenScale = screenScale;
 
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
@@ -863,9 +863,9 @@ struct NodeDisplay : Widget {
 
 		// node bg
 		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][abs(octOffset%5)]);
-        nvgBeginPath(vg);
-        nvgRect(vg, xVal, yVal, xSize, ySize);
-        nvgFill(vg);
+		nvgBeginPath(vg);
+		nvgRect(vg, xVal, yVal, xSize, ySize);
+		nvgFill(vg);
 
 		// update pos for buttonclicking
 		node->box.pos = Vec(xVal, yVal);
@@ -891,11 +891,11 @@ struct NodeDisplay : Widget {
 		nvgSave(vg);
 		float textScale = scale/6;
 		nvgScale(vg, textScale, textScale);
-        nvgFontFaceId(vg, font->handle);
-        nvgFontSize(vg, 50);
-        nvgFillColor(vg, nvgRGB(44,44,44));
-    	//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
-        nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
+		nvgFontFaceId(vg, font->handle);
+		nvgFontSize(vg, 50);
+		nvgFillColor(vg, nvgRGB(44,44,44));
+		//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
+		nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
 		nvgRestore(vg);*/
 
 		if (node->children.size() > 1) {
@@ -930,9 +930,9 @@ struct NodeDisplay : Widget {
 		//if (module == NULL) return;
 
 		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
-        nvgBeginPath(args.vg);
-        nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
-        nvgFill(args.vg);
+		nvgBeginPath(args.vg);
+		nvgRect(args.vg, 0, 0, box.size.x, box.size.y);
+		nvgFill(args.vg);
 
 	}
 
@@ -1076,7 +1076,7 @@ struct TreequencerWidget : QuestionableWidget {
 
 		display = new NodeDisplay();
 		display->box.pos = Vec(2, 50);
-        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 200);
+		display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 200);
 		display->module = module;
 		if (module) {
 			display->screenScale = module->startScreenScale;
@@ -1086,7 +1086,7 @@ struct TreequencerWidget : QuestionableWidget {
 
 		dirt = new ImagePanel();
 		dirt->box.pos = Vec(2, 50);
-        dirt->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 11, 200);
+		dirt->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 11, 200);
 		dirt->imagePath = asset::plugin(pluginInstance, "res/dirt.png");
 		dirt->scalar = 3.5;
 		dirt->visible = true;

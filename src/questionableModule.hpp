@@ -13,21 +13,21 @@ struct QuestionableModule : Module {
 	bool runHalfRate = false;
 	int64_t frame = 0;
 	bool showDescriptors = userSettings.getSetting<bool>("showDescriptors");
-    std::string theme = userSettings.getSetting<std::string>("theme");
+	std::string theme = userSettings.getSetting<std::string>("theme");
 
-    json_t* dataToJson() override {
+	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
-        json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
+		json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
 		json_object_set_new(rootJ, "showDescriptors", json_boolean(showDescriptors));
 		json_object_set_new(rootJ, "runHalfRate", json_boolean(runHalfRate));
-        return rootJ;
-    }
+		return rootJ;
+	}
 
-    void dataFromJson(json_t* rootJ) override {
-        if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+	void dataFromJson(json_t* rootJ) override {
+		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 		if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
 		if (json_t* hr = json_object_get(rootJ, "runHalfRate")) runHalfRate = json_boolean_value(hr);
-    }
+	}
 
 	void onSampleRateChange(const SampleRateChangeEvent& e) override {
 		if (supportsSampleRateOverride && runHalfRate) sampleRateOverride = e.sampleRate / 2;
@@ -58,13 +58,13 @@ struct QuestionableThemed {
 };
 
 struct QuestionableWidget : ModuleWidget {
-    ImagePanel *backdrop;
-    ColorBG* color;
+	ImagePanel *backdrop;
+	ColorBG* color;
 	bool lastPreferDark = false;
 
-    QuestionableWidget() {
+	QuestionableWidget() {
 
-    }
+	}
 
 	void step() override {
 		if (settings::preferDarkPanels != lastPreferDark) {
@@ -102,7 +102,7 @@ struct QuestionableWidget : ModuleWidget {
 			backdrop->drawBackground = false;
 		} else if (backdrop) backdrop->drawBackground = true;
 	}
-    
+	
 	void appendContextMenu(Menu *menu) override
   	{
 		QuestionableModule* mod = (QuestionableModule*)module;

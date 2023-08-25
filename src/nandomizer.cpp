@@ -6,10 +6,10 @@
 #include <algorithm>
 
 /*
-    Param: Read with params[...].getValue()
-    Input: Read with inputs[...].getVoltage()
-    Output: Write with outputs[...].setVoltage(voltage)
-    Light: Write with lights[...].setBrightness(brightness)
+	Param: Read with params[...].getValue()
+	Input: Read with inputs[...].getVoltage()
+	Output: Write with outputs[...].setVoltage(voltage)
+	Light: Write with lights[...].setBrightness(brightness)
 */
 
 const int MODULE_SIZE = 6;

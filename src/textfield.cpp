@@ -4,18 +4,18 @@ typedef std::function<void(std::string)> textLambda;
 
 struct QTextField : ui::TextField {
 
-    textLambda functionPtr;
+	textLambda functionPtr;
 
-    QTextField(textLambda fn) : TextField() {
+	QTextField(textLambda fn) : TextField() {
 
-        functionPtr = fn;
+		functionPtr = fn;
 
-    }
+	}
 
-    void onSelectKey(const SelectKeyEvent& e) override {
-        TextField::onSelectKey(e);
-        functionPtr(text);
-        e.consume(this);
-    }
+	void onSelectKey(const SelectKeyEvent& e) override {
+		TextField::onSelectKey(e);
+		functionPtr(text);
+		e.consume(this);
+	}
 
 };

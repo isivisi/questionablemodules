@@ -12,10 +12,10 @@
 #include <algorithm>
 
 /*
-    Param: Read with params[...].getValue()
-    Input: Read with inputs[...].getVoltage()
-    Output: Write with outputs[...].setVoltage(voltage)
-    Light: Write with lights[...].setBrightness(brightness)
+	Param: Read with params[...].getValue()
+	Input: Read with inputs[...].getVoltage()
+	Output: Write with outputs[...].setVoltage(voltage)
+	Light: Write with lights[...].setBrightness(brightness)
 */
 
 // https://ggt.sourceforge.net/html/gmtlfaq.html
@@ -93,9 +93,9 @@ struct QuatOSC : QuestionableModule {
 
 	std::string projection = "Z";
 
-    gmtl::Quatf sphereQuat;
+	gmtl::Quatf sphereQuat;
 	gmtl::Quatf rotationAccumulation;
-    gmtl::Vec3f xPointOnSphere;
+	gmtl::Vec3f xPointOnSphere;
 	gmtl::Vec3f yPointOnSphere;
 	gmtl::Vec3f zPointOnSphere;
 
@@ -428,9 +428,9 @@ struct QuatDisplay : Widget {
 		float centerY = box.size.y/2;
 
 		nvgFillColor(args.vg, nvgRGB(15, 15, 15));
-        nvgBeginPath(args.vg);
-        nvgCircle(args.vg, centerX, centerY, rad);
-        nvgFill(args.vg);
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, centerX, centerY, rad);
+		nvgFill(args.vg);
 
 	}
 
@@ -639,7 +639,7 @@ struct QuatOSCWidget : QuestionableWidget {
 
 		display = new QuatDisplay();
 		display->box.pos = Vec(2, 40);
-        display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 125);
+		display->box.size = Vec(((MODULE_SIZE -1) * RACK_GRID_WIDTH) + 10, 125);
 		display->module = module;
 
 		fade = new ImagePanel();
