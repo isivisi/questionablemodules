@@ -3,7 +3,7 @@
 _rackver=2.4.0
 
 pkgname='vcvrack-questionablemodules'
-pkgver=2.1.7
+pkgver=2.1.9
 pkgrel=1
 pkgdesc="Questionable Modules for VCVRack"
 url='https://github.com/isivisi/questionablemodules'
@@ -15,10 +15,8 @@ makedepends=(git zip simde zstd)
 
 source=(
     "git+https://github.com/isivisi/questionablemodules.git#tag=v$pkgver"
-    "https://vcvrack.com/downloads/Rack-SDK-$_rackver-lin-x64.zip"
 )
 sha256sums=(
-    SKIP
     SKIP
 )
 
@@ -30,12 +28,11 @@ prepare() {
 
 build() {
     cd questionablemodules
-    export RACK_DIR=../Rack-SDK
+    export RACK_DIR=/usr/share/vcvrack
     make dist
 }
 
 package() {
     cd questionablemodules/dist
-	mkdir -p ~/.Rack2/plugins/
-	cp ./*.vcvplugin ~/.Rack2/plugins/
+    cp ./*.vcvplugin /usr/lib/vcvrack/plugins-lin-x64/
 }
