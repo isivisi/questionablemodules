@@ -11,7 +11,7 @@ jobs:
       - name: Check out this repo
         uses: actions/checkout@v2
       - name: Get deps
-        run: go get github.com/ericchiang/pup
+        run: go install github.com/ericchiang/pup@latest
       - name: Fetch and parse latest data
         run: |-
           curl -s "https://library.vcvrack.com/questionablemodules" | pup ':contains("Popularity: ") text{}' | sed -r 's/ Popularity: //g' | tr -d " \t\n\r" > popularity
