@@ -389,7 +389,7 @@ struct QuatOSC : QuestionableModule {
 		
 		if (json_t* p = json_object_get(rootJ, "projection")) projection = json_string_value(p);
 		if (json_t* cf = json_object_get(rootJ, "clockFreq")) clockFreq = json_real_value(cf);
-		if (json_t* nsv = json_object_get(rootJ, "normalizeSpreadVolume")) normalizeSpreadVolume = nsv;
+		if (json_t* nsv = json_object_get(rootJ, "normalizeSpreadVolume")) normalizeSpreadVolume = json_boolean_value(nsv);
 		if (json_t* qtArray = json_object_get(rootJ, "quantizedVOCT")) {
 			for (size_t i = 0; i < quantizedVOCT.size(); i++) { 
 				quantizedVOCT[i] = json_boolean_value(json_array_get(qtArray, i)); 
