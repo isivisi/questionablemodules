@@ -8,7 +8,7 @@ pkgrel=1
 pkgdesc="Questionable Modules for VCVRack"
 url='https://github.com/isivisi/questionablemodules'
 license=(GPL)
-arch=(x86_64 aarch64)
+arch=(x86_64)
 groups=()
 depends=(vcvrack)
 makedepends=()
@@ -21,5 +21,5 @@ sha256sums=(
 )
 
 package() {
-	cp ./*.vcvplugin ~/.Rack2/plugins-lin-x64/ 2>/dev/null
+	cp ./*.vcvplugin ~/.Rack2/plugins-lin-x64/
 }
