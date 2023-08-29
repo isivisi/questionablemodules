@@ -1,0 +1,30 @@
+name: 
+on:
+    push:
+    workflow_dispatch:
+    schedule:
+      - cron:  '0 0 1 * *'
+jobs:
+    scheduled:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Check out this repo
+        uses: actions/checkout@v2
+      - name: Get deps
+        run: go get github.com/ericchiang/pup
+      - name: Fetch latest data
+        run: |-
+          curl -s "https://library.vcvrack.com/questionablemodules" | pup ':contains("Popularity: ") text{}' > popularity
+      - name:
+        run: |-
+            sed -i 's/ Popularity: //g' popularity
+            pop=$(cat popularity)
+            sed -i 's/Library\/[0-9]*,[0-9]*k\/blue/${pop}/g' README.md
+       - name: Commit and push if the data has changed
+        run: |-
+          git config user.name "Automated"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          timestamp=$(date -u)
+          git commit -m "Latest data: ${timestamp}" || exit 0
+          git push
