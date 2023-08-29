@@ -1,10 +1,13 @@
 name: 
 on:
     workflow_dispatch:
+    schedule:
+      - cron:  '0 0 1 * *'
 jobs:
     scheduled:
       runs-on: ubuntu-latest
       steps:
+      - uses: actions/setup-go@v4
       - name: Check out this repo
         uses: actions/checkout@v2
       - name: Get deps
