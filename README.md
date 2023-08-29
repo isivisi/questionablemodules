@@ -5,8 +5,6 @@
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 
-Subscribe on the [VCV Library](https://library.vcvrack.com/questionablemodules)
-
 <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/nandomizer.png" width="90"> <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/discombobulator.png" width="135">
 <img src="https://github.com/isivisi/questionablemodules/blob/master/images/Treequencer.gif?raw=true?raw=true" width="330">
 <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png" width="180">
@@ -17,6 +15,11 @@ Subscribe on the [VCV Library](https://library.vcvrack.com/questionablemodules)
 - [Treequencer](https://isivisi.github.io/questionablemodules/treequencer)
 - [SLURP](https://isivisi.github.io/questionablemodules/slurp)
 
+
+## Download
+- Subscribe on the [VCV Library](https://library.vcvrack.com/questionablemodules)
+- Download from [Github](https://github.com/isivisi/questionablemodules/releases/latest)
+- Use the AUR package [vcvrack-questionablemodules-bin](https://aur.archlinux.org/packages/vcvrack-questionablemodules-bin)
 
 ## Pulling source
 ```
