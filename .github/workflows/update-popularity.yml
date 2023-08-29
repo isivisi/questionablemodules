@@ -12,6 +12,9 @@ jobs:
       - uses: actions/setup-go@v4
       - name: Check out this repo
         uses: actions/checkout@v2
+        with:
+          ref: 'automated'
+          fetch-depth: 0
       - name: Get deps
         run: go install github.com/ericchiang/pup@latest
       - name: Fetch and parse latest data
@@ -23,7 +26,9 @@ jobs:
         run: |-
           git config user.name "Automated"
           git config user.email "actions@users.noreply.github.com"
+          git remote set-head origin automated
+          git reset --soft automated~1
           git add -A
           timestamp=$(date -u)
           git commit -m "Updated library analytics (${timestamp})" || exit 0
-          git push
+          git push -f
