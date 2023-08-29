@@ -1,6 +1,6 @@
 # Questionable Modules 
 [![Build VCV Rack Plugin](https://github.com/isivisi/questionablemodules/actions/workflows/build-plugin.yml/badge.svg?branch=master)](https://github.com/isivisi/questionablemodules/actions/workflows/build-plugin.yml)
-<img src="https://badgen.net/static/VCV%20Library/6k/blue"/>
+[![VCV Rack Library](https://badgen.net/static/VCV%20Library/6k/blue)](https://library.vcvrack.com/questionablemodules)
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 
