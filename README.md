@@ -1,7 +1,7 @@
 # Questionable Modules 
 [![Build VCV Rack Plugin](https://github.com/isivisi/questionablemodules/actions/workflows/build-plugin.yml/badge.svg?branch=master)](https://github.com/isivisi/questionablemodules/actions/workflows/build-plugin.yml)
 [![Release](https://badgen.net/github/release/isivisi/questionablemodules/stable?color=cyan)](https://github.com/isivisi/questionablemodules/releases/latest)
-[![VCV Rack Library](https://badgen.net/static/VCV%20Library/6,071/blue)](https://library.vcvrack.com/questionablemodules)
+[![VCV Rack Library](https://badgen.net/https/raw.githubusercontent.com/isivisi/questionablemodules/automated/popularity.json)](https://library.vcvrack.com/questionablemodules)
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 
