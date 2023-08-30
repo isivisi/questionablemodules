@@ -13,10 +13,6 @@ groups=()
 depends=(vcvrack)
 makedepends=()
 
-pkgver() {
-    curl -s https://api.github.com/repos/isivisi/questionablemodules/tags | jq -r '.[0].name' | sed -r 's/v//g' | sed -r 's/doc//g'
-}
-
 source=(
     "https://github.com/isivisi/questionablemodules/releases/download/v$pkgver/questionablemodules-$pkgver-lin-x64.vcvplugin"
 )
