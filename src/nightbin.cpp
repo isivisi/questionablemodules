@@ -148,12 +148,24 @@ struct NightBinWidget : QuestionableWidget {
 				continue;
 			}
 
-			json_t* request = network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly");
+			network::CookieMap cookies;
+			cookies["Authorization"] = "Bearer " + userSettings.getSetting<std::string>("gitPersonalAccessToken");
+
+			json_t* request = network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly", nullptr, cookies);
 			DEFER({json_decref(request);});
 
 			if (!request) {
 				WARN("[QuestionableModules::NightBin] Request for github release info failed");
 				continue;
+			}
+
+			if (json_t* msg = json_object_get(request, "message")) {
+				std::string message = json_string_value(msg);
+				if (message == "Not Found") continue;
+				if (message.find("API rate limit exceeded") != std::string::npos) {
+					WARN("[QuestionableModules::NightBin] Request for github rate limited, consider setting your gitPersonalAccessToken");
+					continue;
+				}
 			}
 
 			plugins.push_back(plugin);
@@ -167,21 +179,21 @@ struct NightBinWidget : QuestionableWidget {
 		NightBin* mod = (NightBin*)module;
 		menu->addChild(new MenuSeparator);
 		
-		if (userSettings.getSetting<std::string>("gitPersonalAccessToken") != "") {
+		if (!userSettings.getSetting<std::string>("gitPersonalAccessToken").size()) {
 			menu->addChild(rack::createMenuLabel("Github Access Token:"));
 
 			ui::TextField* param = new QTextField([=](std::string text) { 
-				if (text.length()) userSettings.setSetting("gitPersonalAccessToken", text);
+				if (text.length()) userSettings.setSetting("gitPersonalAccessToken", text); // https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 			});
 			param->box.size.x = 100;
 			menu->addChild(param);
-
-			menu->addChild(new MenuSeparator);
 		} else {
 			menu->addChild(createMenuItem("Clear Github Access Token", "", [=]() { 
 				userSettings.setSetting<std::string>("gitPersonalAccessToken", "");
 			}));
 		}
+
+		menu->addChild(new MenuSeparator);
 
 		menu->addChild(createMenuItem("Update All", "",[=]() {
 				
