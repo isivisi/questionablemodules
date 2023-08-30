@@ -149,7 +149,7 @@ struct NightBinWidget : QuestionableWidget {
 			}
 
 			network::CookieMap cookies;
-			cookies["Authorization"] = "Bearer " + userSettings.getSetting<std::string>("gitPersonalAccessToken");
+			cookies["Authorization"] = userSettings.getSetting<std::string>("gitPersonalAccessToken");
 
 			json_t* request = network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly", nullptr, cookies);
 			DEFER({json_decref(request);});
@@ -194,6 +194,15 @@ struct NightBinWidget : QuestionableWidget {
 		}
 
 		menu->addChild(new MenuSeparator);
+
+		menu->addChild(createSubmenuItem("Add Modules", "", [=](Menu* menu) {
+			 for (plugin::Plugin* plugin : rack::plugin::plugins) {
+				if (!plugin->sourceUrl.size()) continue;
+				menu->addChild(createMenuItem(plugin->name, "",[=]() {
+					
+				}));
+			 }
+		}));
 
 		menu->addChild(createMenuItem("Update All", "",[=]() {
 				
