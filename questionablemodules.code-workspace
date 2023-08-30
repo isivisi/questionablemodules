@@ -118,7 +118,8 @@
 			"typeindex": "cpp",
 			"valarray": "cpp",
 			"variant": "cpp",
-			"*.ipp": "cpp"
+			"*.ipp": "cpp",
+			"regex": "cpp"
 		}
 	}
 }

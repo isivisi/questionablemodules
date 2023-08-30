@@ -5,6 +5,8 @@
 #include "questionableModule.hpp"
 #include <vector>
 #include <algorithm>
+#include <regex>
+#include <plugin.hpp>
 
 const int MODULE_SIZE = 6;
 
@@ -94,26 +96,37 @@ struct NightBinWidget : QuestionableWidget {
         }
     };
 
-    std::vector<QPluginInfo> getPotentialPlugins() {
-        std::vector<QPluginInfo> plugins;
-        if (library::isLoggedIn()) {
-            json_t* request = network::requestJson(network::METHOD_GET, "https://api.vcvrack.com/library/manifests", json_object());
-            DEFER({json_decref(request);});
+	std::string getRepoAPI(Plugin* plugin) {
+		std::regex r(R"(github\.com/(.*\/*.))");
+		std::smatch match;
+		if (std::regex_match(plugin->sourceUrl, match, r)) {
+			return "https://api.github.com/repos/" + match[0].str();
+		}
+		return "";
+	}
 
-            if (!request) {
-                WARN("[QuestionableModules::NightBin] Request for library manifests failed");
-                return plugins;
-            }
-        
-            json_t* manifests = json_object_get(request, "manifests");
-            DEFER({json_decref(manifests);});
+    std::vector<Plugin*> getPotentialPlugins() {
+        std::vector<Plugin*> plugins;
+        for (plugin::Plugin* plugin : rack::plugin::plugins) {
+			if (!plugin->sourceUrl.size()) continue;
 
-            size_t index;
-            json_t *value;
-            json_array_foreach(manifests, index, value) {
-                    plugins.push_back(QPluginInfo::fromJson(value));
-            }
-        }
+			std::string api = getRepoAPI(plugin);
+			WARN("[QuestionableModules::NightBin] checking for builds at: %s", api.c_str());
+			if (!api.size()) {
+				WARN("[QuestionableModules::NightBin] Failed to get api string for module: %s, sourceURL: %s", plugin->name.c_str(), plugin->sourceUrl.c_str());
+				continue;
+			}
+
+			json_t* request = network::requestJson(network::METHOD_GET, "https://api.github.com/repos/isivisi/questionablemodules/releases/tags/Nightly");
+			DEFER({json_decref(request);});
+
+			if (!request) {
+				WARN("[QuestionableModules::NightBin] Request for github release info failed");
+				continue;
+			}
+
+			plugins.push_back(plugin);
+		}
         return plugins;
     }
 
@@ -128,22 +141,11 @@ struct NightBinWidget : QuestionableWidget {
 		}));
         menu->addChild(new MenuSeparator);
 
-        
-
-        /*for (size_t i = 0; i < pluginInstance->plugins.size(); i++) {
-            Plugin* plugin = pluginInstance->plugins[i];
-            menu->addChild(rack::createSubmenuItem(plugin->name, plugin->version, [=](ui::Menu* menu) {
-            
-		    }));
-        }*/
-
-        std::vector<QPluginInfo> plugins = getPotentialPlugins();
-
-        for (size_t i = 0; i < plugins.size(); i++) {
-            menu->addChild(createMenuItem(plugins[i].name, plugins[i].version, [=]() {
+        for (plugin::Plugin* plugin : getPotentialPlugins()) {
+			menu->addChild(createMenuItem(plugin->name, plugin->version, [=]() {
                 
             }));
-        }
+		}
 
 	}
 
