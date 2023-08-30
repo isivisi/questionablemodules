@@ -84,17 +84,37 @@ struct NightBinWidget : QuestionableWidget {
     struct QPluginInfo {
         std::string name;
         std::string slug;
+        std::string gitURL;
         rack::string::Version version;
+
+        static QPluginInfo fromJson(json_t* json) {
+            QPluginInfo newInfo;
+            if (json_t* n = json_object_get(json, "name")) newInfo.name = json_string_value(n);
+            if (json_t* s = json_object_get(json, "slug")) newInfo.name = json_string_value(s);
+            if (json_t* g = json_object_get(json, "sourceUrl")) newInfo.gitURL = json_string_value(g);
+            if (json_t* v = json_object_get(json, "version")) newInfo.name = json_string_value(v);
+
+            return QPluginInfo();
+        }
+
+        json_t* toJson() {
+
+        }
     };
 
     std::vector<QPluginInfo> getPotentialPlugins() {
+        std::vector<QPluginInfo> plugins;
         if (library::isLoggedIn()) {
-            json_t* manifestsResJ = network::requestJson(network::METHOD_GET, "https://api.vcvrack.com/library/manifests", json_object());
-            //for (size_t i = 0; i < pluginInstance->plugins.size(); i++) {
+            json_t* manifests = network::requestJson(network::METHOD_GET, "https://api.vcvrack.com/library/manifests", json_object());
+            DEFER({json_decref(manifests);});
 
-            //}
+            size_t index;
+            json_t *value;
+            json_array_foreach(manifests, index, value) {
+                plugins.push_back(QPluginInfo::fromJson(value));
+            }
         }
-        return std::vector<QPluginInfo>();
+        return plugins;
     }
 
     void appendContextMenu(Menu *menu) override
