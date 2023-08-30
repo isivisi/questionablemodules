@@ -25,6 +25,6 @@ jobs:
             github_token: ${{ secrets.GITHUB_TOKEN }} # The GitHub token to use to update the PKGBUILD file and the AUR submodule
             pkgbuild_path: aur/bin/PKGBUILD
             update_pkgbuild: false
-            git_username: John Iannandrea # Use this if you want to change the git username (recommended)
+            git_username: isivisi
             git_email: jiannandrea@gmail.com
             allow_empty_commits: false
