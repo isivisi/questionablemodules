@@ -52,7 +52,7 @@ struct UserSettings {
 
 	template <typename T>
 	T getSetting(std::string setting, json_t* settings=nullptr) {
-		static_assert(is_any<T, int, bool, float, std::string>::value, "getSetting has no function defined for type");
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "getSetting has no function defined for type");
 
 		if (!settings) settings = readSettings();
 
@@ -60,13 +60,14 @@ struct UserSettings {
 		if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json_object_get(settings, setting.c_str()));
 		if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(settings, setting.c_str()));
 		if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(settings, setting.c_str()));
+		if constexpr (std::is_same<T, json_t*>::value) return json_object_get(settings, setting.c_str());
 
 		throw std::runtime_error("QuestionableModules::UserSettings::getSetting function for type not defined. :(");
 	}
 
 	template <typename T>
 	void setSetting(std::string setting, T value) {
-		static_assert(is_any<T, int, bool, float, std::string>::value, "setSetting has no function defined for type");
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setSetting has no function defined for type");
 
 		json_t* v = nullptr;
 
@@ -74,6 +75,7 @@ struct UserSettings {
 		if constexpr (std::is_same<T, bool>::value) v = json_boolean(value);
 		if constexpr (std::is_same<T, float>::value) v = json_real(value);
 		if constexpr (std::is_same<T, std::string>::value) v = json_string(value.c_str());
+		if constexpr (std::is_same<T, json_t*>::value) v = value;
 
 		if (v) {
 			json_t* settings = readSettings();
