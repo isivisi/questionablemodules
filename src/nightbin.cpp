@@ -102,7 +102,7 @@ struct NightBinWidget : QuestionableWidget {
 
             if (!request) {
                 WARN("[QuestionableModules::NightBin] Request for library manifests failed");
-                return;
+                return plugins;
             }
         
             json_t* manifests = json_object_get(request, "manifests");
@@ -119,6 +119,8 @@ struct NightBinWidget : QuestionableWidget {
 
     void appendContextMenu(Menu *menu) override
   	{
+        QuestionableWidget::appendContextMenu(menu);
+
 		NightBin* mod = (NightBin*)module;
 		menu->addChild(new MenuSeparator);
 		menu->addChild(createMenuItem("Update All", "",[=]() {
@@ -135,11 +137,14 @@ struct NightBinWidget : QuestionableWidget {
 		    }));
         }*/
 
-		menu->addChild(rack::createSubmenuItem("ModuleName", "v2.1.10", [=](ui::Menu* menu) {
-            
-		}));
+        std::vector<QPluginInfo> plugins = getPotentialPlugins();
 
-		QuestionableWidget::appendContextMenu(menu);
+        for (size_t i = 0; i < plugins.size(); i++) {
+            menu->addChild(createMenuItem(plugins[i].name, plugins[i].version, [=]() {
+                
+            }));
+        }
+
 	}
 
 };
