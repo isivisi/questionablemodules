@@ -23,3 +23,4 @@ jobs:
             update_pkgbuild: false
             git_username: John Iannandrea # Use this if you want to change the git username (recommended)
             git_email: jiannandrea@gmail.com
+            allow_empty_commits: false
