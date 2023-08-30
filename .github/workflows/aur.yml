@@ -1,0 +1,30 @@
+name: AUR
+on:
+  push:
+    tags:
+      - 'AUR**'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  update_aur_bin:
+    name: aur bin release
+    # expect AUR2.1.9 etc for commit to send
+    if: startsWith(github.ref, 'refs/tags/AUR') && github.repository_owner == 'isivisi'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Publish AUR package
+        uses: anas-elgarhy/aur-release-action@v4.1
+        with:
+            package_name: vcvrack-questionablemodules-bin
+            ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }} # The private SSH key to use to push the changes to the AUR
+            github_token: ${{ secrets.GITHUB_TOKEN }} # The GitHub token to use to update the PKGBUILD file and the AUR submodule
+            pkgbuild_path: aur/bin/PKGBUILD
+            update_pkgbuild: false
+            git_username: John Iannandrea # Use this if you want to change the git username (recommended)
+            git_email: jiannandrea@gmail.com
+            allow_empty_commits: false
