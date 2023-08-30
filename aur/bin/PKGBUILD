@@ -14,7 +14,7 @@ depends=(vcvrack)
 makedepends=()
 
 pkgver() {
-    curl https://api.github.com/repos/isivisi/questionablemodules/tags | jq -r '.[0].name' | sed -r 's/v//g'
+    curl -s https://api.github.com/repos/isivisi/questionablemodules/tags | jq -r '.[0].name' | sed -r 's/v//g' | sed -r 's/doc//g'
 }
 
 source=(
