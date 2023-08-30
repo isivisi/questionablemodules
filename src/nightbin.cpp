@@ -166,19 +166,26 @@ struct NightBinWidget : QuestionableWidget {
 
 		NightBin* mod = (NightBin*)module;
 		menu->addChild(new MenuSeparator);
+		
+		if (userSettings.getSetting<std::string>("gitPersonalAccessToken") != "") {
+			menu->addChild(rack::createMenuLabel("Github Access Token:"));
 
-		menu->addChild(rack::createMenuLabel("Github Access Token:"));
+			ui::TextField* param = new QTextField([=](std::string text) { 
+				if (text.length()) userSettings.setSetting("gitPersonalAccessToken", text);
+			});
+			param->box.size.x = 100;
+			menu->addChild(param);
 
-		ui::TextField* param = new QTextField([=](std::string text) { 
-			if (text.length()) userSettings.setSetting("gitPersonalAccessToken", text);
-		});
-		param->box.size.x = 100;
-		menu->addChild(param);
+			menu->addChild(new MenuSeparator);
+		} else {
+			menu->addChild(createMenuItem("Clear Github Access Token", "", [=]() { 
+				userSettings.setSetting<std::string>("gitPersonalAccessToken", "");
+			}));
+		}
 
 		menu->addChild(createMenuItem("Update All", "",[=]() {
-			
+				
 		}));
-        menu->addChild(new MenuSeparator);
 
 		if (gathering.try_lock()) {
 			for (plugin::Plugin* plugin : plugins) {
@@ -188,7 +195,7 @@ struct NightBinWidget : QuestionableWidget {
 			}
 			gathering.unlock();
 		} else {
-			menu->addChild(createMenuItem("Checking for updates...", "", [=]() { }));
+			menu->addChild(createMenuItem("Checking for updates..."));
 		}
 
 	}
