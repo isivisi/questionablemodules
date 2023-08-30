@@ -88,6 +88,44 @@ struct UserSettings {
 		throw std::runtime_error("QuestionableModules::UserSettings::setSetting function for type not defined. :(");
 	}
 
+	template<typename T>
+	std::vector<T> getArraySetting(std::string setting, json_t* settings=nullptr) {
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setArraySetting has no function defined for type");
+
+		if (!settings) settings = readSettings();
+		std::vector<T> ret;
+
+		size_t index;
+		json_t* value;
+		json_t* array = json_object_get(settings, setting.c_str());
+		json_array_foreach(array, index, value) {
+			if constexpr (std::is_same<T, int>::value) ret.push_back(json_integer_value(value));
+			if constexpr (std::is_same<T, bool>::value) ret.push_back(json_boolean_value(value));
+			if constexpr (std::is_same<T, float>::value) ret.push_back(json_real_value(value));
+			if constexpr (std::is_same<T, std::string>::value) ret.push_back(json_string_value(value));
+			if constexpr (std::is_same<T, json_t*>::value) ret.push_back(value);
+		}
+
+		return ret;
+	}
+
+	template<typename T>
+	void setArraySetting(std::string setting, std::vector<T> value) {
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setArraySetting has no function defined for type");
+		json_t* settings = readSettings();
+
+		json_t* array = json_array();
+		for (size_t i = 0; i < value.size(); i++) {
+			if constexpr (std::is_same<T, int>::value) json_array_append_new(array, json_integer(value[i]));
+			if constexpr (std::is_same<T, bool>::value) json_array_append_new(array, json_boolean(value[i]));
+			if constexpr (std::is_same<T, float>::value) json_array_append_new(array, json_real(value[i]));
+			if constexpr (std::is_same<T, std::string>::value) json_array_append_new(array, json_string(value[i].c_str()));
+			if constexpr (std::is_same<T, json_t*>::value) json_array_append_new(array, value[i]);
+		}
+
+		json_object_set(settings, setting.c_str(), array);
+	}
+
 	private:
 
 	json_t * readSettings() {

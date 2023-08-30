@@ -104,20 +104,28 @@ struct NightBinWidget : QuestionableWidget {
 		gatherThread = std::thread(&NightBinWidget::getPotentialPlugins, this);
 	}
 
-    struct QPluginInfo {
+    struct QRemotePluginInfo {
         std::string name;
         std::string slug;
-        std::string gitURL;
         rack::string::Version version;
 
-        static QPluginInfo fromJson(json_t* json) {
-            QPluginInfo newInfo;
-            if (json_t* n = json_object_get(json, "name")) newInfo.name = json_string_value(n);
-            if (json_t* s = json_object_get(json, "slug")) newInfo.name = json_string_value(s);
-            if (json_t* g = json_object_get(json, "sourceUrl")) newInfo.gitURL = json_string_value(g);
-            if (json_t* v = json_object_get(json, "version")) newInfo.name = json_string_value(v);
+		std::vector<std::string> assetDownloads;
 
-            return QPluginInfo();
+        static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
+            QRemotePluginInfo newInfo;
+			newInfo.name = plugin->name;
+			newInfo.slug = plugin->slug;
+			if (json_t* array = json_object_get(json, "assets")) {
+				size_t index;
+				json_t* value;
+				json_array_foreach(array, index, value) {
+					if (json_t* url = json_object_get(value, "browser_download_url")) {
+						newInfo.assetDownloads.push_back(json_string_value(url));
+						WARN("[QuestionableModules::NightBin] Found download %s", newInfo.assetDownloads.back());
+					}
+				}
+			}
+            return newInfo;
         }
 
         json_t* toJson() {
@@ -137,13 +145,10 @@ struct NightBinWidget : QuestionableWidget {
 
 	std::vector<Plugin*> getSelectedPlugins() {
 		std::vector<Plugin*> plugins;
-		json_t* array = userSettings.getSetting<json_t*>("nightbinSelectedPlugins");
+		std::vector<std::string> slugs = userSettings.getArraySetting<std::string>("nightbinSelectedPlugins");
 		
-		size_t index;
-		json_t *value;
-		json_array_foreach(array, index, value) {
-			std::string slug = json_string_value(value);
-			auto foundPlugin = find_if(rack::plugin::plugins.begin(), rack::plugin::plugins.end(), [slug](Plugin* x){return x->slug == slug;});
+		for (size_t i = 0; i < slugs.size(); i++) {
+			auto foundPlugin = find_if(rack::plugin::plugins.begin(), rack::plugin::plugins.end(), [slugs, i](Plugin* x){return x->slug == slugs[i];});
 			if (foundPlugin != rack::plugin::plugins.end()) plugins.push_back(*foundPlugin);
 		}
 
@@ -151,17 +156,20 @@ struct NightBinWidget : QuestionableWidget {
 	}
 
 	void addPlugin(std::string slug) {
-		std::vector<Plugin*> plugins = getSelectedPlugins();
-		auto found = find_if(plugins.begin(), plugins.end(), [slug](Plugin* x){return x->slug == slug;});
-		if (found == rack::plugin::plugins.end()) {
-			json_t* array = userSettings.getSetting<json_t*>("nightbinSelectedPlugins");
-			json_array_append_new(array, json_string(slug.c_str()));
-			userSettings.setSetting<json_t*>("nightbinSelectedPlugins", array);
-		}
+		std::vector<std::string> plugins = userSettings.getArraySetting<std::string>("nightbinSelectedPlugins");
+		auto found = find(plugins.begin(), plugins.end(), slug);
+		//if (found == plugins.end()) {
+			plugins.push_back(slug);
+			userSettings.setArraySetting<std::string>("nightbinSelectedPlugin", plugins);
+		//}
 	}
+
+	std::vector<QRemotePluginInfo> gatheredInfo;
 
     void getPotentialPlugins() {
 		std::lock_guard<std::mutex> guard(gathering);
+
+		gatheredInfo.clear();
 
         for (plugin::Plugin* plugin : getSelectedPlugins()) {
 			if (!plugin->sourceUrl.size()) continue;
@@ -193,6 +201,7 @@ struct NightBinWidget : QuestionableWidget {
 				}
 			}
 
+			gatheredInfo.push_back(QRemotePluginInfo::fromJson(request, plugin));
 			plugins.push_back(plugin);
 		}
     }
