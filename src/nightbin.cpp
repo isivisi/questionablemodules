@@ -15,11 +15,9 @@ struct NightBin : QuestionableModule {
 		PARAMS_LEN
 	};
 	enum InputId {
-		VOLTAGE_IN,
 		INPUTS_LEN
 	};
 	enum OutputId {
-		OUTPUT,
 		OUTPUTS_LEN
 	};
 	enum LightId {
@@ -28,13 +26,10 @@ struct NightBin : QuestionableModule {
 
 	NightBin() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configInput(VOLTAGE_IN, "");
-		configOutput(OUTPUT, "");
-		
 	}
 
 	void process(const ProcessArgs& args) override {
-		//outputs[OUTPUT].setVoltage(0);
+
 	}
 
 };
@@ -76,9 +71,6 @@ struct NightBinWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 60)), module, NightBin::VOLTAGE_IN));
-
-		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 110)), module, NightBin::OUTPUT));
 	}
 
     struct QPluginInfo {
@@ -105,13 +97,21 @@ struct NightBinWidget : QuestionableWidget {
     std::vector<QPluginInfo> getPotentialPlugins() {
         std::vector<QPluginInfo> plugins;
         if (library::isLoggedIn()) {
-            json_t* manifests = network::requestJson(network::METHOD_GET, "https://api.vcvrack.com/library/manifests", json_object());
+            json_t* request = network::requestJson(network::METHOD_GET, "https://api.vcvrack.com/library/manifests", json_object());
+            DEFER({json_decref(request);});
+
+            if (!request) {
+                WARN("[QuestionableModules::NightBin] Request for library manifests failed");
+                return;
+            }
+        
+            json_t* manifests = json_object_get(request, "manifests");
             DEFER({json_decref(manifests);});
 
             size_t index;
             json_t *value;
             json_array_foreach(manifests, index, value) {
-                plugins.push_back(QPluginInfo::fromJson(value));
+                    plugins.push_back(QPluginInfo::fromJson(value));
             }
         }
         return plugins;
