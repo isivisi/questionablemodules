@@ -135,10 +135,35 @@ struct NightBinWidget : QuestionableWidget {
 		return "";
 	}
 
+	std::vector<Plugin*> getSelectedPlugins() {
+		std::vector<Plugin*> plugins;
+		json_t* array = userSettings.getSetting<json_t*>("nightbinSelectedPlugins");
+		
+		size_t index;
+		json_t *value;
+		json_array_foreach(array, index, value) {
+			std::string slug = json_string_value(value);
+			auto foundPlugin = find_if(rack::plugin::plugins.begin(), rack::plugin::plugins.end(), [slug](Plugin* x){return x->slug == slug;});
+			if (foundPlugin != rack::plugin::plugins.end()) plugins.push_back(*foundPlugin);
+		}
+
+		return plugins;
+	}
+
+	void addPlugin(std::string slug) {
+		std::vector<Plugin*> plugins = getSelectedPlugins();
+		auto found = find_if(plugins.begin(), plugins.end(), [slug](Plugin* x){return x->slug == slug;});
+		if (found == rack::plugin::plugins.end()) {
+			json_t* array = userSettings.getSetting<json_t*>("nightbinSelectedPlugins");
+			json_array_append_new(array, json_string(slug.c_str()));
+			userSettings.setSetting<json_t*>("nightbinSelectedPlugins", array);
+		}
+	}
+
     void getPotentialPlugins() {
 		std::lock_guard<std::mutex> guard(gathering);
 
-        for (plugin::Plugin* plugin : rack::plugin::plugins) {
+        for (plugin::Plugin* plugin : getSelectedPlugins()) {
 			if (!plugin->sourceUrl.size()) continue;
 
 			std::string api = getRepoAPI(plugin);
@@ -199,7 +224,7 @@ struct NightBinWidget : QuestionableWidget {
 			 for (plugin::Plugin* plugin : rack::plugin::plugins) {
 				if (!plugin->sourceUrl.size()) continue;
 				menu->addChild(createMenuItem(plugin->name, "",[=]() {
-					
+					addPlugin(plugin->slug);
 				}));
 			 }
 		}));
