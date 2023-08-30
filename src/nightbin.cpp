@@ -101,7 +101,7 @@ struct NightBinWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		gatherThread = std::thread(&NightBinWidget::getPotentialPlugins, this);
+		startQueryThread();
 	}
 
     struct QRemotePluginInfo {
@@ -116,9 +116,9 @@ struct NightBinWidget : QuestionableWidget {
 			newInfo.name = plugin->name;
 			newInfo.slug = plugin->slug;
 			if (json_t* array = json_object_get(json, "assets")) {
-				size_t index;
+				const char* key;
 				json_t* value;
-				json_array_foreach(array, index, value) {
+				json_object_foreach(array, key, value) {
 					if (json_t* url = json_object_get(value, "browser_download_url")) {
 						newInfo.assetDownloads.push_back(json_string_value(url));
 						WARN("[QuestionableModules::NightBin] Found download %s", newInfo.assetDownloads.back());
@@ -164,9 +164,13 @@ struct NightBinWidget : QuestionableWidget {
 		//}
 	}
 
+	void startQueryThread() {
+		gatherThread = std::thread(&NightBinWidget::queryForUpdates, this);
+	}
+
 	std::vector<QRemotePluginInfo> gatheredInfo;
 
-    void getPotentialPlugins() {
+    void queryForUpdates() {
 		std::lock_guard<std::mutex> guard(gathering);
 
 		gatheredInfo.clear();
