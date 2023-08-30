@@ -6,6 +6,7 @@ using namespace rack;
 #include <string>
 #include <fstream>
 #include <stdexcept>
+#include <mutex>
 
 // https://stackoverflow.com/questions/17032310/how-to-make-a-variadic-is-same
 template <class T, class... Ts>
@@ -13,6 +14,7 @@ struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
 
 // Global module settings
 struct UserSettings {
+	std::mutex lock;
 	enum Version {
 		LATEST // define migrations above
 	};
@@ -52,6 +54,7 @@ struct UserSettings {
 
 	template <typename T>
 	T getSetting(std::string setting, json_t* settings=nullptr) {
+		std::lock_guard<std::mutex> guard(lock);
 		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "getSetting has no function defined for type");
 
 		if (!settings) settings = readSettings();
@@ -67,6 +70,7 @@ struct UserSettings {
 
 	template <typename T>
 	void setSetting(std::string setting, T value) {
+		std::lock_guard<std::mutex> guard(lock);
 		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setSetting has no function defined for type");
 
 		json_t* v = nullptr;
@@ -90,6 +94,7 @@ struct UserSettings {
 
 	template<typename T>
 	std::vector<T> getArraySetting(std::string setting, json_t* settings=nullptr) {
+		std::lock_guard<std::mutex> guard(lock);
 		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setArraySetting has no function defined for type");
 
 		if (!settings) settings = readSettings();
@@ -111,6 +116,7 @@ struct UserSettings {
 
 	template<typename T>
 	void setArraySetting(std::string setting, std::vector<T> value) {
+		std::lock_guard<std::mutex> guard(lock);
 		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setArraySetting has no function defined for type");
 		json_t* settings = readSettings();
 

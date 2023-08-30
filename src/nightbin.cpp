@@ -116,9 +116,9 @@ struct NightBinWidget : QuestionableWidget {
 			newInfo.name = plugin->name;
 			newInfo.slug = plugin->slug;
 			if (json_t* array = json_object_get(json, "assets")) {
-				const char* key;
+				size_t key;
 				json_t* value;
-				json_object_foreach(array, key, value) {
+				json_array_foreach(array, key, value) {
 					if (json_t* url = json_object_get(value, "browser_download_url")) {
 						newInfo.assetDownloads.push_back(json_string_value(url));
 						WARN("[QuestionableModules::NightBin] Found download %s", newInfo.assetDownloads.back());
