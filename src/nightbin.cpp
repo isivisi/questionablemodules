@@ -1,11 +1,14 @@
 #include "plugin.hpp"
+#include "library.hpp"
 #include "imagepanel.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
 #include <vector>
 #include <algorithm>
 
-const int MODULE_SIZE = 3;
+const int MODULE_SIZE = 6;
+
+
 
 struct NightBin : QuestionableModule {
 	enum ParamId {
@@ -25,17 +28,13 @@ struct NightBin : QuestionableModule {
 
 	NightBin() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		//configParam(OFFSET_PARAM, 0.f, 8.f, 0.f, "Offset");
 		configInput(VOLTAGE_IN, "");
 		configOutput(OUTPUT, "");
 		
 	}
 
 	void process(const ProcessArgs& args) override {
-
-		outputs[OUTPUT].setVoltage(0);
-
+		//outputs[OUTPUT].setVoltage(0);
 	}
 
 };
@@ -45,7 +44,7 @@ struct NightBinWidget : QuestionableWidget {
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("TITLE", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
+		color->addText("NIGHTBIN", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
 		color->addText("OUT", "OpenSans-Bold.ttf", c, 7, Vec(22, 353), "descriptor");
@@ -73,13 +72,54 @@ struct NightBinWidget : QuestionableWidget {
 		//}));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 60)), module, NightBin::VOLTAGE_IN));
 
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 110)), module, NightBin::OUTPUT));
+	}
+
+    struct QPluginInfo {
+        std::string name;
+        std::string slug;
+        rack::string::Version version;
+    };
+
+    std::vector<QPluginInfo> getPotentialPlugins() {
+        if (library::isLoggedIn()) {
+            json_t* manifestsResJ = network::requestJson(network::METHOD_GET, "https://api.vcvrack.com/library/manifests", json_object());
+            //for (size_t i = 0; i < pluginInstance->plugins.size(); i++) {
+
+            //}
+        }
+        return std::vector<QPluginInfo>();
+    }
+
+    void appendContextMenu(Menu *menu) override
+  	{
+		NightBin* mod = (NightBin*)module;
+		menu->addChild(new MenuSeparator);
+		menu->addChild(createMenuItem("Update All", "",[=]() {
+			
+		}));
+        menu->addChild(new MenuSeparator);
+
+        
+
+        /*for (size_t i = 0; i < pluginInstance->plugins.size(); i++) {
+            Plugin* plugin = pluginInstance->plugins[i];
+            menu->addChild(rack::createSubmenuItem(plugin->name, plugin->version, [=](ui::Menu* menu) {
+            
+		    }));
+        }*/
+
+		menu->addChild(rack::createSubmenuItem("ModuleName", "v2.1.10", [=](ui::Menu* menu) {
+            
+		}));
+
+		QuestionableWidget::appendContextMenu(menu);
 	}
 
 };
