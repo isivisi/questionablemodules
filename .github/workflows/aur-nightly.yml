@@ -12,8 +12,6 @@ defaults:
 jobs:
   update_aur_bin:
     name: aur nightly release
-    # expect AUR2.1.9 etc for commit to send
-    if: startsWith(github.ref, 'refs/tags/AUR') && github.repository_owner == 'isivisi'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
