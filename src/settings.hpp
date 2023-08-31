@@ -130,6 +130,7 @@ struct UserSettings {
 		}
 
 		json_object_set(settings, setting.c_str(), array);
+		saveSettings(settings);
 	}
 
 	private:

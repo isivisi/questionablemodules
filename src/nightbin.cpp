@@ -158,10 +158,11 @@ struct NightBinWidget : QuestionableWidget {
 	void addPlugin(std::string slug) {
 		std::vector<std::string> plugins = userSettings.getArraySetting<std::string>("nightbinSelectedPlugins");
 		auto found = find(plugins.begin(), plugins.end(), slug);
-		//if (found == plugins.end()) {
+		if (found == plugins.end()) {
 			plugins.push_back(slug);
-			userSettings.setArraySetting<std::string>("nightbinSelectedPlugin", plugins);
-		//}
+			userSettings.setArraySetting<std::string>("nightbinSelectedPlugins", plugins);
+			//startQueryThread();
+		}
 	}
 
 	void startQueryThread() {
