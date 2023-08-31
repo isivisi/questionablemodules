@@ -161,11 +161,12 @@ struct NightBinWidget : QuestionableWidget {
 		if (found == plugins.end()) {
 			plugins.push_back(slug);
 			userSettings.setArraySetting<std::string>("nightbinSelectedPlugins", plugins);
-			//startQueryThread();
+			startQueryThread();
 		}
 	}
 
 	void startQueryThread() {
+		if (gatherThread.joinable()) gatherThread.detach(); // let go of existing thread as it is either done or will finish on its own
 		gatherThread = std::thread(&NightBinWidget::queryForUpdates, this);
 	}
 
@@ -175,6 +176,7 @@ struct NightBinWidget : QuestionableWidget {
 		std::lock_guard<std::mutex> guard(gathering);
 
 		gatheredInfo.clear();
+		plugins.clear();
 
         for (plugin::Plugin* plugin : getSelectedPlugins()) {
 			if (!plugin->sourceUrl.size()) continue;
@@ -247,7 +249,9 @@ struct NightBinWidget : QuestionableWidget {
 				
 		}));
 
+		menu->addChild(new MenuSeparator);
 		if (gathering.try_lock()) {
+			menu->addChild(createMenuItem("Query for Updates", "⭯",[=]() { startQueryThread(); }));
 			for (plugin::Plugin* plugin : plugins) {
 				menu->addChild(createMenuItem(plugin->name, plugin->version, [=]() {
 					
