@@ -93,8 +93,18 @@ struct NightBinWidget : QuestionableWidget {
 		setPanel(backdrop);
 		addChild(color);
 
-		//addChild(new QuestionableDrawWidget(Vec(18, 100), [module](const DrawArgs &args) {
-		//}));
+		/*addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
+			nvgGlobalCompositeBlendFuncSeparate(args.vg, NVG_ONE_MINUS_DST_ALPHA, NVG_SRC_ALPHA, NVG_ONE, NVG_ONE);
+			nvgFillColor(args.vg, nvgRGB(255, 255, 255));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, 50, 100, 45);
+			nvgFill(args.vg);
+
+			nvgFillColor(args.vg, nvgRGB(50, 50, 50));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, 50, 50, 45);
+			nvgFill(args.vg);
+		}));*/
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
