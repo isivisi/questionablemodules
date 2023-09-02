@@ -114,13 +114,6 @@ struct NightBinWidget : QuestionableWidget {
 		//startQueryThread();
 	}
 
-	struct LinkInfo {
-		std::string version;
-		std::string arch;
-		std::string os;
-		std::string url;
-	};
-
     struct QRemotePluginInfo {
         std::string name;
         std::string slug;
@@ -128,6 +121,12 @@ struct NightBinWidget : QuestionableWidget {
 		std::string dlURL;
 		Plugin* pluginRef;
 
+		struct LinkInfo {
+			std::string version;
+			std::string os;
+			std::string arch;
+			std::string url;
+		};
 		std::vector<LinkInfo> assetDownloads;
 
         static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
@@ -143,9 +142,11 @@ struct NightBinWidget : QuestionableWidget {
 						std::string download = json_string_value(url);
 						LinkInfo info = getLinkInfo(download);
 						newInfo.assetDownloads.push_back(info);
-						WARN("[QuestionableModules::NightBin] Found download %s", download.c_str());
+						INFO("[QuestionableModules::NightBin] Found download %s-%s %s", info.os.c_str(), info.arch.c_str(), download.c_str());
 
+						INFO("[QuestionableModules::NightBin] looking for %s-%s", APP_OS.c_str(), APP_CPU.c_str());
 						if (info.arch == APP_CPU && info.os == APP_OS) {
+							INFO("[QuestionableModules::NightBin] Found correct dl for arch %s", info.version.c_str());
 							newInfo.version = info.version;
 							newInfo.dlURL = download;
 							return newInfo;
