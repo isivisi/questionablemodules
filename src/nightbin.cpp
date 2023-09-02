@@ -114,15 +114,25 @@ struct NightBinWidget : QuestionableWidget {
 		//startQueryThread();
 	}
 
+	struct LinkInfo {
+		std::string version;
+		std::string arch;
+		std::string os;
+		std::string url;
+	};
+
     struct QRemotePluginInfo {
         std::string name;
         std::string slug;
-        rack::string::Version version;
+        std::string version;
+		std::string dlURL;
+		Plugin* pluginRef;
 
-		std::vector<std::string> assetDownloads;
+		std::vector<LinkInfo> assetDownloads;
 
         static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
             QRemotePluginInfo newInfo;
+			newInfo.pluginRef = plugin;
 			newInfo.name = plugin->name;
 			newInfo.slug = plugin->slug;
 			if (json_t* array = json_object_get(json, "assets")) {
@@ -130,13 +140,35 @@ struct NightBinWidget : QuestionableWidget {
 				json_t* value;
 				json_array_foreach(array, key, value) {
 					if (json_t* url = json_object_get(value, "browser_download_url")) {
-						newInfo.assetDownloads.push_back(json_string_value(url));
-						WARN("[QuestionableModules::NightBin] Found download %s", newInfo.assetDownloads.back());
+						std::string download = json_string_value(url);
+						LinkInfo info = getLinkInfo(download);
+						newInfo.assetDownloads.push_back(info);
+						WARN("[QuestionableModules::NightBin] Found download %s", download.c_str());
+
+						if (info.arch == APP_CPU && info.os == APP_OS) {
+							newInfo.version = info.version;
+							newInfo.dlURL = download;
+							return newInfo;
+						}
 					}
 				}
 			}
             return newInfo;
         }
+
+		bool updatable() {
+			return version != "" && pluginRef->version != version;
+		}
+
+		static LinkInfo getLinkInfo(std::string link) {
+			// example: download/Nightly/questionablemodules-2.1.10-nightly-7ce3a21-lin-x64.vcvplugin
+			std::regex r(R"(-([0-9.\-].*(lin|win|mac)-(x64|arm64)))");
+			std::smatch match;
+			if (std::regex_search(link, match, r)) {
+				if (match.size() >= 3) return {match[1].str(), match[2].str(), match[3].str(), link};
+			}
+			return LinkInfo();
+		}
 
         json_t* toJson() {
 
@@ -262,8 +294,9 @@ struct NightBinWidget : QuestionableWidget {
 		menu->addChild(new MenuSeparator);
 		if (gathering.try_lock()) {
 			menu->addChild(createMenuItem("Query for Updates", "",[=]() { startQueryThread(); }));
-			for (plugin::Plugin* plugin : plugins) {
-				menu->addChild(createMenuItem(plugin->name, plugin->version, [=]() {
+			for (QRemotePluginInfo info : gatheredInfo) {
+				if (!info.updatable()) return;
+				menu->addChild(createMenuItem(info.name, info.version, [=]() {
 					
 				}));
 			}
