@@ -24,6 +24,8 @@ jobs:
         run: |-
           git config user.name "Automated"
           git config user.email "actions@users.noreply.github.com"
+          git remote set-head origin automated
+          git reset --soft automated~1
           git add -A
           timestamp=$(date -u)
           git commit -m "Updated library analytics (${timestamp})" || exit 0
