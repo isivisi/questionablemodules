@@ -64,9 +64,10 @@ struct NightBin : QuestionableModule {
 };
 
 struct NightBinWidget : QuestionableWidget {
-	std::vector<Plugin*> plugins;
 	std::mutex gathering;
+	std::mutex updating;
 	std::thread gatherThread;
+	std::thread updateThread;
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
@@ -207,25 +208,31 @@ struct NightBinWidget : QuestionableWidget {
 	}
 
 	void downloadUpdate(QRemotePluginInfo info) {
+		std::lock_guard<std::mutex> guard(updating);
 		network::CookieMap cookies;
 		cookies["Authorization"] = userSettings.getSetting<std::string>("gitPersonalAccessToken");
 		float prog;
 
-		std::regex r(R"(\/(.*.vcvplugin))");
-		std::smatch match;
-		std::string filename;
-		if (std::regex_search(info.dlURL, match, r)) {
-			if (match.size() >= 2) filename = match[1].str();
-			else return;
-		}
-
+		std::string filename = info.dlURL.substr(info.dlURL.rfind('/')+1);
 		std::string packagePath = system::join(plugin::pluginsPath, filename);
-		network::requestDownload(info.dlURL, packagePath, &prog, cookies);
+
+		INFO("Downloading %s to %s", info.name.c_str(), packagePath.c_str());
+		if (!network::requestDownload(info.dlURL, packagePath, &prog, cookies)) {
+			WARN("Download failed :(");
+		}
 	}
 
 	void startQueryThread() {
 		if (gatherThread.joinable()) gatherThread.detach(); // let go of existing thread as it is either done or will finish on its own
 		gatherThread = std::thread(&NightBinWidget::queryForUpdates, this);
+	}
+
+	void startUpdateThread(std::vector<QRemotePluginInfo> updates) {
+		if (updateThread.joinable()) updateThread.detach();
+		updateThread = std::thread([=]() {
+			INFO("Updating plugins");
+			for (size_t i = 0; i < updates.size(); i++) downloadUpdate(updates[i]);
+		});
 	}
 
 	std::vector<QRemotePluginInfo> gatheredInfo;
@@ -234,7 +241,6 @@ struct NightBinWidget : QuestionableWidget {
 		std::lock_guard<std::mutex> guard(gathering);
 
 		gatheredInfo.clear();
-		plugins.clear();
 
         for (plugin::Plugin* plugin : getSelectedPlugins()) {
 			if (!plugin->sourceUrl.size()) continue;
@@ -267,7 +273,6 @@ struct NightBinWidget : QuestionableWidget {
 			}
 
 			gatheredInfo.push_back(QRemotePluginInfo::fromJson(request, plugin));
-			plugins.push_back(plugin);
 		}
     }
 
@@ -303,9 +308,7 @@ struct NightBinWidget : QuestionableWidget {
 			 }
 		}));
 
-		menu->addChild(createMenuItem("Update All", "",[=]() {
-				
-		}));
+		menu->addChild(createMenuItem("Update All", "",[=]() { startUpdateThread(gatheredInfo); }));
 
 		menu->addChild(new MenuSeparator);
 		if (gathering.try_lock()) {
