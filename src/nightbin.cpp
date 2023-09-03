@@ -64,10 +64,14 @@ struct NightBin : QuestionableModule {
 };
 
 struct NightBinWidget : QuestionableWidget {
+	ColorBGSimple* background = nullptr;
+	
 	std::mutex gathering;
 	std::mutex updating;
 	std::thread gatherThread;
 	std::thread updateThread;
+	bool isUpdating;
+	float progress;
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
@@ -79,19 +83,14 @@ struct NightBinWidget : QuestionableWidget {
 	NightBinWidget(NightBin* module) {
 		setModule(module);
 
-		backdrop = new ImagePanel();
-		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/workbench.jpg");
-		backdrop->scalar = 3.5;
-		backdrop->visible = true;
+		background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(150, 173, 233));
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
 		setText();
 
 		backgroundColorLogic(module);
-		
-		setPanel(backdrop);
+		setPanel(background);
 		addChild(color);
 
 		/*addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
@@ -127,6 +126,16 @@ struct NightBinWidget : QuestionableWidget {
 			std::string os;
 			std::string arch;
 			std::string url;
+
+			static LinkInfo getLinkInfo(std::string link) {
+				// example: download/Nightly/questionablemodules-2.1.10-nightly-7ce3a21-lin-x64.vcvplugin
+				std::regex r(R"(-([0-9.\-]*.*(lin|win|mac)-(x64|arm64)))");
+				std::smatch match;
+				if (std::regex_search(link, match, r)) {
+					if (match.size() >= 4) return {match[1].str(), match[2].str(), match[3].str(), link};
+				}
+				return LinkInfo();
+			}
 		};
 
         static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
@@ -140,7 +149,7 @@ struct NightBinWidget : QuestionableWidget {
 				json_array_foreach(array, key, value) {
 					if (json_t* url = json_object_get(value, "browser_download_url")) {
 						std::string download = json_string_value(url);
-						LinkInfo info = getLinkInfo(download);
+						LinkInfo info = LinkInfo::getLinkInfo(download);
 						INFO("[QuestionableModules::NightBin] Found download %s-%s %s", info.os.c_str(), info.arch.c_str(), download.c_str());
 
 						INFO("[QuestionableModules::NightBin] looking for %s-%s", APP_OS.c_str(), APP_CPU.c_str());
@@ -158,16 +167,6 @@ struct NightBinWidget : QuestionableWidget {
 
 		bool updatable() {
 			return version != "" && pluginRef->version != version;
-		}
-
-		static LinkInfo getLinkInfo(std::string link) {
-			// example: download/Nightly/questionablemodules-2.1.10-nightly-7ce3a21-lin-x64.vcvplugin
-			std::regex r(R"(-([0-9.\-].*(lin|win|mac)-(x64|arm64)))");
-			std::smatch match;
-			if (std::regex_search(link, match, r)) {
-				if (match.size() >= 4) return {match[1].str(), match[2].str(), match[3].str(), link};
-			}
-			return LinkInfo();
 		}
 
         json_t* toJson() {
@@ -208,16 +207,19 @@ struct NightBinWidget : QuestionableWidget {
 	}
 
 	void downloadUpdate(QRemotePluginInfo info) {
+		system::setThreadName("Nightbin Update Thread for " + info.name);
 		std::lock_guard<std::mutex> guard(updating);
+		isUpdating = true;
+		DEFER({isUpdating = false;});
+
 		network::CookieMap cookies;
 		cookies["Authorization"] = userSettings.getSetting<std::string>("gitPersonalAccessToken");
-		float prog;
 
 		std::string filename = info.dlURL.substr(info.dlURL.rfind('/')+1);
 		std::string packagePath = system::join(plugin::pluginsPath, filename);
 
 		INFO("Downloading %s to %s", info.name.c_str(), packagePath.c_str());
-		if (!network::requestDownload(info.dlURL, packagePath, &prog, cookies)) {
+		if (!network::requestDownload(info.dlURL, packagePath, &progress, cookies)) {
 			WARN("Download failed :(");
 		}
 	}
@@ -238,6 +240,7 @@ struct NightBinWidget : QuestionableWidget {
 	std::vector<QRemotePluginInfo> gatheredInfo;
 
     void queryForUpdates() {
+		system::setThreadName("Nightbin query Thread");
 		std::lock_guard<std::mutex> guard(gathering);
 
 		gatheredInfo.clear();
@@ -246,9 +249,9 @@ struct NightBinWidget : QuestionableWidget {
 			if (!plugin->sourceUrl.size()) continue;
 
 			std::string api = getRepoAPI(plugin);
-			INFO("[QuestionableModules::NightBin] checking for builds at: %s", api.c_str());
+			INFO("checking for builds at: %s", api.c_str());
 			if (!api.size()) {
-				WARN("[QuestionableModules::NightBin] Failed to get api string for module: %s, sourceURL: %s", plugin->name.c_str(), plugin->sourceUrl.c_str());
+				WARN("Failed to get api string for module: %s, sourceURL: %s", plugin->name.c_str(), plugin->sourceUrl.c_str());
 				continue;
 			}
 
@@ -259,7 +262,7 @@ struct NightBinWidget : QuestionableWidget {
 			DEFER({json_decref(request);});
 
 			if (!request) {
-				WARN("[QuestionableModules::NightBin] Request for github release info failed");
+				WARN("Request for github release info failed");
 				continue;
 			}
 
@@ -267,7 +270,7 @@ struct NightBinWidget : QuestionableWidget {
 				std::string message = json_string_value(msg);
 				if (message == "Not Found") continue;
 				if (message.find("API rate limit exceeded") != std::string::npos) {
-					WARN("[QuestionableModules::NightBin] Request for github rate limited, consider setting your gitPersonalAccessToken");
+					WARN("Request for github rate limited, consider setting your gitPersonalAccessToken");
 					continue;
 				}
 			}

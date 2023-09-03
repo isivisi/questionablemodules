@@ -17,6 +17,27 @@ static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
 	{"Dark", ColorBGTheme{"Dark", nvgRGB(35, 35, 35), nvgRGB(215, 215, 215), nvgRGB(255,255,255)}},
 };
 
+struct ColorBGSimple : Widget {
+	NVGcolor color;
+	NVGcolor stroke;
+
+	ColorBGSimple(Vec s, NVGcolor c = nvgRGB(225, 225, 225), NVGcolor st = nvgRGB(215, 215, 215)) {
+		box.size = s;
+		color = c;
+		stroke = st;
+	}
+
+	void draw(const DrawArgs &args) override {
+		nvgFillColor(args.vg, color);
+		nvgBeginPath(args.vg);
+		nvgRect(args.vg, 0,0, box.size.x, box.size.y);
+		nvgStrokeColor(args.vg, stroke);
+		nvgStrokeWidth(args.vg, 2.0);
+		nvgFill(args.vg);
+		nvgStroke(args.vg);
+	}
+};
+
 struct ColorBG : Widget {
 	NVGcolor color = nvgRGB(225, 225, 225);
 	NVGcolor stroke = nvgRGB(215, 215, 215);

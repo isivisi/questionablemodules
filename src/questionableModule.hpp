@@ -58,8 +58,8 @@ struct QuestionableThemed {
 };
 
 struct QuestionableWidget : ModuleWidget {
-	ImagePanel *backdrop;
-	ColorBG* color;
+	ImagePanel *backdrop = nullptr;
+	ColorBG* color = nullptr;
 	bool lastPreferDark = false;
 
 	QuestionableWidget() {
