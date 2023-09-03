@@ -93,18 +93,25 @@ struct NightBinWidget : QuestionableWidget {
 		setPanel(background);
 		addChild(color);
 
-		/*addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
-			nvgGlobalCompositeBlendFuncSeparate(args.vg, NVG_ONE_MINUS_DST_ALPHA, NVG_SRC_ALPHA, NVG_ONE, NVG_ONE);
-			nvgFillColor(args.vg, nvgRGB(255, 255, 255));
-			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, 50, 100, 45);
-			nvgFill(args.vg);
-
-			nvgFillColor(args.vg, nvgRGB(50, 50, 50));
-			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, 50, 50, 45);
-			nvgFill(args.vg);
-		}));*/
+		addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
+			std::string theme = module ? module->theme : "";
+			for (size_t i = 1; i < 8; i++) {
+				nvgBeginPath(args.vg);
+				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 29);
+				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 350);
+				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
+				nvgStrokeWidth(args.vg, 2.5);
+				nvgStroke(args.vg);
+			}
+			for (size_t i = 1; i < 16; i++) {
+				nvgBeginPath(args.vg);
+				nvgMoveTo(args.vg, 10, (RACK_GRID_HEIGHT/16) * i);
+				nvgLineTo(args.vg, 110, (RACK_GRID_HEIGHT/16) * i);
+				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
+				nvgStrokeWidth(args.vg, 2.5);
+				nvgStroke(args.vg);
+			}
+		}));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
