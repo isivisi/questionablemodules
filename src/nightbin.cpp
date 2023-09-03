@@ -326,7 +326,7 @@ struct NightBinWidget : QuestionableWidget {
 			for (QRemotePluginInfo info : gatheredInfo) {
 				if (!info.updatable()) return;
 				menu->addChild(createMenuItem(info.name, info.version, [=]() {
-					
+					startUpdateThread(std::vector<QRemotePluginInfo>{info});
 				}));
 			}
 			gathering.unlock();
