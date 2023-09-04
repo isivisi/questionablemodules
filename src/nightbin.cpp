@@ -327,22 +327,22 @@ struct NightBinWidget : QuestionableWidget {
 		
 		if (module) setupMenuBar();
 
-		addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
+		addChild(new QuestionableDrawWidget(Vec((MODULE_SIZE * RACK_GRID_WIDTH)/2, RACK_GRID_HEIGHT/2), [module](const DrawArgs &args) {
 			std::string theme = module ? module->theme : "";
-			for (size_t i = 1; i < 8; i++) {
+			for (int i = -4; i < 4; i++) {
 				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 29);
-				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 350);
+				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, -150);
+				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 150);
 				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
-				nvgStrokeWidth(args.vg, 1);
+				nvgStrokeWidth(args.vg, 2);
 				nvgStroke(args.vg);
 			}
-			for (size_t i = 1; i < 16; i++) {
+			for (int i = -9; i <= 9; i++) {
 				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, 10, (RACK_GRID_HEIGHT/16) * i);
-				nvgLineTo(args.vg, 110, (RACK_GRID_HEIGHT/16) * i);
+				nvgMoveTo(args.vg, -55, (RACK_GRID_HEIGHT/25) * i);
+				nvgLineTo(args.vg, 55, (RACK_GRID_HEIGHT/25) * i);
 				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
-				nvgStrokeWidth(args.vg, 1);
+				nvgStrokeWidth(args.vg, 2);
 				nvgStroke(args.vg);
 			}
 		}));
