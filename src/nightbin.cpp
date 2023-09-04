@@ -14,8 +14,6 @@
 
 const int MODULE_SIZE = 8;
 
-
-
 struct NightBin : QuestionableModule {
 	enum ParamId {
 		PARAMS_LEN
@@ -29,8 +27,6 @@ struct NightBin : QuestionableModule {
 	enum LightId {
 		LIGHTS_LEN
 	};
-
-	std::string gitPersonalAccessToken = userSettings.getSetting<std::string>("gitPersonalAccessToken");
 
 	NightBin() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -65,11 +61,14 @@ struct NightBin : QuestionableModule {
 };
 
 struct NightbinButton : ui::Button {
-	//NotificationIcon* notification;
+	std::mutex gathering;
+	std::mutex updating;
+	std::thread gatherThread;
+	std::thread updateThread;
+	bool isUpdating;
+	float progress;
 
 	NightbinButton() {
-		//notification = new NotificationIcon;
-		//addChild(notification);
 		text = "Nightbin";
 	}
 
@@ -88,91 +87,7 @@ struct NightbinButton : ui::Button {
 		Widget::draw(args);
 	}
 
-	void onAction(const ActionEvent& e) override {
-		ui::Menu* menu = createMenu();
-		menu->cornerFlags = BND_CORNER_TOP;
-		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
-
-		menu->addChild(createMenuItem("test", "", [=]() {
-			
-		}));
-	}
-};
-
-struct NightBinWidget : QuestionableWidget {
-	ColorBGSimple* background = nullptr;
-	
-	std::mutex gathering;
-	std::mutex updating;
-	std::thread gatherThread;
-	std::thread updateThread;
-	bool isUpdating;
-	float progress;
-
-	void setText() {
-		NVGcolor c = nvgRGB(255,255,255);
-		color->textList.clear();
-		color->addText("NIGHT-BIN", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
-		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
-	}
-
-	NightBinWidget(NightBin* module) {
-		setModule(module);
-
-		background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(150, 173, 233));
-
-		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
-		color->drawBackground = false;
-		setText();
-
-		backgroundColorLogic(module);
-		setPanel(background);
-		addChild(color);
-		
-		setupMenuBar();
-
-		addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
-			std::string theme = module ? module->theme : "";
-			for (size_t i = 1; i < 8; i++) {
-				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 29);
-				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 350);
-				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
-				nvgStrokeWidth(args.vg, 1);
-				nvgStroke(args.vg);
-			}
-			for (size_t i = 1; i < 16; i++) {
-				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, 10, (RACK_GRID_HEIGHT/16) * i);
-				nvgLineTo(args.vg, 110, (RACK_GRID_HEIGHT/16) * i);
-				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
-				nvgStrokeWidth(args.vg, 1);
-				nvgStroke(args.vg);
-			}
-		}));
-
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-		//startQueryThread();
-	}
-
-	// try to add our own menu item to the main rack bar
-	void setupMenuBar() {
-		auto rackLayout = std::find_if(APP->scene->menuBar->children.begin(), APP->scene->menuBar->children.end(), [=](widget::Widget* widget) {
-			return dynamic_cast<ui::SequentialLayout*>(widget) != nullptr;
-		});
-		if (rackLayout != APP->scene->menuBar->children.end()) {
-			NightbinButton* menuButton = new NightbinButton;
-			(*rackLayout)->addChildBelow(menuButton, (*rackLayout)->children.back());
-			Widget::DirtyEvent eDirty;
-			(*rackLayout)->onDirty(eDirty);
-		} else WARN("Unable to add to racks menubar, could not find ui::SequentialLayout reference.");
-	}
-
-    struct QRemotePluginInfo {
+	struct QRemotePluginInfo {
         std::string name;
         std::string slug;
         std::string version;
@@ -284,7 +199,7 @@ struct NightBinWidget : QuestionableWidget {
 
 	void startQueryThread() {
 		if (gatherThread.joinable()) gatherThread.detach(); // let go of existing thread as it is either done or will finish on its own
-		gatherThread = std::thread(&NightBinWidget::queryForUpdates, this);
+		gatherThread = std::thread(&NightbinButton::queryForUpdates, this);
 	}
 
 	void startUpdateThread(std::vector<QRemotePluginInfo> updates) {
@@ -337,13 +252,11 @@ struct NightBinWidget : QuestionableWidget {
 		}
     }
 
-    void appendContextMenu(Menu *menu) override
-  	{
-        QuestionableWidget::appendContextMenu(menu);
+	void onAction(const ActionEvent& e) override {
+		ui::Menu* menu = createMenu();
+		menu->cornerFlags = BND_CORNER_TOP;
+		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
-		NightBin* mod = (NightBin*)module;
-		menu->addChild(new MenuSeparator);
-		
 		if (!userSettings.getSetting<std::string>("gitPersonalAccessToken").size()) {
 			menu->addChild(rack::createMenuLabel("Github Access Token:"));
 
@@ -376,7 +289,7 @@ struct NightBinWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Query for Updates", "",[=]() { startQueryThread(); }));
 			for (QRemotePluginInfo info : gatheredInfo) {
 				if (!info.updatable()) return;
-				menu->addChild(createMenuItem(info.name, info.version, [=]() {
+				menu->addChild(createMenuItem(info.name, info.pluginRef->version + " → " + info.version, [=]() {
 					startUpdateThread(std::vector<QRemotePluginInfo>{info});
 				}));
 			}
@@ -384,7 +297,81 @@ struct NightBinWidget : QuestionableWidget {
 		} else {
 			menu->addChild(createMenuItem("Checking for updates..."));
 		}
+	}
+};
 
+struct NightBinWidget : QuestionableWidget {
+	ColorBGSimple* background = nullptr;
+
+	void setText() {
+		NVGcolor c = nvgRGB(255,255,255);
+		color->textList.clear();
+		color->addText("NIGHT-BIN", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
+	}
+
+	NightBinWidget(NightBin* module) {
+		setModule(module);
+
+		background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(150, 173, 233));
+
+		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+		color->drawBackground = false;
+		setText();
+
+		backgroundColorLogic(module);
+		setPanel(background);
+		addChild(color);
+		
+		if (module) setupMenuBar();
+
+		addChild(new QuestionableDrawWidget(Vec(0, 0), [module](const DrawArgs &args) {
+			std::string theme = module ? module->theme : "";
+			for (size_t i = 1; i < 8; i++) {
+				nvgBeginPath(args.vg);
+				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 29);
+				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 350);
+				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
+				nvgStrokeWidth(args.vg, 1);
+				nvgStroke(args.vg);
+			}
+			for (size_t i = 1; i < 16; i++) {
+				nvgBeginPath(args.vg);
+				nvgMoveTo(args.vg, 10, (RACK_GRID_HEIGHT/16) * i);
+				nvgLineTo(args.vg, 110, (RACK_GRID_HEIGHT/16) * i);
+				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(30, 30, 30));
+				nvgStrokeWidth(args.vg, 1);
+				nvgStroke(args.vg);
+			}
+		}));
+
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+
+		//startQueryThread();
+	}
+
+	// try to add our own menu item to the main rack bar
+	void setupMenuBar() {
+		auto rackLayout = std::find_if(APP->scene->menuBar->children.begin(), APP->scene->menuBar->children.end(), [=](widget::Widget* widget) {
+			return dynamic_cast<ui::SequentialLayout*>(widget) != nullptr;
+		});
+		if (rackLayout != APP->scene->menuBar->children.end()) {
+			auto existing = std::find_if((*rackLayout)->children.begin(), (*rackLayout)->children.end(), [=](widget::Widget* widget) {
+				return dynamic_cast<NightbinButton*>(widget) != nullptr;
+			});
+			if (existing != (*rackLayout)->children.end()) return;
+			
+			NightbinButton* menuButton = new NightbinButton;
+			(*rackLayout)->addChildBelow(menuButton, (*rackLayout)->children.back());
+		} else WARN("Unable to add to racks menubar, could not find ui::SequentialLayout reference.");
+	}
+
+    void appendContextMenu(Menu *menu) override
+  	{
+        QuestionableWidget::appendContextMenu(menu);
 	}
 
 };
