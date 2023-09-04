@@ -161,13 +161,14 @@ struct NightBinWidget : QuestionableWidget {
 
 	// try to add our own menu item to the main rack bar
 	void setupMenuBar() {
-		NightbinButton* menuButton = new NightbinButton;
 		auto rackLayout = std::find_if(APP->scene->menuBar->children.begin(), APP->scene->menuBar->children.end(), [=](widget::Widget* widget) {
 			return dynamic_cast<ui::SequentialLayout*>(widget) != nullptr;
 		});
 		if (rackLayout != APP->scene->menuBar->children.end()) {
-			(*rackLayout)->addChild(menuButton);
-			(*rackLayout)->step();
+			NightbinButton* menuButton = new NightbinButton;
+			(*rackLayout)->addChildBelow(menuButton, (*rackLayout)->children.back());
+			Widget::DirtyEvent eDirty;
+			(*rackLayout)->onDirty(eDirty);
 		} else WARN("Unable to add to racks menubar, could not find ui::SequentialLayout reference.");
 	}
 
