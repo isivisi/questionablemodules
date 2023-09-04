@@ -47,10 +47,10 @@ struct BackgroundWidget : Widget {
 	    math::Vec max = args.clipBox.getBottomRight();
         nvgFillColor(args.vg, color);
 		nvgBeginPath(args.vg);
-		nvgRoundedRect(args.vg, min.x, min.y, max.x, max.y);
+		nvgRect(args.vg, min.x, min.y, max.x, max.y);
 		nvgFill(args.vg);
     }
-}
+};
 
 struct GreenscreenWidget : QuestionableWidget {
     ColorBGSimple* background = nullptr;
@@ -80,14 +80,17 @@ struct GreenscreenWidget : QuestionableWidget {
 		//addChild(new QuestionableDrawWidget(Vec(18, 100), [module](const DrawArgs &args) {
 		//}));
         
-        // sneak our own background widget after the rail widget.
-        auto railWidget = std::find_if(APP->scene->rack->children.begin(), APP->scene->rack->children.end(), [=](widget::Widget* widget) {
-			return dynamic_cast<RailWidget*>(widget) != nullptr;
-		});
-		if (railWidget != APP->scene->rack->children.begin()) {
-			newBackground = new BackgroundWidget;
-			(*rackWidget)->addChildBelow(newBackground, (*railWidget));
-		} else WARN("Unable to find railWidget");
+        if (module) {
+            // sneak our own background widget after the rail widget.
+            auto railWidget = std::find_if(APP->scene->rack->children.begin(), APP->scene->rack->children.end(), [=](widget::Widget* widget) {
+                return dynamic_cast<RailWidget*>(widget) != nullptr;
+            });
+            if (railWidget != APP->scene->rack->children.end()) {
+                newBackground = new BackgroundWidget;
+                newBackground->color = nvgRGB(0, 175, 26);
+                APP->scene->rack->addChildAbove(newBackground, *railWidget);
+            } else WARN("Unable to find railWidget");
+        }
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
