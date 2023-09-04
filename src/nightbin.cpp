@@ -102,7 +102,7 @@ struct NightbinButton : ui::Button {
 
 			static LinkInfo getLinkInfo(std::string link) {
 				// example: download/Nightly/questionablemodules-2.1.10-nightly-7ce3a21-lin-x64.vcvplugin
-				std::regex r(R"(-([0-9.\-]*.*(lin|win|mac)-(x64|arm64)))");
+				std::regex r(R"(-([0-9.\-]*.*)-(lin|win|mac)-(x64|arm64))");
 				std::smatch match;
 				if (std::regex_search(link, match, r)) {
 					if (match.size() >= 4) return {match[1].str(), match[2].str(), match[3].str(), link};
@@ -152,7 +152,9 @@ struct NightbinButton : ui::Button {
 		std::smatch match;
 		if (std::regex_search(plugin->sourceUrl, match, r)) {
 			if (match.size()<2) return "";
-			return "https://api.github.com/repos/" + match[1].str();
+			std::string gitInfo = match[1].str();
+			if (gitInfo.find_last_of("/") == gitInfo.size()-1) gitInfo.pop_back();
+			return "https://api.github.com/repos/" + gitInfo;
 		}
 		return "";
 	}
