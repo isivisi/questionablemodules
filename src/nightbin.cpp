@@ -70,6 +70,8 @@ struct NightbinButton : ui::Button {
 
 	NightbinButton() {
 		text = "Nightbin";
+
+		startQueryThread();
 	}
 
 	void step() override {
@@ -85,6 +87,16 @@ struct NightbinButton : ui::Button {
 			state = BND_ACTIVE;
 		bndMenuItem(args.vg, 0.0, 0.0, box.size.x, box.size.y, state, -1, text.c_str());
 		Widget::draw(args);
+
+		if (gatheredInfo.size()) {
+			nvgBeginPath(args.vg);
+			float radius = 4;
+			nvgCircle(args.vg, radius, radius, radius);
+			nvgFillColor(args.vg, nvgRGBf(1.0, 0.0, 0.0));
+			nvgFill(args.vg);
+			nvgStrokeColor(args.vg, nvgRGBf(0.5, 0.0, 0.0));
+			nvgStroke(args.vg);
+		}
 	}
 
 	struct QRemotePluginInfo {
@@ -252,7 +264,8 @@ struct NightbinButton : ui::Button {
 				}
 			}
 
-			gatheredInfo.push_back(QRemotePluginInfo::fromJson(request, plugin));
+			QRemotePluginInfo pluginInfo = QRemotePluginInfo::fromJson(request, plugin);
+			if (pluginInfo.updatable()) gatheredInfo.push_back(pluginInfo);
 		}
     }
 
@@ -291,13 +304,13 @@ struct NightbinButton : ui::Button {
 
 		menu->addChild(new MenuSeparator);
 		if (gathering.try_lock()) {
+			gathering.unlock();
 			for (QRemotePluginInfo info : gatheredInfo) {
 				if (!info.updatable()) return;
 				menu->addChild(createMenuItem(info.name, info.pluginRef->version + " → " + info.version, [=]() {
 					startUpdateThread(std::vector<QRemotePluginInfo>{info});
 				}));
 			}
-			gathering.unlock();
 		} else {
 			menu->addChild(createMenuItem("Checking for updates..."));
 		}
