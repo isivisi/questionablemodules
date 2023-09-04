@@ -4,6 +4,7 @@
 #include "questionableModule.hpp"
 #include <vector>
 #include <algorithm>
+#include <app/RailWidget.hpp>
 
 const int MODULE_SIZE = 3;
 
@@ -34,7 +35,26 @@ struct Greenscreen : QuestionableModule {
 
 };
 
+struct BackgroundWidget : Widget {
+    NVGcolor color;
+
+    BackgroundWidget() {
+
+    }
+
+    void draw(const DrawArgs& args) {
+        math::Vec min = args.clipBox.getTopLeft();
+	    math::Vec max = args.clipBox.getBottomRight();
+        nvgFillColor(args.vg, color);
+		nvgBeginPath(args.vg);
+		nvgRoundedRect(args.vg, min.x, min.y, max.x, max.y);
+		nvgFill(args.vg);
+    }
+}
+
 struct GreenscreenWidget : QuestionableWidget {
+    ColorBGSimple* background = nullptr;
+    BackgroundWidget* newBackground = nullptr;
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
@@ -46,11 +66,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
 
-		backdrop = new ImagePanel();
-		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		//backdrop->imagePath = asset::plugin(pluginInstance, "res/backdrop.jpg");
-		backdrop->scalar = 3.5;
-		backdrop->visible = true;
+        background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(0, 175, 26));
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
@@ -58,11 +74,20 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		backgroundColorLogic(module);
 		
-		setPanel(backdrop);
+		setPanel(background);
 		addChild(color);
 
 		//addChild(new QuestionableDrawWidget(Vec(18, 100), [module](const DrawArgs &args) {
 		//}));
+        
+        // sneak our own background widget after the rail widget.
+        auto railWidget = std::find_if(APP->scene->rack->children.begin(), APP->scene->rack->children.end(), [=](widget::Widget* widget) {
+			return dynamic_cast<RailWidget*>(widget) != nullptr;
+		});
+		if (railWidget != APP->scene->rack->children.begin()) {
+			newBackground = new BackgroundWidget;
+			(*rackWidget)->addChildBelow(newBackground, (*railWidget));
+		} else WARN("Unable to find railWidget");
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));

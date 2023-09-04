@@ -47,6 +47,13 @@
       "description": "Grab nightly builds of your favorite plugins",
       "manualUrl": "https://isivisi.github.io/questionablemodules/nightbin",
       "tags": ["Utility"]
+    },
+    {
+      "slug": "greenscreen",
+      "name": "Greenscreen",
+      "description": "Changes the rack background color",
+      "manualUrl": "https://isivisi.github.io/questionablemodules/greenscreen",
+      "tags": ["Utility"]
     }
   ]
 }
