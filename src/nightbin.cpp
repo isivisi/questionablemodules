@@ -65,16 +65,18 @@ struct NightbinButton : ui::Button {
 	std::mutex updating;
 	std::thread gatherThread;
 	std::thread updateThread;
-	bool isUpdating;
-	float progress;
+	bool isUpdating = false;
+	float progress = 0.f;
 
 	NightbinButton() {
-		text = "Nightbin";
+		text = "Night-Bin";
 
 		startQueryThread();
 	}
 
 	void step() override {
+		if (isUpdating) text = "Updating... (%" + std::to_string((int)(progress*100)) + ")";
+		else text = "Night-Bin";
 		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
 		Widget::step();
 	}
