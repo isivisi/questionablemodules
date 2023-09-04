@@ -284,11 +284,11 @@ struct NightbinButton : ui::Button {
 			 }
 		}));
 
-		menu->addChild(createMenuItem("Update All", "",[=]() { startUpdateThread(gatheredInfo); }));
+		if (gatheredInfo.size()) menu->addChild(createMenuItem("Update All", "",[=]() { startUpdateThread(gatheredInfo); }));
+		menu->addChild(createMenuItem("Query for Updates", "",[=]() { startQueryThread(); }));
 
 		menu->addChild(new MenuSeparator);
 		if (gathering.try_lock()) {
-			menu->addChild(createMenuItem("Query for Updates", "",[=]() { startQueryThread(); }));
 			for (QRemotePluginInfo info : gatheredInfo) {
 				if (!info.updatable()) return;
 				menu->addChild(createMenuItem(info.name, info.pluginRef->version + " → " + info.version, [=]() {
