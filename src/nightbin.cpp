@@ -142,9 +142,9 @@ struct NightbinButton : ui::Button {
 			return version != "" && pluginRef->version != version;
 		}
 
-        json_t* toJson() {
-
-        }
+        bool operator==(const QRemotePluginInfo other) {
+			return other.slug == slug;
+		}
     };
 
 	std::string getRepoAPI(Plugin* plugin) {
@@ -194,6 +194,8 @@ struct NightbinButton : ui::Button {
 		INFO("Downloading %s to %s", info.name.c_str(), packagePath.c_str());
 		if (!network::requestDownload(info.dlURL, packagePath, &progress, cookies)) {
 			WARN("Download failed :(");
+		} else {
+			gatheredInfo.erase(std::find(gatheredInfo.begin(), gatheredInfo.end(), info));
 		}
 	}
 
