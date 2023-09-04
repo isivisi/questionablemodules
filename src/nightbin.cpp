@@ -329,7 +329,7 @@ struct NightBinWidget : QuestionableWidget {
 
 		addChild(new QuestionableDrawWidget(Vec((MODULE_SIZE * RACK_GRID_WIDTH)/2, RACK_GRID_HEIGHT/2), [module](const DrawArgs &args) {
 			std::string theme = module ? module->theme : "";
-			for (int i = -4; i < 4; i++) {
+			for (int i = -3; i <= 3; i++) {
 				nvgBeginPath(args.vg);
 				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, -150);
 				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 150);
