@@ -329,11 +329,15 @@ struct NightBinWidget : QuestionableWidget {
 
 		addChild(new QuestionableDrawWidget(Vec((MODULE_SIZE * RACK_GRID_WIDTH)/2, RACK_GRID_HEIGHT/2), [module](const DrawArgs &args) {
 			std::string theme = module ? module->theme : "";
+			NVGcolor color;
+			if (theme == "") color = nvgRGB(250, 250, 250);
+			else if (theme == "Dark") color = nvgRGB(150, 150, 150);
+			else if (theme == "Light") color = nvgRGB(55, 55, 55);
 			for (int i = -3; i <= 3; i++) {
 				nvgBeginPath(args.vg);
 				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, -150);
 				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 150);
-				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(55, 55, 55));
+				nvgStrokeColor(args.vg, color);
 				nvgStrokeWidth(args.vg, 2);
 				nvgStroke(args.vg);
 			}
@@ -341,7 +345,7 @@ struct NightBinWidget : QuestionableWidget {
 				nvgBeginPath(args.vg);
 				nvgMoveTo(args.vg, -55, (RACK_GRID_HEIGHT/25) * i);
 				nvgLineTo(args.vg, 55, (RACK_GRID_HEIGHT/25) * i);
-				nvgStrokeColor(args.vg, (theme == "Dark" || theme == "") ? nvgRGB(250, 250, 250) : nvgRGB(55, 55, 55));
+				nvgStrokeColor(args.vg, color);
 				nvgStrokeWidth(args.vg, 2);
 				nvgStroke(args.vg);
 			}
