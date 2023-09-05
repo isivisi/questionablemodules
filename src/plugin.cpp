@@ -9,7 +9,9 @@ UserSettings userSettings("questionablemodules.json", [](json_t* json) {
 
 	UserSettings::json_create_if_not_exists(json, "theme", json_string(""));
 	UserSettings::json_create_if_not_exists(json, "treequencerScreenColor", json_integer(0));
-	UserSettings::json_create_if_not_exists(json, "showDescriptors", json_boolean(false));
+	UserSettings::json_create_if_not_exists(json, "showDescriptors", json_boolean(true));
+	UserSettings::json_create_if_not_exists(json, "gitPersonalAccessToken", json_string(""));
+	UserSettings::json_create_if_not_exists(json, "nightbinSelectedPlugins", json_array());
 
 	return json;
 }, migrations);
@@ -22,6 +24,8 @@ void init(Plugin* p) {
 	p->addModel(modelDiscombobulator);
 	p->addModel(modelTreequencer);
 	p->addModel(modelQuatOSC);
+	p->addModel(modelNightBin);
+	p->addModel(modelGreenscreen);
 
 	// Any other plugin initialization may go here.
 	// As an alternative, consider lazy-loading assets and lookup tables when your module is created to reduce startup times of Rack.

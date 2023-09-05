@@ -13,3 +13,5 @@ extern Model* modelNandomizer;
 extern Model* modelDiscombobulator;
 extern Model* modelTreequencer;
 extern Model* modelQuatOSC;
+extern Model* modelNightBin;
+extern Model* modelGreenscreen;

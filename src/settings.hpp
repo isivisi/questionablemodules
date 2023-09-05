@@ -6,6 +6,7 @@ using namespace rack;
 #include <string>
 #include <fstream>
 #include <stdexcept>
+#include <mutex>
 
 // https://stackoverflow.com/questions/17032310/how-to-make-a-variadic-is-same
 template <class T, class... Ts>
@@ -13,6 +14,7 @@ struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
 
 // Global module settings
 struct UserSettings {
+	std::mutex lock;
 	enum Version {
 		LATEST // define migrations above
 	};
@@ -52,7 +54,8 @@ struct UserSettings {
 
 	template <typename T>
 	T getSetting(std::string setting, json_t* settings=nullptr) {
-		static_assert(is_any<T, int, bool, float, std::string>::value, "getSetting has no function defined for type");
+		std::lock_guard<std::mutex> guard(lock);
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "getSetting has no function defined for type");
 
 		if (!settings) settings = readSettings();
 
@@ -60,13 +63,15 @@ struct UserSettings {
 		if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json_object_get(settings, setting.c_str()));
 		if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(settings, setting.c_str()));
 		if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(settings, setting.c_str()));
+		if constexpr (std::is_same<T, json_t*>::value) return json_object_get(settings, setting.c_str());
 
 		throw std::runtime_error("QuestionableModules::UserSettings::getSetting function for type not defined. :(");
 	}
 
 	template <typename T>
 	void setSetting(std::string setting, T value) {
-		static_assert(is_any<T, int, bool, float, std::string>::value, "setSetting has no function defined for type");
+		std::lock_guard<std::mutex> guard(lock);
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setSetting has no function defined for type");
 
 		json_t* v = nullptr;
 
@@ -74,6 +79,7 @@ struct UserSettings {
 		if constexpr (std::is_same<T, bool>::value) v = json_boolean(value);
 		if constexpr (std::is_same<T, float>::value) v = json_real(value);
 		if constexpr (std::is_same<T, std::string>::value) v = json_string(value.c_str());
+		if constexpr (std::is_same<T, json_t*>::value) v = value;
 
 		if (v) {
 			json_t* settings = readSettings();
@@ -84,6 +90,47 @@ struct UserSettings {
 		}
 		
 		throw std::runtime_error("QuestionableModules::UserSettings::setSetting function for type not defined. :(");
+	}
+
+	template<typename T>
+	std::vector<T> getArraySetting(std::string setting, json_t* settings=nullptr) {
+		std::lock_guard<std::mutex> guard(lock);
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setArraySetting has no function defined for type");
+
+		if (!settings) settings = readSettings();
+		std::vector<T> ret;
+
+		size_t index;
+		json_t* value;
+		json_t* array = json_object_get(settings, setting.c_str());
+		json_array_foreach(array, index, value) {
+			if constexpr (std::is_same<T, int>::value) ret.push_back(json_integer_value(value));
+			if constexpr (std::is_same<T, bool>::value) ret.push_back(json_boolean_value(value));
+			if constexpr (std::is_same<T, float>::value) ret.push_back(json_real_value(value));
+			if constexpr (std::is_same<T, std::string>::value) ret.push_back(json_string_value(value));
+			if constexpr (std::is_same<T, json_t*>::value) ret.push_back(value);
+		}
+
+		return ret;
+	}
+
+	template<typename T>
+	void setArraySetting(std::string setting, std::vector<T> value) {
+		std::lock_guard<std::mutex> guard(lock);
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setArraySetting has no function defined for type");
+		json_t* settings = readSettings();
+
+		json_t* array = json_array();
+		for (size_t i = 0; i < value.size(); i++) {
+			if constexpr (std::is_same<T, int>::value) json_array_append_new(array, json_integer(value[i]));
+			if constexpr (std::is_same<T, bool>::value) json_array_append_new(array, json_boolean(value[i]));
+			if constexpr (std::is_same<T, float>::value) json_array_append_new(array, json_real(value[i]));
+			if constexpr (std::is_same<T, std::string>::value) json_array_append_new(array, json_string(value[i].c_str()));
+			if constexpr (std::is_same<T, json_t*>::value) json_array_append_new(array, value[i]);
+		}
+
+		json_object_set(settings, setting.c_str(), array);
+		saveSettings(settings);
 	}
 
 	private:

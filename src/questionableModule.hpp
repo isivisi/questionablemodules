@@ -9,6 +9,9 @@
 
 struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
+	bool supportsThemes = true;
+	bool toggleableDescriptors = true;
+
 	float sampleRateOverride = 0;
 	bool runHalfRate = false;
 	int64_t frame = 0;
@@ -58,8 +61,8 @@ struct QuestionableThemed {
 };
 
 struct QuestionableWidget : ModuleWidget {
-	ImagePanel *backdrop;
-	ColorBG* color;
+	ImagePanel *backdrop = nullptr;
+	ColorBG* color = nullptr;
 	bool lastPreferDark = false;
 
 	QuestionableWidget() {
@@ -118,23 +121,27 @@ struct QuestionableWidget : ModuleWidget {
 			}));
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Default", mod->theme == "" ? "•" : "",[=]() {
-				setWidgetTheme("");
+		if (mod->supportsThemes) {
+			menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
+				menu->addChild(createMenuItem("Default", mod->theme == "" ? "•" : "",[=]() {
+					setWidgetTheme("");
+				}));
+				menu->addChild(createMenuItem("Boring", mod->theme == "Light" ? "•" : "", [=]() {
+					setWidgetTheme("Light");
+				}));
+				menu->addChild(createMenuItem("Boring but Dark", mod->theme == "Dark" ? "•" : "", [=]() {
+					setWidgetTheme("Dark");
+				}));
 			}));
-			menu->addChild(createMenuItem("Boring", mod->theme == "Light" ? "•" : "", [=]() {
-				setWidgetTheme("Light");
-			}));
-			menu->addChild(createMenuItem("Boring but Dark", mod->theme == "Dark" ? "•" : "", [=]() {
-				setWidgetTheme("Dark");
-			}));
-		}));
+		}
 
-		menu->addChild(createMenuItem("Toggle Descriptors", "", [=]() {
-			mod->showDescriptors = !mod->showDescriptors;
-			color->setTextGroupVisibility("descriptor", mod->showDescriptors);
-			userSettings.setSetting<bool>("showDescriptors", mod->showDescriptors);
-		}));
+		if (mod->toggleableDescriptors) {
+			menu->addChild(createMenuItem("Toggle Descriptors", "", [=]() {
+				mod->showDescriptors = !mod->showDescriptors;
+				color->setTextGroupVisibility("descriptor", mod->showDescriptors);
+				userSettings.setSetting<bool>("showDescriptors", mod->showDescriptors);
+			}));
+		}
 
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
