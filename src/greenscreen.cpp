@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <app/RailWidget.hpp>
 
-const int MODULE_SIZE = 3;
+const int MODULE_SIZE = 8;
 
 struct Greenscreen : QuestionableModule {
 	enum ParamId {
@@ -22,6 +22,9 @@ struct Greenscreen : QuestionableModule {
 		LIGHTS_LEN
 	};
 
+    NVGcolor color = nvgRGB(4, 244, 4);
+    bool showText = true;
+
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		
@@ -29,8 +32,19 @@ struct Greenscreen : QuestionableModule {
 
 	void process(const ProcessArgs& args) override {
 
-		
+	}
 
+    json_t* dataToJson() override {
+		json_t* rootJ = json_object();
+		json_object_set_new(rootJ, "colorR", json_integer(color.r));
+        json_object_set_new(rootJ, "colorG", json_integer(color.g));
+        json_object_set_new(rootJ, "colorB", json_integer(color.b));
+		json_object_set_new(rootJ, "showText", json_boolean(showText));
+		return rootJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
 	}
 
 };
@@ -63,10 +77,17 @@ struct GreenscreenWidget : QuestionableWidget {
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
+    changeColor(NVGcolor c) {
+        background->color = c;
+        background->stroke = c;
+        if (newBackground) newBackground->color = c;
+        ((Greenscreen*)module)->color = c;
+    }
+
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
 
-        background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(0, 175, 26));
+        background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
@@ -90,12 +111,33 @@ struct GreenscreenWidget : QuestionableWidget {
                 newBackground->color = nvgRGB(0, 175, 26);
                 APP->scene->rack->addChildAbove(newBackground, *railWidget);
             } else WARN("Unable to find railWidget");
+
+            color->setTextGroupVisibility("descriptor", module->showText);
+            changeColor(module->color);
         }
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	}
+
+     void appendContextMenu(Menu *menu) override
+  	{
+        QuestionableWidget::appendContextMenu(menu);
+
+        Greenscreen* mod = (Greenscreen*)module;
+
+        menu->addChild(createMenuItem("Toggle Text", "",[=]() {
+            mod->showText = !mod->showText;
+			color->setTextGroupVisibility("default", mod->showText);
+		}));
+
+        /*ui::TextField* param = new QTextField([=](std::string text) {
+			if (text.length()) changeColor();
+		});
+		param->box.size.x = 100;
+		menu->addChild(param);*/
 	}
 
 };

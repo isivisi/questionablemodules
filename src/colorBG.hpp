@@ -49,12 +49,12 @@ struct ColorBG : Widget {
 	std::string currTheme = "";
 
 	struct drawableText {
-		std::string text;
-		std::string font;
+		std::string text = "";
+		std::string font = "";
 		std::string group = "default";
 		bool enabled = true;
-		NVGcolor color;
-		float size;
+		NVGcolor color = nvgRGB(255,255,255);
+		float size = 1;
 		Vec pos;
 	};
 	std::vector<drawableText> textList;
