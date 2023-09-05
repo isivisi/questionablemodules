@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <app/RailWidget.hpp>
 
-const int MODULE_SIZE = 8;
+const int MODULE_SIZE = 3;
 
 struct Greenscreen : QuestionableModule {
 	enum ParamId {
@@ -63,7 +63,7 @@ struct BackgroundWidget : Widget {
 
     }
 
-    void draw(const DrawArgs& args) {
+    void draw(const DrawArgs& args) override {
         math::Vec min = args.clipBox.getTopLeft();
 	    math::Vec max = args.clipBox.getBottomRight();
         nvgFillColor(args.vg, color);
@@ -95,7 +95,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
+		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 12, 100), "default", nvgDegToRad(90.f));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 

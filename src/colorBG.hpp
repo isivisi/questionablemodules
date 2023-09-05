@@ -56,6 +56,7 @@ struct ColorBG : Widget {
 		NVGcolor color = nvgRGB(255,255,255);
 		float size = 1;
 		Vec pos;
+		float rotation;
 	};
 	std::vector<drawableText> textList;
 
@@ -75,8 +76,8 @@ struct ColorBG : Widget {
 		}
 	}
 
-	void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default") {
-		textList.push_back(drawableText{text,font,group,true,color,size,pos});
+	void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default", float rotation = 0) {
+		textList.push_back(drawableText{text,font,group,true,color,size,pos, rotation});
 	}
 
 	void setTextGroupVisibility(std::string group, bool visibility) {
@@ -106,12 +107,16 @@ struct ColorBG : Widget {
 				if (textDef.enabled) {
 					std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/") + textDef.font));
 					if (!font) return;
+					nvgSave(args.vg);
+					nvgTranslate(args.vg, textDef.pos.x, textDef.pos.y);
+					nvgRotate(args.vg, textDef.rotation);
 					nvgFontFaceId(args.vg, font->handle);
 					nvgTextLetterSpacing(args.vg, 0.0);
 					nvgFontSize(args.vg, textDef.size);
 					nvgFillColor(args.vg, textDef.color);
 					nvgTextAlign(args.vg, NVGalign::NVG_ALIGN_CENTER);
-					nvgText(args.vg, textDef.pos.x, textDef.pos.y, textDef.text.c_str(), NULL);
+					nvgText(args.vg, 0, 0, textDef.text.c_str(), NULL);
+					nvgRestore(args.vg);
 				}
 			}
 		}
