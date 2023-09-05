@@ -3,6 +3,7 @@
 #include "imagepanel.cpp"
 #include "textfield.cpp"
 #include "colorBG.hpp"
+#include "common.hpp"
 #include "questionableModule.hpp"
 #include <vector>
 #include <algorithm>
@@ -67,6 +68,7 @@ struct NightbinButton : ui::Button {
 	std::thread updateThread;
 	bool isUpdating = false;
 	float progress = 0.f;
+	std::vector<std::string> warnings;
 
 	NightbinButton() {
 		text = "Night-Bin";
@@ -159,6 +161,10 @@ struct NightbinButton : ui::Button {
         bool operator==(const QRemotePluginInfo other) {
 			return other.slug == slug;
 		}
+
+		bool operator==(const Plugin* plug) {
+			return plug->slug == slug;
+		}
     };
 
 	std::string getRepoAPI(Plugin* plugin) {
@@ -195,6 +201,13 @@ struct NightbinButton : ui::Button {
 		}
 	}
 
+	void removePlugin(std::string slug) {
+		std::vector<std::string> plugins = userSettings.getArraySetting<std::string>("nightbinSelectedPlugins");
+		auto it = std::remove(plugins.begin(), plugins.end(), slug);
+		plugins.erase(it);
+		userSettings.setArraySetting<std::string>("nightbinSelectedPlugins", plugins);
+	}
+
 	void downloadUpdate(QRemotePluginInfo info) {
 		system::setThreadName("Nightbin Update Thread for " + info.name);
 		std::lock_guard<std::mutex> guard(updating);
@@ -202,13 +215,13 @@ struct NightbinButton : ui::Button {
 		DEFER({isUpdating = false;});
 
 		network::CookieMap cookies;
-		cookies["Authorization"] = userSettings.getSetting<std::string>("gitPersonalAccessToken");
+		std::vector<std::string> headers = getAuth();
 
 		std::string filename = info.dlURL.substr(info.dlURL.rfind('/')+1);
 		std::string packagePath = system::join(plugin::pluginsPath, filename);
 
 		INFO("Downloading %s to %s", info.name.c_str(), packagePath.c_str());
-		if (!network::requestDownload(info.dlURL, packagePath, &progress, cookies)) {
+		if (!q::network::requestDownload(info.dlURL, packagePath, &progress, headers, cookies)) {
 			WARN("Download failed :(");
 		} else {
 			gatheredInfo.erase(std::find(gatheredInfo.begin(), gatheredInfo.end(), info));
@@ -226,6 +239,12 @@ struct NightbinButton : ui::Button {
 			INFO("Updating plugins");
 			for (size_t i = 0; i < updates.size(); i++) downloadUpdate(updates[i]);
 		});
+	}
+
+	std::vector<std::string> getAuth() {
+		std::vector<std::string> headers;
+		headers.push_back("Authorization: Bearer " + userSettings.getSetting<std::string>("gitPersonalAccessToken"));
+		return headers;
 	}
 
 	std::vector<QRemotePluginInfo> gatheredInfo;
@@ -247,22 +266,27 @@ struct NightbinButton : ui::Button {
 			}
 
 			network::CookieMap cookies;
-			cookies["Authorization"] = userSettings.getSetting<std::string>("gitPersonalAccessToken");
-
-			json_t* request = network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly", nullptr, cookies);
+			std::vector<std::string> headers = getAuth();
+			json_t* request = q::network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly", nullptr, headers, cookies);
 			DEFER({json_decref(request);});
 
 			if (!request) {
 				WARN("Request for github release info failed");
+				warnings.push_back("Failed to get " + plugin->name + ", request failed.");
 				continue;
 			}
 
 			if (json_t* msg = json_object_get(request, "message")) {
 				std::string message = json_string_value(msg);
-				if (message == "Not Found") continue;
+				if (message == "Not Found") {
+					removePlugin(plugin->slug);
+					warnings.push_back(plugin->name + " does not have a Nightly tagged release, cannot find updates.");
+					continue;
+				};
 				if (message.find("API rate limit exceeded") != std::string::npos) {
 					WARN("Request for github rate limited, consider setting your gitPersonalAccessToken");
-					continue;
+					warnings.push_back("Request for github rate limited, consider setting your gitPersonalAccessToken");
+					break;
 				}
 			}
 
@@ -276,8 +300,13 @@ struct NightbinButton : ui::Button {
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
 
+		if (warnings.size()) {
+			for (size_t i = 0; i < warnings.size(); i++) menu->addChild(createMenuLabel(warnings[i]));
+			warnings.clear();
+		}
+
 		if (!userSettings.getSetting<std::string>("gitPersonalAccessToken").size()) {
-			menu->addChild(rack::createMenuLabel("Github Access Token:"));
+			menu->addChild(createMenuLabel("Github Access Token:"));
 
 			ui::TextField* param = new QTextField([=](std::string text) { 
 				if (text.length()) userSettings.setSetting("gitPersonalAccessToken", text); // https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
@@ -295,6 +324,7 @@ struct NightbinButton : ui::Button {
 		menu->addChild(createSubmenuItem("Add Modules", "", [=](Menu* menu) {
 			 for (plugin::Plugin* plugin : rack::plugin::plugins) {
 				if (!plugin->sourceUrl.size()) continue;
+				if (std::find(gatheredInfo.begin(), gatheredInfo.end(), plugin) != gatheredInfo.end()) continue;
 				menu->addChild(createMenuItem(plugin->name, "",[=]() {
 					addPlugin(plugin->slug);
 				}));
