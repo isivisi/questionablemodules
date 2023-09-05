@@ -20,16 +20,16 @@ struct QuestionableModule : Module {
 
 	json_t* dataToJson() override {
 		json_t* rootJ = json_object();
-		json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
-		json_object_set_new(rootJ, "showDescriptors", json_boolean(showDescriptors));
-		json_object_set_new(rootJ, "runHalfRate", json_boolean(runHalfRate));
+		if (supportsThemes) json_object_set_new(rootJ, "theme", json_string(theme.c_str()));
+		if (toggleableDescriptors) json_object_set_new(rootJ, "showDescriptors", json_boolean(showDescriptors));
+		if (supportsSampleRateOverride) json_object_set_new(rootJ, "runHalfRate", json_boolean(runHalfRate));
 		return rootJ;
 	}
 
 	void dataFromJson(json_t* rootJ) override {
-		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
-		if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
-		if (json_t* hr = json_object_get(rootJ, "runHalfRate")) runHalfRate = json_boolean_value(hr);
+		if (supportsThemes) if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
+		if (toggleableDescriptors) if (json_t* d = json_object_get(rootJ, "showDescriptors")) showDescriptors = json_boolean_value(d);
+		if (supportsSampleRateOverride) if (json_t* hr = json_object_get(rootJ, "runHalfRate")) runHalfRate = json_boolean_value(hr);
 	}
 
 	void onSampleRateChange(const SampleRateChangeEvent& e) override {
@@ -81,11 +81,12 @@ struct QuestionableWidget : ModuleWidget {
 		if (module && module->theme.size()) {
 			setWidgetTheme(module->theme, false);
 		}
-		if (module) color->setTextGroupVisibility("descriptor", module->showDescriptors);
+		if (module && color) color->setTextGroupVisibility("descriptor", module->showDescriptors);
 	}
 
 	void setWidgetTheme(std::string theme, bool setGlobal=true) {
 		QuestionableModule* mod = (QuestionableModule*)module;
+		if (!mod->supportsThemes) return;
 		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
@@ -138,7 +139,7 @@ struct QuestionableWidget : ModuleWidget {
 		if (mod->toggleableDescriptors) {
 			menu->addChild(createMenuItem("Toggle Descriptors", "", [=]() {
 				mod->showDescriptors = !mod->showDescriptors;
-				color->setTextGroupVisibility("descriptor", mod->showDescriptors);
+				if (color) color->setTextGroupVisibility("descriptor", mod->showDescriptors);
 				userSettings.setSetting<bool>("showDescriptors", mod->showDescriptors);
 			}));
 		}

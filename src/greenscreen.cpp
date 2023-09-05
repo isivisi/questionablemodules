@@ -38,7 +38,7 @@ struct Greenscreen : QuestionableModule {
 	}
 
     json_t* dataToJson() override {
-		json_t* rootJ = json_object();
+		json_t* rootJ = QuestionableModule::dataToJson();
 		json_object_set_new(rootJ, "colorR", json_real(color.r));
         json_object_set_new(rootJ, "colorG", json_real(color.g));
         json_object_set_new(rootJ, "colorB", json_real(color.b));
@@ -47,6 +47,7 @@ struct Greenscreen : QuestionableModule {
 	}
 
 	void dataFromJson(json_t* rootJ) override {
+        QuestionableModule::dataFromJson(rootJ);
         json_t* r = json_object_get(rootJ, "colorR");
         json_t* g = json_object_get(rootJ, "colorG");
         json_t* b = json_object_get(rootJ, "colorB");
@@ -111,11 +112,11 @@ struct GreenscreenWidget : QuestionableWidget {
 
         background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(4, 244, 4), nvgRGB(4, 244, 4));
 
-		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
+        color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
 		setText();
 
-		backgroundColorLogic(module);
+        backgroundColorLogic(module);
 		
 		setPanel(background);
 		addChild(color);
