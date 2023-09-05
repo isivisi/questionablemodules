@@ -95,7 +95,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 12, 100), "default", nvgDegToRad(90.f));
+		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 6, 100), "default", nvgDegToRad(90.f));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
@@ -143,6 +143,10 @@ struct GreenscreenWidget : QuestionableWidget {
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	}
+
+    ~GreenscreenWidget() {
+        if (newBackground) APP->scene->rack->removeChild(newBackground);
+    }
 
      void appendContextMenu(Menu *menu) override
   	{
