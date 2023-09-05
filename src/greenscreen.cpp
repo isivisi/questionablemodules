@@ -96,7 +96,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 6, 100), "default", nvgDegToRad(90.f));
+		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 6, 85), "default", nvgDegToRad(90.f));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
