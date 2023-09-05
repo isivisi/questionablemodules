@@ -156,9 +156,15 @@ struct GreenscreenWidget : QuestionableWidget {
 
         menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
             menu->addChild(createMenuItem("Greenscreen Green", "", [&]() { changeColor(nvgRGB(4, 244, 4)); }));
+            menu->addChild(createMenuItem("Black", "", [&]() { changeColor(nvgRGB(0, 0, 0)); }));
+            menu->addChild(createMenuItem("White", "", [&]() { changeColor(nvgRGB(255, 255, 255)); }));
             menu->addChild(createMenuItem("Cyan", "", [&]() { changeColor(nvgRGB(0, 255, 255)); }));
             menu->addChild(createMenuItem("Dark Grey", "", [&]() { changeColor(nvgRGB(50, 50, 50)); }));
-            menu->addChild(createMenuItem("Black", "", [&]() { changeColor(nvgRGB(0, 0, 0)); }));
+            menu->addChild(createMenuItem("Yellow", "", [&]() { changeColor(nvgRGB(255, 255, 0)); }));
+            menu->addChild(createMenuItem("Maroon", "", [&]() { changeColor(nvgRGB(128, 0, 0)); }));
+            menu->addChild(createMenuItem("Green", "", [&]() { changeColor(nvgRGB(0, 128, 0)); }));
+            menu->addChild(createMenuItem("Purple", "", [&]() { changeColor(nvgRGB(128, 0, 128)); }));
+            menu->addChild(createMenuItem("Teal", "", [&]() { changeColor(nvgRGB(0, 128, 128)); }));
 		}));
 
         /*ui::TextField* param = new QTextField([=](std::string text) {
