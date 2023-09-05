@@ -178,7 +178,7 @@ struct QuestionableParam : T {
 			Model* model = this->module->getModel();
 			if (!model) return;
 			ParamQuantity* param = this->getParamQuantity();
-			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
+			std::string url = "https://isivisi.github.io/questionablemodules/" + rack::string::lowercase(model->name) + "#" + param->name;
 			system::openBrowser(url);
 		}));
 	}
@@ -194,7 +194,7 @@ struct QuestionablePort : T {
 			Model* model = this->module->getModel();
 			if (!model) return;
 			PortInfo* param = this->getPortInfo();
-			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
+			std::string url = "https://isivisi.github.io/questionablemodules/" + rack::string::lowercase(model->name) + "#" + param->name;
 			system::openBrowser(url);
 		}));
 	}
@@ -274,10 +274,4 @@ T dtor(T deg) {
 template <typename T>
 T normalizeRange(T min, T max, T value) {
 	return (max-min)/(max-min)*(value-max)+max;
-}
-
-template <typename T = std::string>
-T toUpper(T str) {
-	std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::toupper(c); });
-	return str;
 }
