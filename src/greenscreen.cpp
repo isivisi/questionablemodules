@@ -27,6 +27,9 @@ struct Greenscreen : QuestionableModule {
 
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+
+        supportsThemes = false;
+        toggleableDescriptors = false;
 		
 	}
 
@@ -36,14 +39,18 @@ struct Greenscreen : QuestionableModule {
 
     json_t* dataToJson() override {
 		json_t* rootJ = json_object();
-		json_object_set_new(rootJ, "colorR", json_integer(color.r));
-        json_object_set_new(rootJ, "colorG", json_integer(color.g));
-        json_object_set_new(rootJ, "colorB", json_integer(color.b));
+		json_object_set_new(rootJ, "colorR", json_real(color.r));
+        json_object_set_new(rootJ, "colorG", json_real(color.g));
+        json_object_set_new(rootJ, "colorB", json_real(color.b));
 		json_object_set_new(rootJ, "showText", json_boolean(showText));
 		return rootJ;
 	}
 
 	void dataFromJson(json_t* rootJ) override {
+        json_t* r = json_object_get(rootJ, "colorR");
+        json_t* g = json_object_get(rootJ, "colorG");
+        json_t* b = json_object_get(rootJ, "colorB");
+        if (r && g && b) color = nvgRGBf(json_real_value(r), json_real_value(g), json_real_value(b));
 		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
 	}
 
@@ -66,6 +73,21 @@ struct BackgroundWidget : Widget {
     }
 };
 
+/*struct QColorPicker : ui::MenuItem {
+
+    QColorPicker() {
+        box.size.x = 50;
+        box.size.y = 50;
+    }
+
+    void draw(const DrawArgs& args) {
+
+
+        
+    }
+
+};*/
+
 struct GreenscreenWidget : QuestionableWidget {
     ColorBGSimple* background = nullptr;
     BackgroundWidget* newBackground = nullptr;
@@ -77,7 +99,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
-    changeColor(NVGcolor c) {
+    void changeColor(NVGcolor c) {
         background->color = c;
         background->stroke = c;
         if (newBackground) newBackground->color = c;
@@ -112,19 +134,18 @@ struct GreenscreenWidget : QuestionableWidget {
                 APP->scene->rack->addChildAbove(newBackground, *railWidget);
             } else WARN("Unable to find railWidget");
 
-            color->setTextGroupVisibility("descriptor", module->showText);
+            color->setTextGroupVisibility("default", module->showText);
             changeColor(module->color);
         }
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	}
 
      void appendContextMenu(Menu *menu) override
   	{
-        QuestionableWidget::appendContextMenu(menu);
 
         Greenscreen* mod = (Greenscreen*)module;
 
@@ -133,11 +154,20 @@ struct GreenscreenWidget : QuestionableWidget {
 			color->setTextGroupVisibility("default", mod->showText);
 		}));
 
+        menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
+            menu->addChild(createMenuItem("Greenscreen Green", "", [&]() { changeColor(nvgRGB(4, 244, 4)); }));
+            menu->addChild(createMenuItem("Cyan", "", [&]() { changeColor(nvgRGB(0, 255, 255)); }));
+            menu->addChild(createMenuItem("Dark Grey", "", [&]() { changeColor(nvgRGB(50, 50, 50)); }));
+            menu->addChild(createMenuItem("Black", "", [&]() { changeColor(nvgRGB(0, 0, 0)); }));
+		}));
+
         /*ui::TextField* param = new QTextField([=](std::string text) {
 			if (text.length()) changeColor();
 		});
 		param->box.size.x = 100;
 		menu->addChild(param);*/
+
+        QuestionableWidget::appendContextMenu(menu);
 	}
 
 };
