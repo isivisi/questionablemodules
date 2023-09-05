@@ -182,9 +182,9 @@ struct GreenscreenWidget : QuestionableWidget {
 		}));
 
         menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
-            for (const auto & name : selectableColors) {
-                menu->addChild(createMenuItem(name, "", [&]() { 
-                    changeColor(name, selectableColors[name]);
+            for (const auto & pair : selectableColors) {
+                menu->addChild(createMenuItem(pair.first, "", [&]() { 
+                    changeColor(pair.first, pair.second);
                 }));
             }
 		}));
