@@ -178,7 +178,7 @@ struct QuestionableParam : T {
 			Model* model = this->module->getModel();
 			if (!model) return;
 			ParamQuantity* param = this->getParamQuantity();
-			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
+			std::string url = "https://isivisi.github.io/questionablemodules/" + std::string::lowercase(model->name) + "#" + param->name;
 			system::openBrowser(url);
 		}));
 	}
@@ -194,7 +194,7 @@ struct QuestionablePort : T {
 			Model* model = this->module->getModel();
 			if (!model) return;
 			PortInfo* param = this->getPortInfo();
-			std::string url = "https://isivisi.github.io/questionablemodules/" + string::lowercase(model->name) + "#" + param->name;
+			std::string url = "https://isivisi.github.io/questionablemodules/" + std::string::lowercase(model->name) + "#" + param->name;
 			system::openBrowser(url);
 		}));
 	}
