@@ -275,3 +275,9 @@ template <typename T>
 T normalizeRange(T min, T max, T value) {
 	return (max-min)/(max-min)*(value-max)+max;
 }
+
+template <typename T = std::string>
+T toUpper(T str) {
+	std::transform(str.begin(), str.end(), str.begin(), [](auto c) { return std::toupper(c); });
+	return str;
+}

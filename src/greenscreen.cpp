@@ -23,6 +23,7 @@ struct Greenscreen : QuestionableModule {
 	};
 
     NVGcolor color = nvgRGB(4, 244, 4);
+    std::string text = "Green";
     bool showText = true;
 
 	Greenscreen() {
@@ -42,6 +43,7 @@ struct Greenscreen : QuestionableModule {
 		json_object_set_new(rootJ, "colorR", json_real(color.r));
         json_object_set_new(rootJ, "colorG", json_real(color.g));
         json_object_set_new(rootJ, "colorB", json_real(color.b));
+        json_object_set_new(rootJ, "text", json_string(text.c_str()));
 		json_object_set_new(rootJ, "showText", json_boolean(showText));
 		return rootJ;
 	}
@@ -53,6 +55,7 @@ struct Greenscreen : QuestionableModule {
         json_t* b = json_object_get(rootJ, "colorB");
         if (r && g && b) color = nvgRGBf(json_real_value(r), json_real_value(g), json_real_value(b));
 		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
+        if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
 	}
 
 };
@@ -93,18 +96,37 @@ struct GreenscreenWidget : QuestionableWidget {
     ColorBGSimple* background = nullptr;
     BackgroundWidget* newBackground = nullptr;
 
+    std::string logoText = "Green";
+
+    std::map<std::string, NVGcolor> selectableColors = {
+        {"Green", nvgRGB(4, 244, 4)},
+        {"Black", nvgRGB(0, 0, 0)},
+        {"White", nvgRGB(255, 255, 255)},
+        {"Cyan", nvgRGB(0, 255, 255)},
+        {"Grey", nvgRGB(50, 50, 50)},
+        {"Yellow", nvgRGB(255, 255, 0)},
+        {"Maroon", nvgRGB(128, 0, 0)},
+        {"Dark Green", nvgRGB(0, 128, 0)},
+        {"Purple", nvgRGB(128, 0, 128)},
+        {"Teal", nvgRGB(0, 128, 128)}
+    };
+
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("GREENSCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 6, 100), "default", nvgDegToRad(90.f));
+		color->addText(toUpper(logoText)+"SCREEN", "OpenSans-ExtraBold.ttf", c, 24, Vec(((MODULE_SIZE * RACK_GRID_WIDTH) / 2) - 6, 25), "default", nvgDegToRad(90.f), NVGalign::NVG_ALIGN_LEFT);
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
-    void changeColor(NVGcolor c) {
+    void changeColor(std::string name, NVGcolor c) {
+        //NVGcolor c = selectableColors.count(name) ? selectableColors[name] : c;
+        logoText = name;
+        setText();
         background->color = c;
         background->stroke = c;
         if (newBackground) newBackground->color = c;
         ((Greenscreen*)module)->color = c;
+        ((Greenscreen*)module)->text = name;
     }
 
 	GreenscreenWidget(Greenscreen* module) {
@@ -136,7 +158,7 @@ struct GreenscreenWidget : QuestionableWidget {
             } else WARN("Unable to find railWidget");
 
             color->setTextGroupVisibility("default", module->showText);
-            changeColor(module->color);
+            changeColor(module->text, module->color);
         }
 
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
@@ -160,16 +182,11 @@ struct GreenscreenWidget : QuestionableWidget {
 		}));
 
         menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
-            menu->addChild(createMenuItem("Greenscreen Green", "", [&]() { changeColor(nvgRGB(4, 244, 4)); }));
-            menu->addChild(createMenuItem("Black", "", [&]() { changeColor(nvgRGB(0, 0, 0)); }));
-            menu->addChild(createMenuItem("White", "", [&]() { changeColor(nvgRGB(255, 255, 255)); }));
-            menu->addChild(createMenuItem("Cyan", "", [&]() { changeColor(nvgRGB(0, 255, 255)); }));
-            menu->addChild(createMenuItem("Dark Grey", "", [&]() { changeColor(nvgRGB(50, 50, 50)); }));
-            menu->addChild(createMenuItem("Yellow", "", [&]() { changeColor(nvgRGB(255, 255, 0)); }));
-            menu->addChild(createMenuItem("Maroon", "", [&]() { changeColor(nvgRGB(128, 0, 0)); }));
-            menu->addChild(createMenuItem("Green", "", [&]() { changeColor(nvgRGB(0, 128, 0)); }));
-            menu->addChild(createMenuItem("Purple", "", [&]() { changeColor(nvgRGB(128, 0, 128)); }));
-            menu->addChild(createMenuItem("Teal", "", [&]() { changeColor(nvgRGB(0, 128, 128)); }));
+            for (const auto & [name, color] : selectableColors) {
+                menu->addChild(createMenuItem(name, "", [&]() { 
+                    changeColor(name, color);
+                }));
+            }
 		}));
 
         /*ui::TextField* param = new QTextField([=](std::string text) {
