@@ -243,7 +243,8 @@ struct NightbinButton : ui::Button {
 
 	std::vector<std::string> getAuth() {
 		std::vector<std::string> headers;
-		headers.push_back("Authorization: Bearer " + userSettings.getSetting<std::string>("gitPersonalAccessToken"));
+		std::string token = userSettings.getSetting<std::string>("gitPersonalAccessToken");
+		if (token.size()) headers.push_back("Authorization: Bearer " + token);
 		return headers;
 	}
 
