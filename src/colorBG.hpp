@@ -57,6 +57,7 @@ struct ColorBG : Widget {
 		float size = 1;
 		Vec pos;
 		float rotation;
+		NVGalign align;
 	};
 	std::vector<drawableText> textList;
 
@@ -76,8 +77,8 @@ struct ColorBG : Widget {
 		}
 	}
 
-	void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default", float rotation = 0) {
-		textList.push_back(drawableText{text,font,group,true,color,size,pos, rotation});
+	void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default", float rotation = 0, NVGalign align = NVGalign::NVG_ALIGN_CENTER) {
+		textList.push_back(drawableText{text,font,group,true,color,size,pos, rotation, align});
 	}
 
 	void setTextGroupVisibility(std::string group, bool visibility) {
@@ -114,7 +115,7 @@ struct ColorBG : Widget {
 					nvgTextLetterSpacing(args.vg, 0.0);
 					nvgFontSize(args.vg, textDef.size);
 					nvgFillColor(args.vg, textDef.color);
-					nvgTextAlign(args.vg, NVGalign::NVG_ALIGN_CENTER);
+					nvgTextAlign(args.vg, textDef.align);
 					nvgText(args.vg, 0, 0, textDef.text.c_str(), NULL);
 					nvgRestore(args.vg);
 				}
