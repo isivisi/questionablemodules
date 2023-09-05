@@ -27,4 +27,3 @@ jobs:
             update_pkgbuild: false
             git_username: isivisi
             git_email: jiannandrea@gmail.com
-            allow_empty_commits: false
