@@ -320,6 +320,7 @@ struct NightbinButton : ui::Button {
 };
 
 struct NightBinWidget : QuestionableWidget {
+	NightbinButton* menuButton = nullptr;
 	ColorBGSimple* background = nullptr;
 
 	void setText() {
@@ -376,21 +377,32 @@ struct NightBinWidget : QuestionableWidget {
 		//startQueryThread();
 	}
 
-	// try to add our own menu item to the main rack bar
-	void setupMenuBar() {
+	Widget* getRackLayout() {
 		auto rackLayout = std::find_if(APP->scene->menuBar->children.begin(), APP->scene->menuBar->children.end(), [=](widget::Widget* widget) {
 			return dynamic_cast<ui::SequentialLayout*>(widget) != nullptr;
 		});
-		if (rackLayout != APP->scene->menuBar->children.end()) {
-			auto existing = std::find_if((*rackLayout)->children.begin(), (*rackLayout)->children.end(), [=](widget::Widget* widget) {
+		if (rackLayout != APP->scene->menuBar->children.end()) return *rackLayout;
+		return nullptr;
+	}
+
+	// try to add our own menu item to the main rack bar
+	void setupMenuBar() {
+		Widget* rackLayout = getRackLayout();
+
+		if (rackLayout) {
+			auto existing = std::find_if(rackLayout->children.begin(), rackLayout->children.end(), [=](widget::Widget* widget) {
 				return dynamic_cast<NightbinButton*>(widget) != nullptr;
 			});
-			if (existing != (*rackLayout)->children.end()) return;
+			if (existing != rackLayout->children.end()) return;
 			
-			NightbinButton* menuButton = new NightbinButton;
-			(*rackLayout)->addChildBelow(menuButton, (*rackLayout)->children.back());
+			menuButton = new NightbinButton;
+			rackLayout->addChildBelow(menuButton, rackLayout->children.back());
 		} else WARN("Unable to add to racks menubar, could not find ui::SequentialLayout reference.");
 	}
+
+	~NightBinWidget() {
+        if ((Widget* rackLayout = getRackLayout() != nullptr) && menuButton) rackLayout->removeChild(menuButton);
+    }
 
     void appendContextMenu(Menu *menu) override
   	{
