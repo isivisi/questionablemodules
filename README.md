@@ -22,7 +22,7 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 - [Discombobulator](https://isivisi.github.io/questionablemodules/discombobulator)
 - [Treequencer](https://isivisi.github.io/questionablemodules/treequencer)
 - [SLURP](https://isivisi.github.io/questionablemodules/slurp)
-- [Night-Bin](https://isivisi.github.io/questionablemodules/nightbin)
+- [Night-bin](https://isivisi.github.io/questionablemodules/nightbin)
 - [Greenscreen](https://isivisi.github.io/questionablemodules/greenscreen)
 
 ## Pulling source
