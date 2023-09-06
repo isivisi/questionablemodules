@@ -1,6 +1,10 @@
 // Settings
-var DocVersion = "v2.1.8 - v2.1.9";
+var DocVersion = "v2.1.10";
 var previousVersions = [
+    {
+        version: "v2.1.8 - v2.1.9",
+        commit: "doc2.1.8"
+    },
     {
         verison: "v2.1.7",
         commit: "doc2.1.7"
