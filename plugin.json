@@ -43,7 +43,7 @@
     },
     {
       "slug": "nightbin",
-      "name": "Night-Bin",
+      "name": "Night-bin",
       "description": "Grab nightly builds of your favorite plugins",
       "manualUrl": "https://isivisi.github.io/questionablemodules/nightbin",
       "tags": ["Utility"]

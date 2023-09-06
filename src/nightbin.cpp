@@ -71,14 +71,14 @@ struct NightbinButton : ui::Button {
 	std::vector<std::string> warnings;
 
 	NightbinButton() {
-		text = "Night-Bin";
+		text = "Night-bin";
 
 		startQueryThread();
 	}
 
 	void step() override {
 		if (isUpdating) text = "Updating... (%" + std::to_string((int)(progress*100)) + ")";
-		else text = "Night-Bin";
+		else text = "Night-bin";
 		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
 		Widget::step();
 	}
