@@ -86,7 +86,7 @@ struct QuestionableWidget : ModuleWidget {
 
 	void setWidgetTheme(std::string theme, bool setGlobal=true) {
 		QuestionableModule* mod = (QuestionableModule*)module;
-		if (!mod->supportsThemes) return;
+		if (mod && !mod->supportsThemes) return;
 		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
