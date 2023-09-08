@@ -106,9 +106,9 @@ struct NightbinButton : ui::Button {
 	}
 
 	struct QRemotePluginInfo {
-        std::string name;
-        std::string slug;
-        std::string version;
+		std::string name;
+		std::string slug;
+		std::string version;
 		std::string dlURL;
 		Plugin* pluginRef;
 
@@ -130,8 +130,8 @@ struct NightbinButton : ui::Button {
 			}
 		};
 
-        static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
-            QRemotePluginInfo newInfo;
+		static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
+			QRemotePluginInfo newInfo;
 			newInfo.pluginRef = plugin;
 			newInfo.name = plugin->name;
 			newInfo.slug = plugin->slug;
@@ -154,8 +154,8 @@ struct NightbinButton : ui::Button {
 					}
 				}
 			}
-            return newInfo;
-        }
+			return newInfo;
+		}
 
 		bool isValid() {
 			return pluginRef != nullptr;
@@ -165,14 +165,14 @@ struct NightbinButton : ui::Button {
 			return version != "" && pluginRef->version != version;
 		}
 
-        bool operator==(const QRemotePluginInfo other) {
+		bool operator==(const QRemotePluginInfo other) {
 			return other.slug == slug;
 		}
 
 		bool operator==(const Plugin* plug) {
 			return plug->slug == slug;
 		}
-    };
+	};
 
 	std::string getRepoAPI(Plugin* plugin) {
 		std::regex r(R"(github\.com/(.*\/*.))");
@@ -264,7 +264,7 @@ struct NightbinButton : ui::Button {
 	std::vector<QRemotePluginInfo> gatheredInfo;
 	std::vector<Plugin*> pluginsWithBuilds;
 
-    void queryForUpdates() {
+	void queryForUpdates() {
 		system::setThreadName("Nightbin query Thread");
 		std::lock_guard<std::mutex> guard(gathering);
 		isGathering = true; 
@@ -272,11 +272,11 @@ struct NightbinButton : ui::Button {
 
 		gatheredInfo.clear();
 
-        for (plugin::Plugin* plugin : getSelectedPlugins()) {
+		for (plugin::Plugin* plugin : getSelectedPlugins()) {
 			QRemotePluginInfo pluginInfo = getPluginRemoteInfo(plugin);
 			if (pluginInfo.updatable()) gatheredInfo.push_back(pluginInfo);
 		}
-    }
+	}
 
 	void queryForUpdatablePlugins() {
 		system::setThreadName("Nightbin query Thread");
@@ -476,12 +476,12 @@ struct NightBinWidget : QuestionableWidget {
 
 	~NightBinWidget() {
 		Widget* rackLayout = getRackLayout();
-        if ((rackLayout != nullptr) && menuButton) rackLayout->removeChild(menuButton);
-    }
+		if ((rackLayout != nullptr) && menuButton) rackLayout->removeChild(menuButton);
+	}
 
-    void appendContextMenu(Menu *menu) override
+	void appendContextMenu(Menu *menu) override
   	{
-        QuestionableWidget::appendContextMenu(menu);
+		QuestionableWidget::appendContextMenu(menu);
 	}
 
 };
