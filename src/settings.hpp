@@ -59,11 +59,7 @@ struct UserSettings {
 
 		if (!settings) settings = readSettings();
 
-		if constexpr (std::is_same<T, int>::value) return json_integer_value(json_object_get(settings, setting.c_str()));
-		if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json_object_get(settings, setting.c_str()));
-		if constexpr (std::is_same<T, float>::value) return json_real_value(json_object_get(settings, setting.c_str()));
-		if constexpr (std::is_same<T, std::string>::value) return json_string_value(json_object_get(settings, setting.c_str()));
-		if constexpr (std::is_same<T, json_t*>::value) return json_object_get(settings, setting.c_str());
+		return jsonToType<T>(json_object_get(settings, setting.c_str()));
 
 		throw std::runtime_error("QuestionableModules::UserSettings::getSetting function for type not defined. :(");
 	}
@@ -73,13 +69,7 @@ struct UserSettings {
 		std::lock_guard<std::mutex> guard(lock);
 		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "setSetting has no function defined for type");
 
-		json_t* v = nullptr;
-
-		if constexpr (std::is_same<T, int>::value) v = json_integer(value);
-		if constexpr (std::is_same<T, bool>::value) v = json_boolean(value);
-		if constexpr (std::is_same<T, float>::value) v = json_real(value);
-		if constexpr (std::is_same<T, std::string>::value) v = json_string(value.c_str());
-		if constexpr (std::is_same<T, json_t*>::value) v = value;
+		json_t* v = typeToJson<T>(value);
 
 		if (v) {
 			json_t* settings = readSettings();
@@ -104,11 +94,7 @@ struct UserSettings {
 		json_t* value;
 		json_t* array = json_object_get(settings, setting.c_str());
 		json_array_foreach(array, index, value) {
-			if constexpr (std::is_same<T, int>::value) ret.push_back(json_integer_value(value));
-			if constexpr (std::is_same<T, bool>::value) ret.push_back(json_boolean_value(value));
-			if constexpr (std::is_same<T, float>::value) ret.push_back(json_real_value(value));
-			if constexpr (std::is_same<T, std::string>::value) ret.push_back(json_string_value(value));
-			if constexpr (std::is_same<T, json_t*>::value) ret.push_back(value);
+			ret.push_back(jsonToType<T>(value));
 		}
 
 		return ret;
@@ -122,11 +108,7 @@ struct UserSettings {
 
 		json_t* array = json_array();
 		for (size_t i = 0; i < value.size(); i++) {
-			if constexpr (std::is_same<T, int>::value) json_array_append_new(array, json_integer(value[i]));
-			if constexpr (std::is_same<T, bool>::value) json_array_append_new(array, json_boolean(value[i]));
-			if constexpr (std::is_same<T, float>::value) json_array_append_new(array, json_real(value[i]));
-			if constexpr (std::is_same<T, std::string>::value) json_array_append_new(array, json_string(value[i].c_str()));
-			if constexpr (std::is_same<T, json_t*>::value) json_array_append_new(array, value[i]);
+			json_array_append_new(array, typeToJson<T>(value[i]));
 		}
 
 		json_object_set(settings, setting.c_str(), array);
@@ -134,6 +116,24 @@ struct UserSettings {
 	}
 
 	private:
+
+	template<typename T> 
+	T jsonToType(json_t* json) {
+		if constexpr (std::is_same<T, int>::value) return json_integer_value(json);
+		if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json);
+		if constexpr (std::is_same<T, float>::value) return json_real_value(json);
+		if constexpr (std::is_same<T, std::string>::value) return json_string_value(json);
+		if constexpr (std::is_same<T, json_t*>::value) return json;
+	}
+
+	template<typename T> 
+	json_t* typeToJson(T value) {
+		if constexpr (std::is_same<T, int>::value) return json_integer(value);
+		if constexpr (std::is_same<T, bool>::value) return json_boolean(value);
+		if constexpr (std::is_same<T, float>::value) return json_real(value);
+		if constexpr (std::is_same<T, std::string>::value) return json_string(value.c_str());
+		if constexpr (std::is_same<T, json_t*>::value) return value;
+	}
 
 	json_t * readSettings() {
 		if (!settingCache) {
