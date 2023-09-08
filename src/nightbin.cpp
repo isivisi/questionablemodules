@@ -67,6 +67,7 @@ struct NightbinButton : ui::Button {
 	std::thread gatherThread;
 	std::thread updateThread;
 	bool isUpdating = false;
+	bool isGathering = false;
 	float progress = 0.f;
 	std::vector<std::string> warnings;
 
@@ -78,6 +79,7 @@ struct NightbinButton : ui::Button {
 
 	void step() override {
 		if (isUpdating) text = "Updating... (%" + std::to_string((int)(progress*100)) + ")";
+		if (isGathering) text = "Night-bin ...";
 		else text = "Night-bin";
 		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
 		Widget::step();
@@ -265,6 +267,8 @@ struct NightbinButton : ui::Button {
     void queryForUpdates() {
 		system::setThreadName("Nightbin query Thread");
 		std::lock_guard<std::mutex> guard(gathering);
+		isGathering = true; 
+		DEFER({isGathering = false;});
 
 		gatheredInfo.clear();
 
@@ -277,6 +281,8 @@ struct NightbinButton : ui::Button {
 	void queryForUpdatablePlugins() {
 		system::setThreadName("Nightbin query Thread");
 		std::lock_guard<std::mutex> guard(gathering);
+		isGathering = true; 
+		DEFER({isGathering = false;});
 
 		if (userSettings.getSetting<std::string>("gitPersonalAccessToken").empty()) return;
 
@@ -355,8 +361,8 @@ struct NightbinButton : ui::Button {
 
 		menu->addChild(createSubmenuItem("Add Modules", "", [=](Menu* menu) {
 			std::string token = userSettings.getSetting<std::string>("gitPersonalAccessToken");
-			if (!!token.size()) menu->addChild(createMenuItem("Check for Nightly Builds", "", [=]() { startCheckThread(); }));
-			else menu->addChild(createMenuLabel("Check for Nightly Builds"));
+			menu->addChild(createMenuItem("Check for Nightly Builds", "", [=]() { startCheckThread(); }));
+			//else menu->addChild(createMenuLabel("Check for Nightly Builds"));
 
 			for (plugin::Plugin* plugin : pluginsWithBuilds.empty() ? rack::plugin::plugins : pluginsWithBuilds) {
 				if (!plugin->sourceUrl.size()) continue;
