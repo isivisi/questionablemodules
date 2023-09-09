@@ -19,7 +19,7 @@
 
     for (var i = 0; i < previousVersions.length; i++) {
         var version = previousVersions[i]
-        if (version.hasOwnProperty("commit")) dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://rawcdn.githack.com/isivisi/questionablemodules/${version.commit}/docs/${currFile}">${version.verison}</a></li>`
-        else dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://github.com/isivisi/questionablemodules/wiki/${currFile.replace(".html", "")}">${version.verison}</a></li>`
+        if (version.hasOwnProperty("commit")) dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://rawcdn.githack.com/isivisi/questionablemodules/${version.commit}/docs/${currFile}">${version.version}</a></li>`
+        else dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://github.com/isivisi/questionablemodules/wiki/${currFile.replace(".html", "")}">${version.version}</a></li>`
     }
 </script>
