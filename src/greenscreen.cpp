@@ -132,6 +132,9 @@ struct GreenscreenWidget : QuestionableWidget {
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
 
+        supportsThemes = false;
+		toggleableDescriptors = false;
+
         background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(4, 244, 4), nvgRGB(4, 244, 4));
 
         color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));

@@ -365,6 +365,8 @@ struct NightBinWidget : QuestionableWidget {
 	NightBinWidget(NightBin* module) {
 		setModule(module);
 
+		toggleableDescriptors = false;
+
 		background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(150, 173, 233));
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));

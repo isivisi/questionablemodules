@@ -65,6 +65,9 @@ struct QuestionableWidget : ModuleWidget {
 	ColorBG* color = nullptr;
 	bool lastPreferDark = false;
 
+	bool supportsThemes = true;
+	bool toggleableDescriptors = true;
+
 	QuestionableWidget() {
 
 	}
@@ -86,7 +89,7 @@ struct QuestionableWidget : ModuleWidget {
 
 	void setWidgetTheme(std::string theme, bool setGlobal=true) {
 		QuestionableModule* mod = (QuestionableModule*)module;
-		if (mod && !mod->supportsThemes) return;
+		if (!supportsThemes) return;
 		color->drawBackground = theme != "";
 		color->setTheme(BG_THEMES[theme]);
 		if (mod) mod->theme = theme;
@@ -122,7 +125,7 @@ struct QuestionableWidget : ModuleWidget {
 			}));
 		}));
 
-		if (mod->supportsThemes) {
+		if (supportsThemes) {
 			menu->addChild(rack::createSubmenuItem("Theme", "", [=](ui::Menu* menu) {
 				menu->addChild(createMenuItem("Default", mod->theme == "" ? "•" : "",[=]() {
 					setWidgetTheme("");
@@ -136,7 +139,7 @@ struct QuestionableWidget : ModuleWidget {
 			}));
 		}
 
-		if (mod->toggleableDescriptors) {
+		if (toggleableDescriptors) {
 			menu->addChild(createMenuItem("Toggle Descriptors", "", [=]() {
 				mod->showDescriptors = !mod->showDescriptors;
 				if (color) color->setTextGroupVisibility("descriptor", mod->showDescriptors);
