@@ -146,6 +146,9 @@ struct NandomizerWidget : QuestionableWidget {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
 
+		color->addText("NANDOMIZER", "OpenSans-ExtraBold.ttf", c, 28, Vec(5, 20), "nondefault", nvgDegToRad(90.f), NVG_ALIGN_LEFT);
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13), "nondefault");
+
 		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(45.35, 257), "descriptor");
 
 		color->addText("FADE", "OpenSans-Bold.ttf", c, 7, Vec(24.5, 315), "descriptor");

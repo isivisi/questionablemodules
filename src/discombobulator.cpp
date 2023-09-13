@@ -153,6 +153,9 @@ struct DiscombobulatorWidget : QuestionableWidget {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
 
+		color->addText("DISCOMBOLULATOR", "OpenSans-ExtraBold.ttf", c, 28, Vec(132, 140), "nondefault", nvgDegToRad(270.f), NVG_ALIGN_RIGHT);
+		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13), "nondefault");
+
 		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(30, 257), "descriptor");
 		color->addText("OUTS", "OpenSans-Bold.ttf", c, 7, Vec(104.35, 257), "descriptor");
 
