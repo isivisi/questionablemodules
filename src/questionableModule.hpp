@@ -75,7 +75,7 @@ struct QuestionableWidget : ModuleWidget {
 	void step() override {
 		if (settings::preferDarkPanels != lastPreferDark) {
 			lastPreferDark = settings::preferDarkPanels;
-			if (settings::preferDarkPanels && !module) setWidgetTheme("Dark");
+			if (!module) setWidgetTheme(settings::preferDarkPanels ? "Dark" : "");
 		}
 		ModuleWidget::step();
 	}
