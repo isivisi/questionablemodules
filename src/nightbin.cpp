@@ -241,11 +241,6 @@ struct NightbinButton : ui::Button {
 		gatherThread = std::thread(&NightbinButton::queryForUpdates, this);
 	}
 
-	void startCheckThread() {
-		if (gatherThread.joinable()) gatherThread.detach(); // let go of existing thread as it is either done or will finish on its own
-		gatherThread = std::thread(&NightbinButton::queryForUpdatablePlugins, this);
-	}
-
 	void startUpdateThread(std::vector<QRemotePluginInfo> updates) {
 		if (updateThread.joinable()) updateThread.detach();
 		updateThread = std::thread([=]() {
@@ -360,10 +355,6 @@ struct NightbinButton : ui::Button {
 		menu->addChild(new MenuSeparator);
 
 		menu->addChild(createSubmenuItem("Add Modules", "", [=](Menu* menu) {
-			std::string token = userSettings.getSetting<std::string>("gitPersonalAccessToken");
-			menu->addChild(createMenuItem("Check for Nightly Builds", "", [=]() { startCheckThread(); }));
-			//else menu->addChild(createMenuLabel("Check for Nightly Builds"));
-
 			for (plugin::Plugin* plugin : pluginsWithBuilds.empty() ? rack::plugin::plugins : pluginsWithBuilds) {
 				if (!plugin->sourceUrl.size()) continue;
 				if (std::find(gatheredInfo.begin(), gatheredInfo.end(), plugin) != gatheredInfo.end()) continue;
