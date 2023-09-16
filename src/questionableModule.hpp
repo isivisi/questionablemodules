@@ -140,7 +140,7 @@ struct QuestionableWidget : ModuleWidget {
 		}
 
 		if (toggleableDescriptors) {
-			menu->addChild(createMenuItem("Toggle Descriptors", "", [=]() {
+			menu->addChild(createMenuItem("Toggle Labels", "", [=]() {
 				mod->showDescriptors = !mod->showDescriptors;
 				if (color) color->setTextGroupVisibility("descriptor", mod->showDescriptors);
 				userSettings.setSetting<bool>("showDescriptors", mod->showDescriptors);

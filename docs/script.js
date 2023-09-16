@@ -2,27 +2,27 @@
 var DocVersion = "v2.1.10";
 var previousVersions = [
     {
-        verison: "v2.1.9",
+        version: "v2.1.9",
         commit: "doc2.1.9"
     },
     {
-        verison: "v2.1.8",
+        version: "v2.1.8",
         commit: "doc2.1.8"
     },
     {
-        verison: "v2.1.7",
+        version: "v2.1.7",
         commit: "doc2.1.7"
     },
     {
-        verison: "v2.1.6",
+        version: "v2.1.6",
         commit: "doc2.1.6"
     },
     {
-        verison: "v2.1.5",
+        version: "v2.1.5",
         commit: "doc2.1.5"
     },
     {
-        verison: "v2.1.4",
+        version: "v2.1.4",
     }
 ]
 

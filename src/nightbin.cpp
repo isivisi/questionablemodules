@@ -67,6 +67,7 @@ struct NightbinButton : ui::Button {
 	std::thread gatherThread;
 	std::thread updateThread;
 	bool isUpdating = false;
+	bool isGathering = false;
 	float progress = 0.f;
 	std::vector<std::string> warnings;
 
@@ -78,6 +79,7 @@ struct NightbinButton : ui::Button {
 
 	void step() override {
 		if (isUpdating) text = "Updating... (%" + std::to_string((int)(progress*100)) + ")";
+		if (isGathering) text = "Night-bin ...";
 		else text = "Night-bin";
 		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
 		Widget::step();
@@ -104,9 +106,9 @@ struct NightbinButton : ui::Button {
 	}
 
 	struct QRemotePluginInfo {
-        std::string name;
-        std::string slug;
-        std::string version;
+		std::string name;
+		std::string slug;
+		std::string version;
 		std::string dlURL;
 		Plugin* pluginRef;
 
@@ -128,8 +130,8 @@ struct NightbinButton : ui::Button {
 			}
 		};
 
-        static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
-            QRemotePluginInfo newInfo;
+		static QRemotePluginInfo fromJson(json_t* json, Plugin* plugin) {
+			QRemotePluginInfo newInfo;
 			newInfo.pluginRef = plugin;
 			newInfo.name = plugin->name;
 			newInfo.slug = plugin->slug;
@@ -152,21 +154,25 @@ struct NightbinButton : ui::Button {
 					}
 				}
 			}
-            return newInfo;
-        }
+			return newInfo;
+		}
+
+		bool isValid() {
+			return pluginRef != nullptr;
+		}
 
 		bool updatable() {
 			return version != "" && pluginRef->version != version;
 		}
 
-        bool operator==(const QRemotePluginInfo other) {
+		bool operator==(const QRemotePluginInfo other) {
 			return other.slug == slug;
 		}
 
 		bool operator==(const Plugin* plug) {
 			return plug->slug == slug;
 		}
-    };
+	};
 
 	std::string getRepoAPI(Plugin* plugin) {
 		std::regex r(R"(github\.com/(.*\/*.))");
@@ -205,6 +211,7 @@ struct NightbinButton : ui::Button {
 	void removePlugin(std::string slug) {
 		std::vector<std::string> plugins = userSettings.getArraySetting<std::string>("nightbinSelectedPlugins");
 		auto it = std::remove(plugins.begin(), plugins.end(), slug);
+		if (it == plugins.end()) return;
 		plugins.erase(it);
 		userSettings.setArraySetting<std::string>("nightbinSelectedPlugins", plugins);
 	}
@@ -250,52 +257,76 @@ struct NightbinButton : ui::Button {
 	}
 
 	std::vector<QRemotePluginInfo> gatheredInfo;
+	std::vector<Plugin*> pluginsWithBuilds;
 
-    void queryForUpdates() {
+	void queryForUpdates() {
 		system::setThreadName("Nightbin query Thread");
 		std::lock_guard<std::mutex> guard(gathering);
+		isGathering = true; 
+		DEFER({isGathering = false;});
 
 		gatheredInfo.clear();
 
-        for (plugin::Plugin* plugin : getSelectedPlugins()) {
-			if (!plugin->sourceUrl.size()) continue;
-
-			std::string api = getRepoAPI(plugin);
-			INFO("checking for builds at: %s", api.c_str());
-			if (!api.size()) {
-				WARN("Failed to get api string for module: %s, sourceURL: %s", plugin->name.c_str(), plugin->sourceUrl.c_str());
-				continue;
-			}
-
-			network::CookieMap cookies;
-			std::vector<std::string> headers = getAuth();
-			json_t* request = q::network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly", nullptr, headers, cookies);
-			DEFER({json_decref(request);});
-
-			if (!request) {
-				WARN("Request for github release info failed");
-				warnings.push_back("Failed to get " + plugin->name + ", request failed.");
-				continue;
-			}
-
-			if (json_t* msg = json_object_get(request, "message")) {
-				std::string message = json_string_value(msg);
-				if (message == "Not Found") {
-					removePlugin(plugin->slug);
-					warnings.push_back(plugin->name + " does not have a Nightly tagged release, cannot find updates.");
-					continue;
-				};
-				if (message.find("API rate limit exceeded") != std::string::npos) {
-					WARN("Request for github rate limited, consider setting your gitPersonalAccessToken");
-					warnings.push_back("Request for github rate limited, consider setting your gitPersonalAccessToken");
-					break;
-				}
-			}
-
-			QRemotePluginInfo pluginInfo = QRemotePluginInfo::fromJson(request, plugin);
+		for (plugin::Plugin* plugin : getSelectedPlugins()) {
+			QRemotePluginInfo pluginInfo = getPluginRemoteInfo(plugin);
 			if (pluginInfo.updatable()) gatheredInfo.push_back(pluginInfo);
 		}
-    }
+	}
+
+	void queryForUpdatablePlugins() {
+		system::setThreadName("Nightbin query Thread");
+		std::lock_guard<std::mutex> guard(gathering);
+		isGathering = true; 
+		DEFER({isGathering = false;});
+
+		if (userSettings.getSetting<std::string>("gitPersonalAccessToken").empty()) return;
+
+		// if git token set check all plugins for Nightly builds
+		if (!pluginsWithBuilds.size()) {
+			for (plugin::Plugin* plugin : plugin::plugins) {
+				QRemotePluginInfo pluginInfo = getPluginRemoteInfo(plugin);
+				if (pluginInfo.isValid()) pluginsWithBuilds.push_back(plugin);
+			}
+		}
+	}
+
+	QRemotePluginInfo getPluginRemoteInfo(Plugin* plugin) {
+		if (!plugin->sourceUrl.size()) return QRemotePluginInfo();
+
+		std::string api = getRepoAPI(plugin);
+		INFO("checking for builds at: %s", api.c_str());
+		if (!api.size()) {
+			WARN("Failed to get api string for module: %s, sourceURL: %s", plugin->name.c_str(), plugin->sourceUrl.c_str());
+			return QRemotePluginInfo();
+		}
+
+		network::CookieMap cookies;
+		std::vector<std::string> headers = getAuth();
+		json_t* request = q::network::requestJson(network::METHOD_GET, api + "/releases/tags/Nightly", nullptr, headers, cookies);
+		DEFER({json_decref(request);});
+
+		if (!request) {
+			WARN("Request for github release info failed");
+			warnings.push_back("Failed to get " + plugin->name + ", request failed.");
+			return QRemotePluginInfo();
+		}
+
+		if (json_t* msg = json_object_get(request, "message")) {
+			std::string message = json_string_value(msg);
+			if (message == "Not Found") {
+				removePlugin(plugin->slug);
+				warnings.push_back(plugin->name + " does not have a Nightly tagged release, cannot find updates.");
+				return QRemotePluginInfo();
+			};
+			if (message.find("API rate limit exceeded") != std::string::npos) {
+				WARN("Request for github rate limited, consider setting your gitPersonalAccessToken");
+				warnings.push_back("Request for github rate limited, consider setting your gitPersonalAccessToken");
+				return QRemotePluginInfo();
+			}
+		}
+
+		return QRemotePluginInfo::fromJson(request, plugin);
+	}
 
 	void onAction(const ActionEvent& e) override {
 		ui::Menu* menu = createMenu();
@@ -324,13 +355,13 @@ struct NightbinButton : ui::Button {
 		menu->addChild(new MenuSeparator);
 
 		menu->addChild(createSubmenuItem("Add Modules", "", [=](Menu* menu) {
-			 for (plugin::Plugin* plugin : rack::plugin::plugins) {
+			for (plugin::Plugin* plugin : pluginsWithBuilds.empty() ? rack::plugin::plugins : pluginsWithBuilds) {
 				if (!plugin->sourceUrl.size()) continue;
 				if (std::find(gatheredInfo.begin(), gatheredInfo.end(), plugin) != gatheredInfo.end()) continue;
 				menu->addChild(createMenuItem(plugin->name, "",[=]() {
 					addPlugin(plugin->slug);
 				}));
-			 }
+			}
 		}));
 
 		if (gatheredInfo.size()) menu->addChild(createMenuItem("Update All", "",[=]() { startUpdateThread(gatheredInfo); }));
@@ -436,12 +467,12 @@ struct NightBinWidget : QuestionableWidget {
 
 	~NightBinWidget() {
 		Widget* rackLayout = getRackLayout();
-        if ((rackLayout != nullptr) && menuButton) rackLayout->removeChild(menuButton);
-    }
+		if ((rackLayout != nullptr) && menuButton) rackLayout->removeChild(menuButton);
+	}
 
-    void appendContextMenu(Menu *menu) override
+	void appendContextMenu(Menu *menu) override
   	{
-        QuestionableWidget::appendContextMenu(menu);
+		QuestionableWidget::appendContextMenu(menu);
 	}
 
 };
