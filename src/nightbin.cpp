@@ -79,7 +79,7 @@ struct NightbinButton : ui::Button {
 
 	void step() override {
 		if (isUpdating) text = "Updating... (%" + std::to_string((int)(progress*100)) + ")";
-		if (isGathering) text = "Night-bin ...";
+		else if (isGathering) text = "Night-bin ...";
 		else text = "Night-bin";
 		box.size.x = bndLabelWidth(APP->window->vg, -1, text.c_str()) + 1.0;
 		Widget::step();
