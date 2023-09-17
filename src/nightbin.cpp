@@ -361,9 +361,10 @@ struct NightbinButton : ui::Button {
 		menu->addChild(new MenuSeparator);
 
 		menu->addChild(createSubmenuItem("Add / Remove Modules", "", [=](Menu* menu) {
+			std::vector<Plugin*> selected = getSelectedPlugins();
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
 				if (!plugin->sourceUrl.size()) continue;
-				if (std::find(gatheredInfo.begin(), gatheredInfo.end(), plugin) != gatheredInfo.end()) {
+				if (std::find(selected.begin(), selected.end(), plugin) != selected.end()) {
 					menu->addChild(createMenuItem(plugin->name, "-",[=]() { removePlugin(plugin->slug); }));
 				} else menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }));
 			}
