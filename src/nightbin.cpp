@@ -449,6 +449,7 @@ struct NightBinWidget : QuestionableWidget {
 	}
 
 	Widget* getRackLayout() {
+		if (!APP->scene || !APP->scene->menuBar) return nullptr;
 		auto rackLayout = std::find_if(APP->scene->menuBar->children.begin(), APP->scene->menuBar->children.end(), [=](widget::Widget* widget) {
 			return dynamic_cast<ui::SequentialLayout*>(widget) != nullptr;
 		});
@@ -472,8 +473,9 @@ struct NightBinWidget : QuestionableWidget {
 	}
 
 	~NightBinWidget() {
+		if (!module) return;
 		Widget* rackLayout = getRackLayout();
-		if ((rackLayout != nullptr) && menuButton) rackLayout->removeChild(menuButton);
+		if (rackLayout != nullptr && menuButton != nullptr) rackLayout->removeChild(menuButton);
 	}
 
 	void appendContextMenu(Menu *menu) override
