@@ -472,8 +472,9 @@ struct NightBinWidget : QuestionableWidget {
 	}
 
 	~NightBinWidget() {
+		if (!module) return;
 		Widget* rackLayout = getRackLayout();
-		if ((rackLayout != nullptr) && menuButton) rackLayout->removeChild(menuButton);
+		if (rackLayout != nullptr && menuButton != nullptr) rackLayout->removeChild(menuButton);
 	}
 
 	void appendContextMenu(Menu *menu) override
