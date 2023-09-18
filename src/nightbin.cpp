@@ -363,7 +363,7 @@ struct NightbinButton : ui::Button {
 		menu->addChild(createSubmenuItem("Add / Remove Modules", "", [=](Menu* menu) {
 			std::vector<Plugin*> selected = getSelectedPlugins();
 			
-			if (userSettings.getSetting<std::string>("gitPersonalAccessToken").size()) {
+			if (!userSettings.getSetting<std::string>("gitPersonalAccessToken").empty()) {
 				menu->addChild(createMenuItem("Add All Plugins", "+",[=]() { 
 					for (plugin::Plugin* plugin : rack::plugin::plugins) {
 						if (plugin->sourceUrl.size()) addPlugin(plugin->slug, false);
