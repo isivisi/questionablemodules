@@ -381,6 +381,7 @@ struct Treequencer : QuestionableModule {
 	float startOffsetX = 12.5f;
 	float startOffsetY = -11.f;
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
+	int noteRepresentation = 0;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -591,6 +592,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "startOffsetX", json_real(startOffsetX));
 		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
+		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -604,6 +606,7 @@ struct Treequencer : QuestionableModule {
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
+		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
 
 		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
@@ -627,7 +630,7 @@ struct NodeDisplay : Widget {
 	enum NoteRep {
 		SQUARES,
 		LETTERS,
-		LETTERS_AND_OCTAVE
+		NUMBERS,
 	};
 
 	const float NODE_SIZE = 25;
@@ -878,27 +881,30 @@ struct NodeDisplay : Widget {
 		node->box.size = Vec(xSize, ySize);
 
 		// grid
-		for (int i = 0; i < abs((node->output+1) % 12); i++) {
+		if (module->noteRepresentation == NoteRep::SQUARES) {
+			for (int i = 0; i < abs((node->output+1) % 12); i++) {
 
-			float boxX = 3 + (3.57 * (i%3));
-			float boxY = 3 + (3.57 * floor(i/3));
+				float boxX = 3 + (3.57 * (i%3));
+				float boxY = 3 + (3.57 * floor(i/3));
 
-			nvgFillColor(vg, nvgRGB(44,44,44));
-			nvgBeginPath(vg);
-			nvgRect(vg, boxX, boxY, NODE_SIZE/8, NODE_SIZE/8);
-			nvgFill(vg);
+				nvgFillColor(vg, nvgRGB(44,44,44));
+				nvgBeginPath(vg);
+				nvgRect(vg, boxX, boxY, NODE_SIZE/8, NODE_SIZE/8);
+				nvgFill(vg);
 
-		}
-		
-		if (true) {  // NoteRep::LETTERS
-			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
+			}
+		} 
+		if (module->noteRepresentation == NoteRep::LETTERS || module->noteRepresentation == NoteRep::NUMBERS) {
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Bold.ttf")));
 			nvgSave(vg);
-			nvgScale(vg, 0.16, 0.16);
+			nvgTranslate(vg, 2, 10);
+			nvgScale(vg, 0.25, 0.25);
 			nvgFontFaceId(vg, font->handle);
 			nvgFontSize(vg, 50);
 			nvgFillColor(vg, nvgRGB(44,44,44));
-			//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
-			nvgText(vg, 3, 3, Scale::getNoteString(node->output, true).c_str(), NULL);
+			nvgTextAlign(vg, NVGalign::NVG_ALIGN_LEFT);
+			if (module->noteRepresentation == NoteRep::LETTERS) nvgText(vg, 3, 3, Scale::getNoteString(node->output, true).c_str(), NULL);
+			else nvgText(vg, 0, 0, std::to_string(node->output).c_str(), NULL);
 			nvgRestore(vg);
 		}
 		
@@ -926,9 +932,9 @@ struct NodeDisplay : Widget {
 	void drawNodes(NVGcontext* vg) {
 
 		for (size_t i = 0; i < nodeCache.size(); i++) {
-			if (nodeCache[i].scale * screenScale < 0.05) continue; // cut when too small
-			if ((nodeCache[i].pos.x + xOffset) * screenScale > box.size.x || nodeCache[i].pos.y * screenScale > box.size.y) continue;
-			if (nodeCache[i].pos.x + xOffset + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0 || nodeCache[i].pos.y + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0) continue;
+			if (nodeCache[i].scale * screenScale < 0.01) continue; // cut when too small
+			//if ((nodeCache[i].pos.x + xOffset) * screenScale > box.size.x || nodeCache[i].pos.y * screenScale > box.size.y) continue;
+			//if (nodeCache[i].pos.x + xOffset + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0 || nodeCache[i].pos.y + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0) continue;
 
 			nvgSave(vg);
 			nvgTranslate(vg, nodeCache[i].pos.x + xOffset, nodeCache[i].pos.y + yOffset);
@@ -1183,6 +1189,17 @@ struct TreequencerWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Greyscale", "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::GREYSCALE; });
 				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::GREYSCALE);
+			}));
+		}));
+		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Squares", "",[=]() {
+				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::SQUARES; });
+			}));
+			menu->addChild(createMenuItem("Letters", "",[=]() {
+				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::LETTERS; });
+			}));
+			menu->addChild(createMenuItem("Numbers", "",[=]() {
+				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::NUMBERS; });
 			}));
 		}));
 
