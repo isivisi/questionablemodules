@@ -328,8 +328,7 @@ struct NightbinButton : ui::Button {
 		return QRemotePluginInfo::fromJson(request, plugin);
 	}
 
-	std::vector<Plugin*> getPluginsSorted() {
-		std::vector<Plugin*> plugins = rack::plugin::plugins;
+	std::vector<Plugin*> getPluginsSorted(std::vector<Plugin*> plugins = rack::plugin::plugins) {
 		std::sort(plugins.begin(), plugins.end(), [](const Plugin* a, const Plugin* b) { return a->name < b->name; });
 		return plugins;
 	}
@@ -362,11 +361,16 @@ struct NightbinButton : ui::Button {
 
 		menu->addChild(createSubmenuItem("Add / Remove Modules", "", [=](Menu* menu) {
 			std::vector<Plugin*> selected = getSelectedPlugins();
+
+			for (plugin::Plugin* plugin : getPluginsSorted(selected)) {
+				menu->addChild(createMenuItem(plugin->name, "-",[=]() { removePlugin(plugin->slug); }));
+			}
+
+			if (selected.size()) menu->addChild(new MenuSeparator);
+
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
 				if (!plugin->sourceUrl.size()) continue;
-				if (std::find(selected.begin(), selected.end(), plugin) != selected.end()) {
-					menu->addChild(createMenuItem(plugin->name, "-",[=]() { removePlugin(plugin->slug); }));
-				} else menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }));
+				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }));
 			}
 		}));
 
