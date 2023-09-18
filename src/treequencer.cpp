@@ -814,8 +814,6 @@ struct NodeDisplay : Widget {
 
 		xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
 		yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
-
-
 	}
 
 	// https://personal.sron.nl/~pault/
