@@ -138,7 +138,7 @@ struct Scale {
 
 	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
 		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-		if (includeOctaveOffset) return noteStrings[abs(note%12)] + std::to_string((int)((note/12)+1));
+		if (includeOctaveOffset) return noteStrings[abs(note%12)] + std::to_string((int)((note/12)+4));
 		else return noteStrings[abs(note%12)];
 	}
 	
@@ -647,7 +647,6 @@ struct NodeDisplay : Widget {
 	float dragY = 0;
 
 	float screenScale = 3.5f;
-	bool followNodes = true;
 
 	bool dirtyRender = true;
 
@@ -1185,9 +1184,11 @@ struct TreequencerWidget : QuestionableWidget {
 		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
 			display->resetScreenPosition();
 		}));
+		
 		menu->addChild(createMenuItem("Toggle Follow Nodes", mod->followNodes ? "On" : "Off", [=]() {
 			mod->followNodes = !mod->followNodes;
 		}));
+
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", mod->colorMode == ScreenMode::LIGHT ? "•" : "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::LIGHT; });
