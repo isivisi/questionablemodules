@@ -381,7 +381,7 @@ struct Treequencer : QuestionableModule {
 	float startOffsetX = 12.5f;
 	float startOffsetY = -11.f;
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
-	int noteRepresentation = 0;
+	int noteRepresentation = 2;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -606,7 +606,9 @@ struct Treequencer : QuestionableModule {
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
+
 		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
+		else noteRepresentation = 0; // preserve previous users visuals
 
 		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
@@ -1194,13 +1196,13 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Squares", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::SQUARES; setText(); });
+				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::SQUARES; setText(); });
 			}));
 			menu->addChild(createMenuItem("Letters", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::LETTERS; setText(); });
+				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::LETTERS; setText(); });
 			}));
 			menu->addChild(createMenuItem("Numbers", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::NUMBERS; setText(); });
+				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::NUMBERS; setText(); });
 			}));
 		}));
 
