@@ -624,6 +624,12 @@ struct Treequencer : QuestionableModule {
 struct NodeDisplay : Widget {
 	Treequencer* module;
 
+	enum NoteRep {
+		SQUARES,
+		LETTERS,
+		LETTERS_AND_OCTAVE
+	};
+
 	const float NODE_SIZE = 25;
 
 	float xOffset = 25;
@@ -864,7 +870,7 @@ struct NodeDisplay : Widget {
 		// node bg
 		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][abs(octOffset%5)]);
 		nvgBeginPath(vg);
-		nvgRect(vg, xVal, yVal, xSize, ySize);
+		nvgRect(vg, 0, 0, NODE_SIZE, NODE_SIZE);
 		nvgFill(vg);
 
 		// update pos for buttonclicking
@@ -872,42 +878,40 @@ struct NodeDisplay : Widget {
 		node->box.size = Vec(xSize, ySize);
 
 		// grid
-		float gridStartX = xVal + (xSize/8);
-		float gridStartY = yVal + (xSize/8);
-
 		for (int i = 0; i < abs((node->output+1) % 12); i++) {
 
-			float boxX = gridStartX + (((NODE_SIZE/7)*scale) * (i%3));
-			float boxY = gridStartY + (((NODE_SIZE/7)*scale) * floor(i/3));
+			float boxX = 3 + (3.57 * (i%3));
+			float boxY = 3 + (3.57 * floor(i/3));
 
 			nvgFillColor(vg, nvgRGB(44,44,44));
 			nvgBeginPath(vg);
-			nvgRect(vg, boxX, boxY, (NODE_SIZE/8) * scale, (NODE_SIZE/8) * scale);
+			nvgRect(vg, boxX, boxY, NODE_SIZE/8, NODE_SIZE/8);
 			nvgFill(vg);
 
 		}
-
-		/*std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
-		nvgSave(vg);
-		float textScale = scale/6;
-		nvgScale(vg, textScale, textScale);
-		nvgFontFaceId(vg, font->handle);
-		nvgFontSize(vg, 50);
-		nvgFillColor(vg, nvgRGB(44,44,44));
-		//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
-		nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
-		nvgRestore(vg);*/
-
+		
+		if (true) {  // NoteRep::LETTERS
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
+			nvgSave(vg);
+			nvgScale(vg, 0.16, 0.16);
+			nvgFontFaceId(vg, font->handle);
+			nvgFontSize(vg, 50);
+			nvgFillColor(vg, nvgRGB(44,44,44));
+			//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
+			nvgText(vg, 3, 3, Scale::getNoteString(node->output, true).c_str(), NULL);
+			nvgRestore(vg);
+		}
+		
 		if (node->children.size() > 1) {
 			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
 
 			nvgFillColor(vg, nvgRGB(240,240,240));
 			nvgBeginPath(vg);
-			nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize);
+			nvgRect(vg, ((NODE_SIZE/8) * 7), 0, NODE_SIZE/8, NODE_SIZE);
 			nvgFill(vg);
 			nvgFillColor(vg, nvgRGB(44,44,44));
 			nvgBeginPath(vg);
-			nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * chance);
+			nvgRect(vg, ((NODE_SIZE/8) * 7), 0, NODE_SIZE/8, NODE_SIZE * chance);
 			nvgFill(vg);
 		}
 
@@ -922,7 +926,11 @@ struct NodeDisplay : Widget {
 	void drawNodes(NVGcontext* vg) {
 
 		for (size_t i = 0; i < nodeCache.size(); i++) {
+			nvgSave(vg);
+			nvgTranslate(vg, nodeCache[i].pos.x + xOffset, nodeCache[i].pos.y + yOffset);
+			nvgScale(vg, nodeCache[i].scale, nodeCache[i].scale);
 			drawNode(vg, nodeCache[i].node, nodeCache[i].pos.x, nodeCache[i].pos.y, nodeCache[i].scale);
+			nvgRestore(vg);
 		}
 	}
 
@@ -1034,6 +1042,13 @@ struct NodeDisplay : Widget {
 struct TreequencerWidget : QuestionableWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
+
+	enum ScreenMode {
+		LIGHT,
+		VIBRANT,
+		MUTED,
+		GREYSCALE
+	};
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
@@ -1150,20 +1165,20 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", "",[=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 0; });
-				userSettings.setSetting<int>("treequencerScreenColor", 0);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::LIGHT; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::LIGHT);
 			}));
 			menu->addChild(createMenuItem("Vibrant", "", [=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 1; });
-				userSettings.setSetting<int>("treequencerScreenColor", 1);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::VIBRANT; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::VIBRANT);
 			}));
 			menu->addChild(createMenuItem("Muted", "", [=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 2; });
-				userSettings.setSetting<int>("treequencerScreenColor", 2);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::MUTED; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::MUTED);
 			}));
 			menu->addChild(createMenuItem("Greyscale", "", [=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 3; });
-				userSettings.setSetting<int>("treequencerScreenColor", 3);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::GREYSCALE; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::GREYSCALE);
 			}));
 		}));
 
