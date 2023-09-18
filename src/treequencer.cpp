@@ -381,6 +381,7 @@ struct Treequencer : QuestionableModule {
 	float startOffsetX = 12.5f;
 	float startOffsetY = -11.f;
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
+	int noteRepresentation = 2;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -591,6 +592,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "startOffsetX", json_real(startOffsetX));
 		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
+		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -604,6 +606,9 @@ struct Treequencer : QuestionableModule {
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
+
+		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
+		else noteRepresentation = 0; // preserve previous users visuals
 
 		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
@@ -623,6 +628,12 @@ struct Treequencer : QuestionableModule {
 
 struct NodeDisplay : Widget {
 	Treequencer* module;
+
+	enum NoteRep {
+		SQUARES,
+		LETTERS,
+		NUMBERS,
+	};
 
 	const float NODE_SIZE = 25;
 
@@ -794,17 +805,15 @@ struct NodeDisplay : Widget {
 
 	void onHoverScroll(const HoverScrollEvent& e) override {
 		e.consume(this);
-		//float posX = APP->scene->rack->getMousePos().x;
-		//float posY = APP->scene->rack->getMousePos().y;
-		//float oldScreenScale = screenScale;
+		float posX = e.pos.x;
+		float posY = e.pos.y;
+		float oldScreenScale = screenScale;
 
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
 		module->startScreenScale = screenScale;
 
-		//xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
-		//yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
-
-
+		xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
+		yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
 	}
 
 	// https://personal.sron.nl/~pault/
@@ -864,7 +873,7 @@ struct NodeDisplay : Widget {
 		// node bg
 		nvgFillColor(vg, node->enabled ? activeColor[module->colorMode] : octColors[module->colorMode][abs(octOffset%5)]);
 		nvgBeginPath(vg);
-		nvgRect(vg, xVal, yVal, xSize, ySize);
+		nvgRect(vg, 0, 0, NODE_SIZE, NODE_SIZE);
 		nvgFill(vg);
 
 		// update pos for buttonclicking
@@ -872,42 +881,43 @@ struct NodeDisplay : Widget {
 		node->box.size = Vec(xSize, ySize);
 
 		// grid
-		float gridStartX = xVal + (xSize/8);
-		float gridStartY = yVal + (xSize/8);
+		if (module->noteRepresentation == NoteRep::SQUARES) {
+			for (int i = 0; i < abs((node->output+1) % 12); i++) {
 
-		for (int i = 0; i < abs((node->output+1) % 12); i++) {
+				float boxX = 3 + (3.57 * (i%3));
+				float boxY = 3 + (3.57 * floor(i/3));
 
-			float boxX = gridStartX + (((NODE_SIZE/7)*scale) * (i%3));
-			float boxY = gridStartY + (((NODE_SIZE/7)*scale) * floor(i/3));
+				nvgFillColor(vg, nvgRGB(44,44,44));
+				nvgBeginPath(vg);
+				nvgRect(vg, boxX, boxY, NODE_SIZE/8, NODE_SIZE/8);
+				nvgFill(vg);
 
+			}
+		} 
+		if (module->noteRepresentation == NoteRep::LETTERS || module->noteRepresentation == NoteRep::NUMBERS) {
+			std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Bold.ttf")));
+			nvgSave(vg);
+			nvgTranslate(vg, 2, 10);
+			nvgScale(vg, 0.25, 0.25);
+			nvgFontFaceId(vg, font->handle);
+			nvgFontSize(vg, 50);
 			nvgFillColor(vg, nvgRGB(44,44,44));
-			nvgBeginPath(vg);
-			nvgRect(vg, boxX, boxY, (NODE_SIZE/8) * scale, (NODE_SIZE/8) * scale);
-			nvgFill(vg);
-
+			nvgTextAlign(vg, NVGalign::NVG_ALIGN_LEFT);
+			if (module->noteRepresentation == NoteRep::LETTERS) nvgText(vg, 3, 3, Scale::getNoteString(node->output, true).c_str(), NULL);
+			else nvgText(vg, 0, 0, ((std::signbit(node->output+1) ? std::string("-") : (node->output+1 > 9 ? std::string("") : std::string("0"))) + std::to_string(abs(node->output+1))).c_str(), NULL);
+			nvgRestore(vg);
 		}
-
-		/*std::shared_ptr<window::Font> font = APP->window->loadFont(asset::plugin(pluginInstance, std::string("res/fonts/OpenSans-Regular.ttf")));
-		nvgSave(vg);
-		float textScale = scale/6;
-		nvgScale(vg, textScale, textScale);
-		nvgFontFaceId(vg, font->handle);
-		nvgFontSize(vg, 50);
-		nvgFillColor(vg, nvgRGB(44,44,44));
-		//nvgTextAlign(vg, NVGalign::NVG_ALIGN_CENTER);
-		nvgText(vg, (xVal/textScale) + ((xSize/textScale)/4), (yVal/textScale) + ((ySize/textScale)), Scale::getNoteString(node->output).c_str(), NULL);
-		nvgRestore(vg);*/
-
+		
 		if (node->children.size() > 1) {
 			float chance = std::min(1.f, std::max(0.f, node->chance - module->getChanceMod()));
 
 			nvgFillColor(vg, nvgRGB(240,240,240));
 			nvgBeginPath(vg);
-			nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize);
+			nvgRect(vg, ((NODE_SIZE/8) * 7), 0, NODE_SIZE/8, NODE_SIZE);
 			nvgFill(vg);
 			nvgFillColor(vg, nvgRGB(44,44,44));
 			nvgBeginPath(vg);
-			nvgRect(vg, xVal + ((xSize/8) * 7), yVal, xSize/8, ySize * chance);
+			nvgRect(vg, ((NODE_SIZE/8) * 7), 0, NODE_SIZE/8, NODE_SIZE * chance);
 			nvgFill(vg);
 		}
 
@@ -922,7 +932,15 @@ struct NodeDisplay : Widget {
 	void drawNodes(NVGcontext* vg) {
 
 		for (size_t i = 0; i < nodeCache.size(); i++) {
+			if (nodeCache[i].scale * screenScale < 0.01) continue; // cut when too small
+			//if ((nodeCache[i].pos.x + xOffset) * screenScale > box.size.x || nodeCache[i].pos.y * screenScale > box.size.y) continue;
+			//if (nodeCache[i].pos.x + xOffset + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0 || nodeCache[i].pos.y + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0) continue;
+
+			nvgSave(vg);
+			nvgTranslate(vg, nodeCache[i].pos.x + xOffset, nodeCache[i].pos.y + yOffset);
+			nvgScale(vg, nodeCache[i].scale, nodeCache[i].scale);
 			drawNode(vg, nodeCache[i].node, nodeCache[i].pos.x, nodeCache[i].pos.y, nodeCache[i].scale);
+			nvgRestore(vg);
 		}
 	}
 
@@ -1035,6 +1053,13 @@ struct TreequencerWidget : QuestionableWidget {
 	NodeDisplay *display;
 	ImagePanel *dirt;
 
+	enum ScreenMode {
+		LIGHT,
+		VIBRANT,
+		MUTED,
+		GREYSCALE
+	};
+
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
@@ -1053,15 +1078,16 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("HOLD", "OpenSans-Bold.ttf", c, 7, Vec(223, 314), "descriptor");
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
-
-		color->addText("1", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
-		color->addText("2", "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
-		color->addText("3", "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
-		color->addText("4", "OpenSans-Bold.ttf", c, 7, Vec(146, 353), "descriptor");
-		color->addText("5", "OpenSans-Bold.ttf", c, 7, Vec(184.5, 353), "descriptor");
-		color->addText("6", "OpenSans-Bold.ttf", c, 7, Vec(223, 353), "descriptor");
-		color->addText("7", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 353), "descriptor");
-		color->addText("8", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 353), "descriptor");
+		
+		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
+		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
+		color->addText(isNumber ? "2" : Scale::getNoteString(1, true), "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
+		color->addText(isNumber ? "3" : Scale::getNoteString(2, true), "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
+		color->addText(isNumber ? "4" : Scale::getNoteString(3, true), "OpenSans-Bold.ttf", c, 7, Vec(146, 353), "descriptor");
+		color->addText(isNumber ? "5" : Scale::getNoteString(4, true), "OpenSans-Bold.ttf", c, 7, Vec(184.5, 353), "descriptor");
+		color->addText(isNumber ? "6" : Scale::getNoteString(5, true), "OpenSans-Bold.ttf", c, 7, Vec(223, 353), "descriptor");
+		color->addText(isNumber ? "7" : Scale::getNoteString(6, true), "OpenSans-Bold.ttf", c, 7, Vec(261.35, 353), "descriptor");
+		color->addText(isNumber ? "8" : Scale::getNoteString(7, true), "OpenSans-Bold.ttf", c, 7, Vec(299.35, 353), "descriptor");
 	}
 
 	TreequencerWidget(Treequencer* module) {
@@ -1150,20 +1176,31 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", "",[=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 0; });
-				userSettings.setSetting<int>("treequencerScreenColor", 0);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::LIGHT; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::LIGHT);
 			}));
 			menu->addChild(createMenuItem("Vibrant", "", [=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 1; });
-				userSettings.setSetting<int>("treequencerScreenColor", 1);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::VIBRANT; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::VIBRANT);
 			}));
 			menu->addChild(createMenuItem("Muted", "", [=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 2; });
-				userSettings.setSetting<int>("treequencerScreenColor", 2);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::MUTED; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::MUTED);
 			}));
 			menu->addChild(createMenuItem("Greyscale", "", [=]() {
-				mod->onAudioThread([=]() { mod->colorMode = 3; });
-				userSettings.setSetting<int>("treequencerScreenColor", 3);
+				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::GREYSCALE; });
+				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::GREYSCALE);
+			}));
+		}));
+		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Squares", "",[=]() {
+				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::SQUARES; setText(); });
+			}));
+			menu->addChild(createMenuItem("Letters", "",[=]() {
+				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::LETTERS; setText(); });
+			}));
+			menu->addChild(createMenuItem("Numbers", "",[=]() {
+				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::NUMBERS; setText(); });
 			}));
 		}));
 
