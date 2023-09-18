@@ -159,9 +159,9 @@ struct GreenscreenWidget : QuestionableWidget {
 				newBackground->color = nvgRGB(0, 175, 26);
 				APP->scene->rack->addChildAbove(newBackground, *railWidget);
 			} else WARN("Unable to find railWidget");
-
-			color->setTextGroupVisibility("default", module->showText);
+			
 			changeColor(module->text, module->color);
+			color->setTextGroupVisibility("default", module->showText);
 		}
 
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
@@ -188,6 +188,7 @@ struct GreenscreenWidget : QuestionableWidget {
 			for (const auto & pair : selectableColors) {
 				menu->addChild(createMenuItem(pair.first, "", [&]() { 
 					changeColor(pair.first, pair.second);
+					color->setTextGroupVisibility("default", mod->showText);
 				}));
 			}
 		}));
