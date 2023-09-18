@@ -500,7 +500,7 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
-	size_t sequencePos = 0;
+	int sequencePos = 0;
 	void processSequence(bool newSequence = false) {
 		bool lastBounce = bouncing;
 		if (newSequence) {
