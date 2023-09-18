@@ -1194,13 +1194,25 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Squares", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::SQUARES; setText(); });
+				mod->onAudioThread([=]() { 
+					mod->noteRepresentation = NodeDisplay::NoteRep::SQUARES; 
+					setText();
+					setWidgetTheme(mod->theme, false); // fix text color
+				});
 			}));
 			menu->addChild(createMenuItem("Letters", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::LETTERS; setText(); });
+				mod->onAudioThread([=]() { 
+					mod->noteRepresentation = NodeDisplay::NoteRep::LETTERS; 
+					setText();
+					setWidgetTheme(mod->theme, false); // fix text color
+				});
 			}));
 			menu->addChild(createMenuItem("Numbers", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation = NodeDisplay::NoteRep::NUMBERS; setText(); });
+				mod->onAudioThread([=]() { 
+					mod->noteRepresentation = NodeDisplay::NoteRep::NUMBERS; 
+					setText();
+					setWidgetTheme(mod->theme, false); // fix text color
+				});
 			}));
 		}));
 
