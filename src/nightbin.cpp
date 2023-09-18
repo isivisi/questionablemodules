@@ -334,7 +334,17 @@ struct NightbinButton : ui::Button {
 		return plugins;
 	}
 
+	// check if plugin has everytinh needed to query updates
+	bool isPluginValid(Plugin* p) {
+		if (!p) return false;
+		if (p->pluginUrl.empty()) return false;
+		if (p->pluginUrl.find("github") == std::string::npos) return false; // github only atm
+		return true;
+	}
+
 	void onAction(const ActionEvent& e) override {
+		if (isGathering || isUpdating) return;
+
 		ui::Menu* menu = createMenu();
 		menu->cornerFlags = BND_CORNER_TOP;
 		menu->box.pos = getAbsoluteOffset(math::Vec(0, box.size.y));
@@ -366,7 +376,7 @@ struct NightbinButton : ui::Button {
 			if (!userSettings.getSetting<std::string>("gitPersonalAccessToken").empty()) {
 				menu->addChild(createMenuItem("Add All Plugins", "+",[=]() { 
 					for (plugin::Plugin* plugin : rack::plugin::plugins) {
-						if (plugin->sourceUrl.size()) addPlugin(plugin->slug, false);
+						if (isPluginValid(plugin)) addPlugin(plugin->slug, false);
 					}
 					startQueryThread();
 				}));
@@ -381,7 +391,7 @@ struct NightbinButton : ui::Button {
 			}
 
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
-				if (!plugin->sourceUrl.size()) continue;
+				if (!isPluginValid(plugin)) continue;
 				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }));
 			}
 		}));
