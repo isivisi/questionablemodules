@@ -198,13 +198,13 @@ struct NightbinButton : ui::Button {
 		return plugins;
 	}
 
-	void addPlugin(std::string slug) {
+	void addPlugin(std::string slug, bool check = true) {
 		std::vector<std::string> plugins = userSettings.getArraySetting<std::string>("nightbinSelectedPlugins");
 		auto found = find(plugins.begin(), plugins.end(), slug);
 		if (found == plugins.end()) {
 			plugins.push_back(slug);
 			userSettings.setArraySetting<std::string>("nightbinSelectedPlugins", plugins);
-			startQueryThread();
+			if (check) startQueryThread();
 		}
 	}
 
@@ -297,6 +297,7 @@ struct NightbinButton : ui::Button {
 		INFO("checking for builds at: %s", api.c_str());
 		if (!api.size()) {
 			WARN("Failed to get api string for module: %s, sourceURL: %s", plugin->name.c_str(), plugin->sourceUrl.c_str());
+			warnings.push_back("Could not parse api string for " + plugin->name);
 			return QRemotePluginInfo();
 		}
 
@@ -361,12 +362,23 @@ struct NightbinButton : ui::Button {
 
 		menu->addChild(createSubmenuItem("Add / Remove Modules", "", [=](Menu* menu) {
 			std::vector<Plugin*> selected = getSelectedPlugins();
-
-			for (plugin::Plugin* plugin : getPluginsSorted(selected)) {
-				menu->addChild(createMenuItem(plugin->name, "-",[=]() { removePlugin(plugin->slug); }));
+			
+			if (userSettings.getSetting<std::string>("gitPersonalAccessToken").size()) {
+				menu->addChild(createMenuItem("Add All Plugins", "+",[=]() { 
+					for (plugin::Plugin* plugin : rack::plugin::plugins) {
+						if (plugin->sourceUrl.size()) addPlugin(plugin->slug, false);
+					}
+					startQueryThread();
+				}));
+				menu->addChild(new MenuSeparator);
 			}
 
-			if (selected.size()) menu->addChild(new MenuSeparator);
+			if (selected.size()) {
+				for (plugin::Plugin* plugin : getPluginsSorted(selected)) {
+					menu->addChild(createMenuItem(plugin->name, "-",[=]() { removePlugin(plugin->slug); }));
+				}
+				menu->addChild(new MenuSeparator);
+			}
 
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
 				if (!plugin->sourceUrl.size()) continue;
