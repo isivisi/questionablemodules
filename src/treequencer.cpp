@@ -926,6 +926,10 @@ struct NodeDisplay : Widget {
 	void drawNodes(NVGcontext* vg) {
 
 		for (size_t i = 0; i < nodeCache.size(); i++) {
+			if (nodeCache[i].scale * screenScale < 0.05) continue; // cut when too small
+			if ((nodeCache[i].pos.x + xOffset) * screenScale > box.size.x || nodeCache[i].pos.y * screenScale > box.size.y) continue;
+			if (nodeCache[i].pos.x + xOffset + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0 || nodeCache[i].pos.y + (NODE_SIZE*nodeCache[i].scale*screenScale) < 0) continue;
+
 			nvgSave(vg);
 			nvgTranslate(vg, nodeCache[i].pos.x + xOffset, nodeCache[i].pos.y + yOffset);
 			nvgScale(vg, nodeCache[i].scale, nodeCache[i].scale);
