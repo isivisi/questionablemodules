@@ -1175,39 +1175,40 @@ struct TreequencerWidget : QuestionableWidget {
 			display->resetScreenPosition();
 		}));
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Light", "",[=]() {
+			menu->addChild(createMenuItem("Light", mod->colorMode == ScreenMode::LIGHT ? "•" : "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::LIGHT; });
 				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::LIGHT);
 			}));
-			menu->addChild(createMenuItem("Vibrant", "", [=]() {
+			menu->addChild(createMenuItem("Vibrant", mod->colorMode == ScreenMode::VIBRANT ? "•" : "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::VIBRANT; });
 				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::VIBRANT);
 			}));
-			menu->addChild(createMenuItem("Muted", "", [=]() {
+			menu->addChild(createMenuItem("Muted", mod->colorMode == ScreenMode::MUTED ? "•" : "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::MUTED; });
 				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::MUTED);
 			}));
-			menu->addChild(createMenuItem("Greyscale", "", [=]() {
+			menu->addChild(createMenuItem("Greyscale", mod->colorMode == ScreenMode::GREYSCALE ? "•" : "", [=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::GREYSCALE; });
 				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::GREYSCALE);
 			}));
 		}));
+		
 		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
-			menu->addChild(createMenuItem("Squares", "",[=]() {
+			menu->addChild(createMenuItem("Squares", mod->noteRepresentation == NodeDisplay::SQUARES ? "•" : "", [=]() {
 				mod->onAudioThread([=]() { 
 					mod->noteRepresentation = NodeDisplay::NoteRep::SQUARES; 
 					setText();
 					setWidgetTheme(mod->theme, false); // fix text color
 				});
 			}));
-			menu->addChild(createMenuItem("Letters", "",[=]() {
+			menu->addChild(createMenuItem("Letters", mod->noteRepresentation == NodeDisplay::LETTERS ? "•" : "",[=]() {
 				mod->onAudioThread([=]() { 
 					mod->noteRepresentation = NodeDisplay::NoteRep::LETTERS; 
 					setText();
 					setWidgetTheme(mod->theme, false); // fix text color
 				});
 			}));
-			menu->addChild(createMenuItem("Numbers", "",[=]() {
+			menu->addChild(createMenuItem("Numbers", mod->noteRepresentation == NodeDisplay::NUMBERS ? "•" : "",[=]() {
 				mod->onAudioThread([=]() { 
 					mod->noteRepresentation = NodeDisplay::NoteRep::NUMBERS; 
 					setText();
