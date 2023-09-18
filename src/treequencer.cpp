@@ -904,7 +904,7 @@ struct NodeDisplay : Widget {
 			nvgFillColor(vg, nvgRGB(44,44,44));
 			nvgTextAlign(vg, NVGalign::NVG_ALIGN_LEFT);
 			if (module->noteRepresentation == NoteRep::LETTERS) nvgText(vg, 3, 3, Scale::getNoteString(node->output, true).c_str(), NULL);
-			else nvgText(vg, 0, 0, std::to_string(node->output+1).c_str(), NULL);
+			else nvgText(vg, 0, 0, ((std::signbit(node->output+1) ? std::string("-") : (node->output+1 > 9 ? std::string("") : std::string("0"))) + std::to_string(abs(node->output+1))).c_str(), NULL);
 			nvgRestore(vg);
 		}
 		
