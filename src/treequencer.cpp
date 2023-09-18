@@ -1078,15 +1078,16 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("HOLD", "OpenSans-Bold.ttf", c, 7, Vec(223, 314), "descriptor");
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
-
-		color->addText("1", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
-		color->addText("2", "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
-		color->addText("3", "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
-		color->addText("4", "OpenSans-Bold.ttf", c, 7, Vec(146, 353), "descriptor");
-		color->addText("5", "OpenSans-Bold.ttf", c, 7, Vec(184.5, 353), "descriptor");
-		color->addText("6", "OpenSans-Bold.ttf", c, 7, Vec(223, 353), "descriptor");
-		color->addText("7", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 353), "descriptor");
-		color->addText("8", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 353), "descriptor");
+		
+		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
+		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
+		color->addText(isNumber ? "2" : Scale::getNoteString(1, true), "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
+		color->addText(isNumber ? "3" : Scale::getNoteString(2, true), "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
+		color->addText(isNumber ? "4" : Scale::getNoteString(3, true), "OpenSans-Bold.ttf", c, 7, Vec(146, 353), "descriptor");
+		color->addText(isNumber ? "5" : Scale::getNoteString(4, true), "OpenSans-Bold.ttf", c, 7, Vec(184.5, 353), "descriptor");
+		color->addText(isNumber ? "6" : Scale::getNoteString(5, true), "OpenSans-Bold.ttf", c, 7, Vec(223, 353), "descriptor");
+		color->addText(isNumber ? "7" : Scale::getNoteString(6, true), "OpenSans-Bold.ttf", c, 7, Vec(261.35, 353), "descriptor");
+		color->addText(isNumber ? "8" : Scale::getNoteString(7, true), "OpenSans-Bold.ttf", c, 7, Vec(299.35, 353), "descriptor");
 	}
 
 	TreequencerWidget(Treequencer* module) {
@@ -1193,13 +1194,13 @@ struct TreequencerWidget : QuestionableWidget {
 		}));
 		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Squares", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::SQUARES; });
+				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::SQUARES; setText(); });
 			}));
 			menu->addChild(createMenuItem("Letters", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::LETTERS; });
+				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::LETTERS; setText(); });
 			}));
 			menu->addChild(createMenuItem("Numbers", "",[=]() {
-				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::NUMBERS; });
+				mod->onAudioThread([=]() { mod->noteRepresentation =  NodeDisplay::NoteRep::NUMBERS; setText(); });
 			}));
 		}));
 
