@@ -805,15 +805,15 @@ struct NodeDisplay : Widget {
 
 	void onHoverScroll(const HoverScrollEvent& e) override {
 		e.consume(this);
-		//float posX = APP->scene->rack->getMousePos().x;
-		//float posY = APP->scene->rack->getMousePos().y;
-		//float oldScreenScale = screenScale;
+		float posX = e.pos.x;
+		float posY = e.pos.y;
+		float oldScreenScale = screenScale;
 
 		screenScale += (e.scrollDelta.y * screenScale) / 256.f;
 		module->startScreenScale = screenScale;
 
-		//xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
-		//yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
+		xOffset = xOffset - ((posX / oldScreenScale) - (posX / screenScale));
+		yOffset = yOffset - ((posY / oldScreenScale) - (posY / screenScale));
 
 
 	}
