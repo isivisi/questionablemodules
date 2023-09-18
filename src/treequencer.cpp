@@ -651,6 +651,8 @@ struct NodeDisplay : Widget {
 
 	bool dirtyRender = true;
 
+	Node* lastActive = nullptr;
+
 	NodeDisplay() {
 
 	}
@@ -987,15 +989,15 @@ struct NodeDisplay : Widget {
 				cacheNodePositions();
 				renderStateClean();
 			}
+			drawNodes(args.vg);
 
-			if (module && module->followNodes) {
+			if (module && module->followNodes && (!lastActive || lastActive != module->activeNode)) {
 				NodePosCache activeNode = getActiveCached();
 				xOffset = -(activeNode.pos.x - (0.5*activeNode.scale));
 				yOffset = -(activeNode.pos.y - (0.5*activeNode.scale));
 				screenScale = 7.65/activeNode.scale;
+				lastActive = module->activeNode;
 			}
-
-			drawNodes(args.vg);
 
 		}
 
