@@ -107,7 +107,13 @@
               <p id="Sequence Complete"><span class="fw-bold">Sequence Completed</span> triggers when the end of a sequence has been hit. The end of a sequence is when the node is set back to the first or when the sequence begins to move backwards.</p>
               <p id="VOct" class=""><span class="fw-bold">VOct Out</span> outputs the current node value divided by 12 to be used as octave control (This uses the 1V/oct standard). Node values higher than 8 will still output here.</p>
               <p id="Sequence" class=""><span class="fw-bold">Outputs 1-8</span>, values 1 through 8 will activate these corresponding output triggers. Values higher and lower than 8 will not be output here but will still output to VOct.</p>
- 
+              
+
+              <h2>Note Representation</h2>
+              <p>There are 3 ways you can represent the specified note for a node. You can set this via the <span class="fw-bold">Note Representation</span> submenu in the modules <span class="fw-bold">context menu</span>.</p>
+                <p><span class="fw-bold">Squares</span> the original method before I figured out text, uses up to 12 squares to represent the number. </p>
+                <p><span class="fw-bold">Letters</span> uses the <a href="#VOct">VOct Out</a> note letter representation (C#1, F2, etc..)</p>
+                <p><span class="fw-bold">Numbers</span> The raw output number value (1, 2, 3, etc...)</p>
             </div>
            </div> 
 
@@ -115,7 +121,7 @@
             <div>
               <h2>Themes</h2>
               <p>The modules context menu has a theme submenu where you can change the background to a solid white or black color if you are having trouble with the default background design. </p>
-              <p>You can also change how Treequencer displays colors aswell. Treequencer utilizes <a href="https://personal.sron.nl/~pault/">Tol Color Schemes</a> for better colorblind safe colors. There is also a greyscale color scheme :)</p>
+              <p>You can change how Treequencer displays colors aswell. Treequencer utilizes <a href="https://personal.sron.nl/~pault/">Tol Color Schemes</a> for better colorblind safe colors. There is also a greyscale color scheme :)</p>
 
               <h2>Labels</h2>
               <p>Knob and plug labels can be toggled via the <span class="fw-bold">toggle labels</span> option in the context menu. </p>
