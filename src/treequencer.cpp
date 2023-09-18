@@ -382,6 +382,7 @@ struct Treequencer : QuestionableModule {
 	float startOffsetY = -11.f;
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
+	bool followNodes = false;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -593,6 +594,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "startOffsetY", json_real(startOffsetY));
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
+		json_object_set_new(rootJ, "followNodes", json_boolean(followNodes));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -606,6 +608,7 @@ struct Treequencer : QuestionableModule {
 		if (json_t* sx = json_object_get(rootJ, "startOffsetX")) startOffsetX = json_real_value(sx);
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
+		if (json_t* fn = json_object_get(rootJ, "followNodes")) followNodes = json_boolean_value(fn);
 
 		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
 		else noteRepresentation = 0; // preserve previous users visuals
@@ -644,7 +647,7 @@ struct NodeDisplay : Widget {
 	float dragY = 0;
 
 	float screenScale = 3.5f;
-	bool followNodes = false;
+	bool followNodes = true;
 
 	bool dirtyRender = true;
 
@@ -801,6 +804,7 @@ struct NodeDisplay : Widget {
 		dragX = newDragX;
 		dragY = newDragY;
 
+		if (module) module->followNodes = false;
 	}
 
 	void onHoverScroll(const HoverScrollEvent& e) override {
@@ -957,12 +961,6 @@ struct NodeDisplay : Widget {
 	void drawLayer(const DrawArgs &args, int layer) override {
 		if (module == NULL) return;
 
-		// nvgScale
-		// nvgText
-		// nvgFontSize
-		// nvgCreateFont
-		// nvgText(0, 0 )
-
 		nvgSave(args.vg);
 		nvgScissor(args.vg, 0, 0, box.size.x, box.size.y);
 
@@ -989,6 +987,14 @@ struct NodeDisplay : Widget {
 				cacheNodePositions();
 				renderStateClean();
 			}
+
+			if (module && module->followNodes) {
+				NodePosCache activeNode = getActiveCached();
+				xOffset = -(activeNode.pos.x - (0.5*activeNode.scale));
+				yOffset = -(activeNode.pos.y - (0.5*activeNode.scale));
+				screenScale = 7.65/activeNode.scale;
+			}
+
 			drawNodes(args.vg);
 
 		}
@@ -1002,6 +1008,10 @@ struct NodeDisplay : Widget {
 		Vec pos;
 		float scale;
 		Node* node;
+
+		bool operator==(const Node* other) {
+			return node == other;
+		}
 	};
 	
 	std::vector<NodePosCache> nodeCache;
@@ -1023,17 +1033,16 @@ struct NodeDisplay : Widget {
 
 				if (node) {
 					nodeCache.push_back(NodePosCache{Vec(cumulativeX, y), calcNodeScale(binLen), node});
-
-					if (followNodes && node == module->activeNode) {
-						xOffset = -cumulativeX;
-						yOffset = -y;
-						screenScale = ((1-(scale*2))*25);
-					}
 				}
 				
 			}
 		}
 
+	}
+
+	// find the current active node cache data
+	NodePosCache getActiveCached() {
+		return *std::find(nodeCache.begin(), nodeCache.end(), module->activeNode);
 	}
 
 	void gatherNodesForBins(Node* node, int position = 0, int depth = 0) {
@@ -1174,6 +1183,9 @@ struct TreequencerWidget : QuestionableWidget {
 		menu->addChild(createMenuItem("Reset Screen Position", "",[=]() {
 			display->resetScreenPosition();
 		}));
+		menu->addChild(createMenuItem("Toggle Follow Nodes", mod->followNodes ? "On" : "Off", [=]() {
+			mod->followNodes = !mod->followNodes;
+		}));
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Light", mod->colorMode == ScreenMode::LIGHT ? "•" : "",[=]() {
 				mod->onAudioThread([=]() { mod->colorMode = ScreenMode::LIGHT; });
@@ -1192,7 +1204,7 @@ struct TreequencerWidget : QuestionableWidget {
 				userSettings.setSetting<int>("treequencerScreenColor", ScreenMode::GREYSCALE);
 			}));
 		}));
-		
+
 		menu->addChild(rack::createSubmenuItem("Note Representation", "", [=](ui::Menu* menu) {
 			menu->addChild(createMenuItem("Squares", mod->noteRepresentation == NodeDisplay::SQUARES ? "•" : "", [=]() {
 				mod->onAudioThread([=]() { 
