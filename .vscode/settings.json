@@ -65,8 +65,6 @@
         "xhash": "cpp",
         "xlocmon": "cpp",
         "xloctime": "cpp",
-        "chrono": "cpp",
-        "typeindex": "cpp",
         "csignal": "cpp",
         "cstdarg": "cpp",
         "cwctype": "cpp",
@@ -77,6 +75,7 @@
         "bitset": "cpp",
         "cfenv": "cpp",
         "charconv": "cpp",
+        "chrono": "cpp",
         "cinttypes": "cpp",
         "codecvt": "cpp",
         "complex": "cpp",
@@ -96,8 +95,8 @@
         "semaphore": "cpp",
         "shared_mutex": "cpp",
         "stdfloat": "cpp",
+        "typeindex": "cpp",
         "valarray": "cpp",
-        "variant": "cpp",
-        "*.ipp": "cpp"
+        "variant": "cpp"
     }
 }
