@@ -93,18 +93,15 @@ struct Scale {
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
-			int randomType = randomInt<int>(0, 3);
+			int randomType = randomInt<int>(0, 2);
 			switch (randomType) {
-				case 0: // random number nearby
-					offset = randomInt<int>(back-9, back+9);
-					break;
-				case 1: // move a 3rd
+				case 0: // move a 3rd
 					offset = (randomInt<int>(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
 					break;
-				case 2: // move a 5th
+				case 1: // move a 5th
 					offset = (randomInt<int>(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
 					break;
-				case 3: // move a 7th
+				case 2: // move a 7th
 					offset = (randomInt<int>(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
 					break;
 			}
