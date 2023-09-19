@@ -257,12 +257,16 @@ struct Node {
 		if (d <= 0) return;
 		if (depth >= 21) return;
 
+		if (randomReal<float>() > 0.9) return;
+
 		if (Node* child1 = addChild()) {
 			std::vector<int> c1History = history;
 			c1History.push_back(output);
 			child1->output = s.getNextInSequence(c1History, 48);
 			child1->generateSequencesToDepth(s, d-1, c1History);
 		}
+
+		if (randomReal<float>() > 0.9) return;
 		
 		if (Node* child2 = addChild()) {
 			std::vector<int> c2History = history;
