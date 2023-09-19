@@ -88,8 +88,8 @@ struct Scale {
 		return note;*/
 
 		// convert back to offset values
-		int front = toOffset(sequence.front());
-		int back = toOffset(sequence.back());
+		int front = toOffset(sequence.back());
+		int back = toOffset(sequence.front());
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
@@ -106,7 +106,7 @@ struct Scale {
 					break;
 			}
 		}
-		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
+		return offsetToNote(offset);
 	}
 
 	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
@@ -118,9 +118,13 @@ struct Scale {
 	// convert note to position offset
 	int toOffset(int note) {
 		for (size_t i = 0; i < notes.size(); i++) {
-			if (notes[i] == abs(note % (int)notes.size())) return i * (note / (int)notes.size());
+			if (notes[i] == abs(note % (int)notes.size())) return i + ((int)notes.size() * (note / 12));
 		}
 		return 0;
+	}
+
+	int offsetToNote(int offset) {
+		return notes[offset%notes.size()] + (int)(12 * (offset/(int)notes.size()));
 	}
 
 	Scale getTransposedBy(int note) {
@@ -215,6 +219,13 @@ struct Node {
 	std::vector<Node*> getChildren() {
 		
 		return children;
+	}
+
+	std::vector<int> getHistory() {
+		if (!parent) return {output};
+		std::vector history = parent->getHistory();
+		history.push_back(output);
+		return history;
 	}
 
 	// Fill each Node with 2 other nodes until depth is met
@@ -760,7 +771,7 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
-				node->addChild(getScale(mod->defaultScale).getNextInSequence({node->output})); 
+				node->addChild(getScale(mod->defaultScale).getNextInSequence(node->getHistory())); 
 				renderStateDirty();
 			});
 		}));
