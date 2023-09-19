@@ -66,7 +66,7 @@ struct Scale {
 		return sequence;
 	}
 
-	int getNextInSequence(std::vector<int> sequence, int maxSize) {
+	int getNextInSequence(std::vector<int> sequence, int maxSize=1) {
 		int offset = 0;
 
 		/*auto probs = getProbabilities();
@@ -131,6 +131,10 @@ struct Scale {
 		}
 		return newScale;
 	}
+
+	bool operator==(const std::string other) {
+		return name == other;
+	}
 };
 
 // All starting at C
@@ -143,6 +147,12 @@ std::vector<Scale> scales = {
 	Scale{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
 	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
 };
+
+static Scale getScale(std::string scaleName) {
+	auto found = std::find(scales.begin(), scales.end(), scaleName);
+	if (found != scales.end()) return *found;
+	return Scale{"None", {}};
+}
 
 // A node in the tree
 struct Node {
@@ -221,13 +231,13 @@ struct Node {
 		children.push_back(child2);
   	}
 
-	Node* addChild() {
+	Node* addChild(int out = randomInt<int>(-1, 7), float c = randomReal<float>(0, 0.9f)) {
 		if (children.size() > 1) return nullptr;
 
 		Node* child = new Node(this);
 		child->parent = this;
-		child->chance = randomReal<float>(0, 0.9f);
-		child->output = randomInt<int>(-1, 7);
+		child->chance = c;
+		child->output = out;
 		children.push_back(child);
 
 		return child;
@@ -360,6 +370,7 @@ struct Treequencer : QuestionableModule {
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
 	bool followNodes = false;
+	std::string defaultScale = "Pentatonic"; // scale for new node gen
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -572,6 +583,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
 		json_object_set_new(rootJ, "followNodes", json_boolean(followNodes));
+		json_object_set_new(rootJ, "defaultScale", json_string(defaultScale.c_str()));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -586,6 +598,7 @@ struct Treequencer : QuestionableModule {
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
 		if (json_t* fn = json_object_get(rootJ, "followNodes")) followNodes = json_boolean_value(fn);
+		if (json_t* ds = json_object_get(rootJ, "defaultScale")) defaultScale = json_string_value(ds);
 
 		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
 		else noteRepresentation = 0; // preserve previous users visuals
@@ -747,7 +760,7 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
-				node->addChild(); 
+				node->addChild(getScale(mod->defaultScale).getNextInSequence({node->output})); 
 				renderStateDirty();
 			});
 		}));
@@ -1203,6 +1216,14 @@ struct TreequencerWidget : QuestionableWidget {
 		
 		menu->addChild(createMenuItem("Toggle Follow Nodes", mod->followNodes ? "On" : "Off", [=]() {
 			mod->followNodes = !mod->followNodes;
+		}));
+
+		menu->addChild(rack::createSubmenuItem("Default Scale", "", [=](ui::Menu* menu) {
+			for (size_t i = 0; i < scales.size(); i++) {
+				menu->addChild(createMenuItem(scales[i].name, scales[i].name == mod->defaultScale ? "•" : "",[=]() {
+						mod->defaultScale = scales[i].name;
+				}));
+			}
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
