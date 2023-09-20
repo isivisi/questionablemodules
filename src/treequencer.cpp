@@ -114,6 +114,8 @@ struct Scale {
 			offset -= relativeOctDiff;
 		}
 
+		assert(std::find(notes.begin(), notes.end(), abs(offsetToNote(offset)%12)) != notes.end());
+
 		return offsetToNote(offset);
 	}
 
