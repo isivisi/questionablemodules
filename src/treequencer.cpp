@@ -277,15 +277,17 @@ struct Node {
 	}
 
 	void generateSequencesToDepth(Scale s, int d, std::vector<int> history=std::vector<int>()) {
+		if (history.empty()) history = getHistory();
 		if (d <= 0) return;
 		if (depth >= 21) return;
+		
 
 		if (randomReal<float>() > 0.9) return;
 
 		if (Node* child1 = addChild()) {
 			std::vector<int> c1History = history;
-			c1History.push_back(output);
-			child1->output = s.getNextInSequence(c1History, 48);
+			child1->output = s.getNextInSequence(history, 48);
+			c1History.push_back(child1->output);
 			child1->generateSequencesToDepth(s, d-1, c1History);
 		}
 
@@ -293,8 +295,8 @@ struct Node {
 		
 		if (Node* child2 = addChild()) {
 			std::vector<int> c2History = history;
-			c2History.push_back(output);
-			child2->output = s.getNextInSequence(c2History, 48);
+			child2->output = s.getNextInSequence(history, 48);
+			c2History.push_back(child2->output);
 			child2->generateSequencesToDepth(s, d-1, c2History);
 		}
 	}
