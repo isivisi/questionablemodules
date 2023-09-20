@@ -93,7 +93,7 @@ struct Scale {
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
-			int randomType = randomInt<int>(0, 2);
+			int randomType = randomInt<int>(0, 0);
 			switch (randomType) {
 				case 0: // move a 3rd
 					offset = (randomInt<int>(0,1) ? back+3 : back-3);// * std::max(1, (int)(back / 12));
@@ -108,8 +108,9 @@ struct Scale {
 		}
 
 		// keep root octave or not
-		if (randomReal<float>(0,1) < 0.95) {
+		if (true) { //randomReal<float>(0,1) < 0.95) {
 			int relativeOctDiff = relativeOctave(front) - relativeOctave(offset);
+			relativeOctDiff = relativeOctDiff < 0 ? relativeOctDiff-1 : relativeOctDiff > 0 ? relativeOctDiff+1 : relativeOctDiff;
 			offset -= relativeOctDiff;
 		}
 
