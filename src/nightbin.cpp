@@ -391,8 +391,8 @@ struct NightbinButton : ui::Button {
 			}
 
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
-				if (!isPluginValid(plugin)) continue;
-				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }));
+				//if (!isPluginValid(plugin)) continue;
+				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }, isPluginValid(plugin)));
 			}
 		}));
 
