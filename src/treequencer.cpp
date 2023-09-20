@@ -117,15 +117,19 @@ struct Scale {
 	
 	// convert absolute note to scale position offset
 	int noteToOffset(int note) {
+		int relativeOctave = (int)notes.size() * ((int)(note/12));
+		relativeOctave = relativeOctave < 0 ? relativeOctave-1 : relativeOctave > 0 ? relativeOctave+1 : relativeOctave;
 		for (size_t i = 0; i < notes.size(); i++) {
-			if (notes[i] == abs(note%12)) return i + ((int)notes.size() * ((int)(note/12)));
+			if (notes[i] == abs(note%12)) return i + relativeOctave;
 		}
 		return 0;
 	}
 
 	// convert scale offset to absolute note
 	int offsetToNote(int offset) {
-		return notes[offset%notes.size()] + (12 * ((int)(offset/(int)notes.size())));
+		int absOctave = 12 * ((int)(offset/(int)notes.size()));
+		absOctave = absOctave < 0 ? absOctave-1 : absOctave > 0 ? absOctave+1 : absOctave;
+		return notes[offset%notes.size()] + absOctave;
 	}
 
 	Scale getTransposedBy(int note) {
