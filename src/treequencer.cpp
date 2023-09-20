@@ -88,21 +88,21 @@ struct Scale {
 		return note;*/
 
 		// convert back to offset values
-		int front = toOffset(sequence.back());
-		int back = toOffset(sequence.front());
+		int front = noteToOffset(sequence.front());
+		int back = noteToOffset(sequence.back());
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
 			int randomType = randomInt<int>(0, 2);
 			switch (randomType) {
 				case 0: // move a 3rd
-					offset = (randomInt<int>(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? back+3 : back-3);// * std::max(1, (int)(back / 12));
 					break;
 				case 1: // move a 5th
-					offset = (randomInt<int>(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? back+5 : back-5);// * std::max(1, (int)(back / 12));
 					break;
 				case 2: // move a 7th
-					offset = (randomInt<int>(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? back+7 : back-7);// * std::max(1, (int)(back / 12));
 					break;
 			}
 		}
@@ -115,16 +115,17 @@ struct Scale {
 		else return noteStrings[abs((note % 12 + 12) % 12)];
 	}
 	
-	// convert note to position offset
-	int toOffset(int note) {
+	// convert absolute note to scale position offset
+	int noteToOffset(int note) {
 		for (size_t i = 0; i < notes.size(); i++) {
-			if (notes[i] == abs(note % (int)notes.size())) return i + ((int)notes.size() * (note / 12));
+			if (notes[i] == abs(note%12)) return i + ((int)notes.size() * ((int)(note/12)));
 		}
 		return 0;
 	}
 
+	// convert scale offset to absolute note
 	int offsetToNote(int offset) {
-		return notes[offset%notes.size()] + (int)(12 * (offset/(int)notes.size()));
+		return notes[offset%notes.size()] + (12 * ((int)(offset/(int)notes.size())));
 	}
 
 	Scale getTransposedBy(int note) {
