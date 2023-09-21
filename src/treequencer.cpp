@@ -596,29 +596,38 @@ struct Treequencer : QuestionableModule {
 };
 
 struct NodeChanceQuantity : QQuantity {
+
+	NodeChanceQuantity(quantityGetFunc g, quantitySetFunc s) : QQuantity(g, s) { }
+
 	float getDefaultValue() override {
 		return 0.0f;
 	}
+
 	float getDisplayValue() override {
 		return getValue() * 100;
 	}
+
 	void setDisplayValue(float displayValue) override {
 		setValue(displayValue / 100);
 	}
+
 	std::string getUnit() override {
 		return "%";
 	}
+
 	std::string getLabel() override {
 		return "Chance";
 	}
+
 	int getDisplayPrecision() override {
 		return 3;
 	}
+
 };
 
 struct NodeChanceSlider : ui::Slider {
 	NodeChanceSlider(quantityGetFunc valueGet, quantitySetFunc valueSet) {
-		quantity = new QQuantity(valueGet, valueSet);
+		quantity = new NodeChanceQuantity(valueGet, valueSet);
 		box.size.x = 150.0;
 	}
 	~NodeChanceSlider() {

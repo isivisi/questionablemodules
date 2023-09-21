@@ -94,6 +94,47 @@ struct BackgroundWidget : Widget {
 
 };*/
 
+struct RGBSliderQuantity : QQuantity {
+	std::string label;
+	RGBSliderQuantity(std::string label, quantityGetFunc g, quantitySetFunc s) : QQuantity(g, s) { 
+		this->label = label;
+	}
+
+	float getDefaultValue() override {
+		return 0.0f;
+	}
+
+	float getDisplayValue() override {
+		return getValue() * 255;
+	}
+
+	void setDisplayValue(float displayValue) override {
+		setValue(displayValue / 255);
+	}
+
+	std::string getUnit() override {
+		return "";
+	}
+
+	std::string getLabel() override {
+		return label;
+	}
+
+	int getDisplayPrecision() override {
+		return 1;
+	}
+};
+
+struct RGBSlider : ui::Slider {
+	RGBSlider(std::string label, quantityGetFunc valueGet, quantitySetFunc valueSet) {
+		quantity = new RGBSliderQuantity(label, valueGet, valueSet);
+		box.size.x = 150.0;
+	}
+	~RGBSlider() {
+		delete quantity;
+	}
+};
+
 struct GreenscreenWidget : QuestionableWidget {
 	ColorBGSimple* background = nullptr;
 	BackgroundWidget* newBackground = nullptr;
@@ -265,29 +306,18 @@ struct GreenscreenWidget : QuestionableWidget {
 					menu->addChild(rack::createMenuLabel("Name:"));
 					menu->addChild(new QTextField([=](std::string text) { preview.name = text; updateToPreview(); }, 100, ""));
 
-					menu->addChild(rack::createMenuLabel("R:"));
-					menu->addChild(new QTextField([=](std::string text) { 
-						if (isInteger(text)) {
-							preview.r = clamp<float>(0, 1, std::stoi(text)/255.f); 
-							updateToPreview();
-						}
-					}, 100, "0"));
-
-					menu->addChild(rack::createMenuLabel("G:"));
-					menu->addChild(new QTextField([=](std::string text) { 
-						if (isInteger(text)) {
-							preview.g = clamp<float>(0, 1, std::stoi(text)/255.f); 
-							updateToPreview();
-						}
-					}, 100, "0"));
-
-					menu->addChild(rack::createMenuLabel("B:"));
-					menu->addChild(new QTextField([=](std::string text) { 
-						if (isInteger(text)) {
-							preview.b = clamp<float>(0, 1, std::stoi(text)/255.f); 
-							updateToPreview();
-						}
-					}, 100, "0"));
+					menu->addChild(new RGBSlider("R",
+						[=]() { return preview.r; }, 
+						[=](float value) { preview.r = clamp<float>(0, 1, value); }
+					));
+					menu->addChild(new RGBSlider("G",
+						[=]() { return preview.g; }, 
+						[=](float value) { preview.g = clamp<float>(0, 1, value); }
+					));
+					menu->addChild(new RGBSlider("B",
+						[=]() { return preview.b; },
+						[=](float value) { preview.b = clamp<float>(0, 1, value); }
+					));
 
 					menu->addChild(new MenuSeparator);
 
