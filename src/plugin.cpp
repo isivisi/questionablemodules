@@ -12,6 +12,7 @@ UserSettings userSettings("questionablemodules.json", [](json_t* json) {
 	UserSettings::json_create_if_not_exists(json, "showDescriptors", json_boolean(true));
 	UserSettings::json_create_if_not_exists(json, "gitPersonalAccessToken", json_string(""));
 	UserSettings::json_create_if_not_exists(json, "nightbinSelectedPlugins", json_array());
+	UserSettings::json_create_if_not_exists(json, "greenscreenCustomColors", json_array());
 
 	return json;
 }, migrations);

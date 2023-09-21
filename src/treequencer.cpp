@@ -1,6 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
-#include "textfield.cpp"
+#include "ui.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
 #include <iostream>
@@ -19,40 +19,6 @@ const int MODULE_SIZE = 22;
 
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
-
-inline bool isInteger(const std::string& s)
-{
-   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
-
-   char * p;
-   strtol(s.c_str(), &p, 10);
-
-   return (*p == 0);
-}
-
-bool isNumber(std::string s)
-{
-	std::size_t char_pos(0);
-	// skip the whilespaces 
-	char_pos = s.find_first_not_of(' ');
-	if (char_pos == s.size()) return false;
-	// check the significand 
-	if (s[char_pos] == '+' || s[char_pos] == '-') 
-		++char_pos; // skip the sign if exist 
-	int n_nm, n_pt;
-	for (n_nm = 0, n_pt = 0;
-		std::isdigit(s[char_pos]) || s[char_pos] == '.';
-		++char_pos) {
-		s[char_pos] == '.' ? ++n_pt : ++n_nm;
-	}
-	if (n_pt>1 || n_nm<1) // no more than one point, at least one digit 
-		return false;
-	// skip the trailing whitespaces 
-	while (s[char_pos] == ' ') {
-		++ char_pos;
-	}
-	return char_pos == s.size(); // must reach the ending 0 of the string 
-}
 
 struct Scale {
 	std::string name;
@@ -629,6 +595,46 @@ struct Treequencer : QuestionableModule {
 
 };
 
+struct NodeChanceQuantity : QQuantity {
+
+	NodeChanceQuantity(quantityGetFunc g, quantitySetFunc s) : QQuantity(g, s) { }
+
+	float getDefaultValue() override {
+		return 0.0f;
+	}
+
+	float getDisplayValue() override {
+		return getValue() * 100;
+	}
+
+	void setDisplayValue(float displayValue) override {
+		setValue(displayValue / 100);
+	}
+
+	std::string getUnit() override {
+		return "%";
+	}
+
+	std::string getLabel() override {
+		return "Chance";
+	}
+
+	int getDisplayPrecision() override {
+		return 3;
+	}
+
+};
+
+struct NodeChanceSlider : ui::Slider {
+	NodeChanceSlider(quantityGetFunc valueGet, quantitySetFunc valueSet) {
+		quantity = new NodeChanceQuantity(valueGet, valueSet);
+		box.size.x = 150.0;
+	}
+	~NodeChanceSlider() {
+		delete quantity;
+	}
+};
+
 struct NodeDisplay : Widget {
 	Treequencer* module;
 
@@ -713,11 +719,10 @@ struct NodeDisplay : Widget {
 
 		menu->addChild(rack::createMenuLabel("Node Chance:"));
 
-		ui::TextField* param = new QTextField([=](std::string text) { 
-			if (text.length() < 4 && isNumber(text)) mod->onAudioThread([=](){ node->setChance((float)::atof(text.c_str())); });
-		});
-		param->box.size.x = 100;
-		param->text = std::to_string(node->chance);
+		NodeChanceSlider* param = new NodeChanceSlider(
+			[=]() { return node->getChance(); }, 
+			[=](float value) { mod->onAudioThread([=](){ node->setChance(value);}); }
+		);
 		menu->addChild(param);
 
 		menu->addChild(createMenuItem("Preview", "", [=]() { 

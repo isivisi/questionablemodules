@@ -67,14 +67,18 @@ struct ColorBG : Widget {
 		size = s;
 	}
 
+	void setFontColor(NVGcolor c) {
+		for (size_t i = 0; i < textList.size(); i++) {
+			textList[i].color = c;
+		}
+	}
+
 	void setTheme(ColorBGTheme theme) {
 		currTheme = theme.name;
 		color = theme.color;
 		stroke = theme.stroke;
 
-		for (size_t i = 0; i < textList.size(); i++) {
-			textList[i].color = theme.fontColor;
-		}
+		setFontColor(theme.fontColor);
 
 		setTextGroupVisibility("nondefault", theme.name != "");
 	}
