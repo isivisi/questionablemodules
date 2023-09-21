@@ -364,11 +364,11 @@ struct GreenscreenWidget : QuestionableWidget {
 						custom.push_back(preview);
 						userSettings.setArraySetting<Color>("greenscreenCustomColors", custom);
 
-						changeColor(Color("", nvgRGB(255, 255, 255)));
+						preview = Color("", nvgRGB(255, 255, 255));
 						setPreviewText = true;
 					}));
 
-					menu->addChild(createMenuItem("Clear", "", [=]() { 
+					menu->addChild(createMenuItem("Clear", "", [=]() {
 						changeColor(Color("Green", nvgRGB(4, 244, 4)));
 						setPreviewText = true;
 					}));
