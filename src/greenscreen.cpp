@@ -120,7 +120,7 @@ struct RGBSliderQuantity : QQuantity {
 		return label;
 	}
 
-	std::string getDisplayValueString() {
+	std::string getDisplayValueString() override {
 		float v = getDisplayValue();
 		if (std::isnan(v))
 			return "NaN";
@@ -171,22 +171,27 @@ struct GreenscreenWidget : QuestionableWidget {
 			return (0.2126*r + 0.7152*g + 0.0722*b);
 		}
 
-		float getContrast(Color other) {
+		float getContrastFrom(Color& other) {
 			return abs(getBrightness() - other.getBrightness());
 		}
 
-		float getContrast(NVGcolor other) {
+		float getContrastFrom(NVGcolor other) {
 			return abs(getBrightness() - Color("", other).getBrightness());
+		}
+		 
+		// https://stackoverflow.com/a/1847112
+		float getDifferenceFrom(Color other) {
+			return sqrt(std::pow(other.r-r, 2) + std::pow(other.g-g, 2) + std::pow(other.b-b, 2));
 		}
 
 		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
 
 		json_t* toJson() override {
-			json_t* rootJ = new json_t();
-			json_object_set_new(rootJ, "colorR", json_real(r));
-			json_object_set_new(rootJ, "colorG", json_real(g));
-			json_object_set_new(rootJ, "colorB", json_real(b));
-			json_object_set_new(rootJ, "text", json_string(name.c_str()));
+			json_t* rootJ = json_object();
+			json_object_set_new(rootJ, "r", json_real(r));
+			json_object_set_new(rootJ, "g", json_real(g));
+			json_object_set_new(rootJ, "b", json_real(b));
+			json_object_set_new(rootJ, "name", json_string(name.c_str()));
 			return rootJ;
 		}
 
@@ -227,7 +232,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		logoText = c.name; 
 
 		setText();
-		if (c.getContrast(nvgRGB(0,0,0)) > 0.75) color->setFontColor(nvgRGB(25,25,25));
+		if (c.getContrastFrom(nvgRGB(0,0,0)) > 0.75) color->setFontColor(nvgRGB(25,25,25));
 		color->setTextGroupVisibility("default", ((Greenscreen*)module)->showText);
 
 		background->color = c.getNVGColor();
@@ -240,6 +245,8 @@ struct GreenscreenWidget : QuestionableWidget {
 
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
+
+		std::sort(selectableColors.begin(), selectableColors.end(), [](Color& a, Color& b) { return a.name > b.name; });
 
 		supportsThemes = false;
 		toggleableDescriptors = false;
@@ -282,10 +289,19 @@ struct GreenscreenWidget : QuestionableWidget {
 		if (newBackground) APP->scene->rack->removeChild(newBackground);
 	}
 
-	Color preview;
+	Color preview = Color("", nvgRGB(255, 255, 255));
+	bool setPreviewText = true;
 
 	void updateToPreview() {
 		changeColor(preview);
+	}
+
+	Color getClosestTo(Color other) {
+		Color returnColor;
+		for (auto c : selectableColors) {
+			if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
+		}
+		return returnColor;
 	}
 
 	void appendContextMenu(Menu *menu) override
@@ -299,27 +315,43 @@ struct GreenscreenWidget : QuestionableWidget {
 		}));
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
-			menu->addChild(createSubmenuItem("Custom", "", [=](Menu* menu) {
-				//std::vector<Color> custom = userSettings.getArraySettingFunc<Color>("greenscreenColors" [=](json_t*) { return 0; });
+			std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 
-				std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenColors");
 
-				menu->addChild(createSubmenuItem("Add Color", "", [=](Menu* menu) {
+				menu->addChild(createSubmenuItem("Add Custom Color", "", [=](Menu* menu) {
 
 					menu->addChild(rack::createMenuLabel("Name:"));
-					menu->addChild(new QTextField([=](std::string text) { preview.name = text; updateToPreview(); }, 100, ""));
+					QTextField* textField = new QTextField([=](std::string text) { 
+						preview.name = text; 
+						updateToPreview();
+						setPreviewText = false;
+					}, 100, "");
+					if (setPreviewText) textField->text = getClosestTo(preview).name + std::string("'ish");
+					menu->addChild(textField);
 
 					menu->addChild(new RGBSlider("R",
-						[=]() { return preview.r; }, 
-						[=](float value) { preview.r = clamp<float>(0, 1, value); updateToPreview(); }
+						[&]() { return preview.r; },
+						[&](float value) { 
+							preview.r = clamp<float>(0, 1, value); 
+							updateToPreview();
+							if (setPreviewText) textField->text = getClosestTo(preview).name + std::string("'ish");
+						}
 					));
 					menu->addChild(new RGBSlider("G",
-						[=]() { return preview.g; }, 
-						[=](float value) { preview.g = clamp<float>(0, 1, value); updateToPreview(); }
+						[&]() { return preview.g; }, 
+						[&](float value) { 
+							preview.g = clamp<float>(0, 1, value); 
+							updateToPreview();
+							if (setPreviewText) textField->text = getClosestTo(preview).name + std::string("'ish");
+						}
 					));
 					menu->addChild(new RGBSlider("B",
-						[=]() { return preview.b; },
-						[=](float value) { preview.b = clamp<float>(0, 1, value); updateToPreview(); }
+						[&]() { return preview.b; },
+						[&](float value) { 
+							preview.b = clamp<float>(0, 1, value); 
+							updateToPreview();
+							if (preview.name.empty()) textField->text = getClosestTo(preview).name + std::string("'ish");
+						}
 					));
 
 					menu->addChild(new MenuSeparator);
@@ -330,21 +362,29 @@ struct GreenscreenWidget : QuestionableWidget {
 
 						custom.push_back(preview);
 						userSettings.setArraySetting<Color>("greenscreenCustomColors", custom);
+
+						changeColor(Color("", nvgRGB(255, 255, 255)));
+						setPreviewText = true;
 					}));
 
 					menu->addChild(createMenuItem("Clear", "", [=]() { 
 						changeColor(Color("Green", nvgRGB(4, 244, 4)));
+						setPreviewText = true;
 					}));
-				}));
 
-				if (!custom.empty()) menu->addChild(new MenuSeparator);
+			}));
 
+			menu->addChild(new MenuSeparator);
+
+			if (!custom.empty()) {
 				for (const auto & ccData : custom) {
 					menu->addChild(createMenuItem(ccData.name, "", [=]() { 
 						changeColor(ccData);
 					}));
 				}
-			}));
+				menu->addChild(new MenuSeparator);
+			}
+
 			for (const auto & selectableColor : selectableColors) {
 				menu->addChild(createMenuItem(selectableColor.name, "", [=]() { 
 					changeColor(selectableColor);
