@@ -100,11 +100,29 @@ struct GreenscreenWidget : QuestionableWidget {
 
 	std::string logoText = "Green";
 
-	struct CustomColor : QuestionableJsonable {
+	struct Color : QuestionableJsonable {
 		std::string name;
 		float r;
 		float g;
 		float b;
+
+		Color(std::string name, unsigned char r, unsigned char g, unsigned char b) {
+			this->name = name;
+			this->r = r * 255.f;
+			this->g = g * 255.f;
+			this->b = b * 255.f;
+		}
+
+		// https://stackoverflow.com/a/9733452
+		float getBrightness() {
+			return (0.2126*r + 0.7152*g + 0.0722*b) / 1000;
+		}
+
+		float getContrast(Color other) {
+			return abs(getBrightness() - other.getBrightness());
+		}
+
+		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
 
 		json_t* toJson() override {
 			json_t* rootJ = new json_t();
@@ -122,22 +140,22 @@ struct GreenscreenWidget : QuestionableWidget {
 			if (json_t* t = json_object_get(rootJ, "name")) name = json_string_value(t);
 		}
 
-		bool operator==(CustomColor other) {
+		bool operator==(Color other) {
 			return name == other.name;
 		}
 	};
 
-	std::map<std::string, NVGcolor> selectableColors = {
-		{"Green", nvgRGB(4, 244, 4)},
-		{"Black", nvgRGB(0, 0, 0)},
-		{"White", nvgRGB(255, 255, 255)},
-		{"Cyan", nvgRGB(0, 255, 255)},
-		{"Grey", nvgRGB(50, 50, 50)},
-		{"Yellow", nvgRGB(255, 255, 0)},
-		{"Maroon", nvgRGB(128, 0, 0)},
-		{"Dark Green", nvgRGB(0, 128, 0)},
-		{"Purple", nvgRGB(128, 0, 128)},
-		{"Teal", nvgRGB(0, 128, 128)}
+	std::vector<Color> selectableColors = {
+		Color{"Green", 4, 244, 4},
+		Color{"Black", 0, 0, 0},
+		Color{"White", 255, 255, 255},
+		Color{"Cyan", 0, 255, 255},
+		Color{"Grey", 50, 50, 50},
+		Color{"Yellow", 255, 255, 0},
+		Color{"Maroon", 128, 0, 0},
+		Color{"Dark Green", 0, 128, 0},
+		Color{"Purple", 128, 0, 128},
+		Color{"Teal", 0, 128, 128}
 	};
 
 	void setText() {
@@ -206,7 +224,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		if (newBackground) APP->scene->rack->removeChild(newBackground);
 	}
 
-	CustomColor preview;
+	Color preview;
 
 	void updateToPreview() {
 		changeColor(preview.name, nvgRGBf(preview.r, preview.g, preview.b));
@@ -224,9 +242,9 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 			menu->addChild(createSubmenuItem("Custom", "", [=](Menu* menu) {
-				//std::vector<CustomColor> custom = userSettings.getArraySettingFunc<CustomColor>("greenscreenCustomColors" [=](json_t*) { return 0; });
+				//std::vector<Color> custom = userSettings.getArraySettingFunc<Color>("greenscreenColors" [=](json_t*) { return 0; });
 
-				std::vector<CustomColor> custom = userSettings.getArraySetting<CustomColor>("greenscreenCustomColors");
+				std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenColors");
 
 				menu->addChild(createSubmenuItem("Add Color", "", [=](Menu* menu) {
 
@@ -235,42 +253,42 @@ struct GreenscreenWidget : QuestionableWidget {
 
 					menu->addChild(rack::createMenuLabel("R:"));
 					menu->addChild(new QTextField([=](std::string text) { 
-						if (isNumber(text)) {
-							preview.r = clamp<int>(0, 255, std::stoi(text)/255); 
+						if (isInteger(text)) {
+							preview.r = clamp<float>(0, 1, std::stoi(text)/255); 
 							updateToPreview();
 						}
 					}, 100, "0"));
 
 					menu->addChild(rack::createMenuLabel("G:"));
 					menu->addChild(new QTextField([=](std::string text) { 
-						if (isNumber(text)) {
-							preview.g = clamp<int>(0, 255, std::stoi(text)/255); 
+						if (isInteger(text)) {
+							preview.g = clamp<float>(0, 1, std::stoi(text)/255); 
 							updateToPreview();
 						}
 					}, 100, "0"));
 
 					menu->addChild(rack::createMenuLabel("B:"));
 					menu->addChild(new QTextField([=](std::string text) { 
-						if (isNumber(text)) {
-							preview.b = clamp<int>(0, 255, std::stoi(text)/255); 
+						if (isInteger(text)) {
+							preview.b = clamp<float>(0, 1, std::stoi(text)/255); 
 							updateToPreview();
 						}
 					}, 100, "0"));
 
 					menu->addChild(new MenuSeparator);
 
-					menu->addChild(createMenuItem("Save", "", [&]() {
-						std::vector<CustomColor> custom = userSettings.getArraySetting<CustomColor>("greenscreenCustomColors");
+					menu->addChild(createMenuItem("Save", "", [=]() {
+						std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenColors");
 						if (std::find(custom.begin(), custom.end(), preview) != custom.end()) return;
 
 						custom.push_back(preview);
-						userSettings.setArraySetting<CustomColor>("greenscreenCustomColors", custom);
-						preview = CustomColor();
+						userSettings.setArraySetting<Color>("greenscreenColors", custom);
+						preview = Color();
 					}));
 
-					menu->addChild(createMenuItem("Clear", "", [&]() { 
+					menu->addChild(createMenuItem("Clear", "", [=]() { 
 						changeColor("Green", nvgRGB(4, 244, 4));
-						preview = CustomColor();
+						preview = Color();
 					}));
 				}));
 

@@ -20,16 +20,6 @@ const int MODULE_SIZE = 22;
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
-inline bool isInteger(const std::string& s)
-{
-   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
-
-   char * p;
-   strtol(s.c_str(), &p, 10);
-
-   return (*p == 0);
-}
-
 struct Scale {
 	std::string name;
 	std::vector<int> notes;

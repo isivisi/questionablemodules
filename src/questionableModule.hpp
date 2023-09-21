@@ -302,3 +302,13 @@ static bool isNumber(std::string s)
 	}
 	return char_pos == s.size(); // must reach the ending 0 of the string 
 }
+
+static bool isInteger(const std::string& s)
+{
+   if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
+
+   char * p;
+   strtol(s.c_str(), &p, 10);
+
+   return (*p == 0);
+}
