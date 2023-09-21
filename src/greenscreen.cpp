@@ -187,7 +187,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
 
 		static Color getClosestTo(std::vector<Color> list, Color other) {
-			Color returnColor("None", nvgRGB(0,0,0));
+			Color returnColor("Black", nvgRGB(0,0,0));
 			for (auto c : list) {
 				if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
 			}
@@ -270,7 +270,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
 
-		std::sort(selectableColors.begin(), selectableColors.end(), [](Color& a, Color& b) { return a.name > b.name; });
+		std::sort(selectableColors.begin(), selectableColors.end(), [](Color& a, Color& b) { return a.name < b.name; });
 
 		supportsThemes = false;
 		toggleableDescriptors = false;
