@@ -325,11 +325,11 @@ struct GreenscreenWidget : QuestionableWidget {
 					menu->addChild(new MenuSeparator);
 
 					menu->addChild(createMenuItem("Save", "", [=]() {
-						std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenColors");
+						std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 						if (std::find(custom.begin(), custom.end(), preview) != custom.end()) return;
 
 						custom.push_back(preview);
-						userSettings.setArraySetting<Color>("greenscreenColors", custom);
+						userSettings.setArraySetting<Color>("greenscreenCustomColors", custom);
 					}));
 
 					menu->addChild(createMenuItem("Clear", "", [=]() { 

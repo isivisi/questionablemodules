@@ -9,8 +9,8 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/nandomizer.png" style="object-fit:scale-down" height="300"> <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/discombobulator.png" style="object-fit:scale-down" height="300">
 <img src="https://github.com/isivisi/questionablemodules/blob/master/images/Treequencer.gif?raw=true?raw=true" style="object-fit:scale-down" height="300">
 <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png" style="object-fit:scale-down" height="300">
-<img src="https://i.imgur.com/MBqkUFQ.png" style="object-fit:scale-down" height="300">
-<img src="https://i.imgur.com/orQ4wf8.png" style="object-fit:scale-down" height="300">
+<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/nightbin.png" style="object-fit:scale-down" height="300">
+<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/greenscreen.png" style="object-fit:scale-down" height="300">
 
 ## Download
 - Subscribe on the [VCV Library](https://library.vcvrack.com/questionablemodules)
