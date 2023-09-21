@@ -106,11 +106,13 @@ struct GreenscreenWidget : QuestionableWidget {
 		float g;
 		float b;
 
+		Color() { }
+
 		Color(std::string name, unsigned char r, unsigned char g, unsigned char b) {
 			this->name = name;
-			this->r = r * 255.f;
-			this->g = g * 255.f;
-			this->b = b * 255.f;
+			this->r = r / 255.f;
+			this->g = g / 255.f;
+			this->b = b / 255.f;
 		}
 
 		// https://stackoverflow.com/a/9733452
@@ -227,7 +229,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	Color preview;
 
 	void updateToPreview() {
-		changeColor(preview.name, nvgRGBf(preview.r, preview.g, preview.b));
+		changeColor(preview.name, preview.getNVGColor());
 	}
 
 	void appendContextMenu(Menu *menu) override
@@ -254,7 +256,7 @@ struct GreenscreenWidget : QuestionableWidget {
 					menu->addChild(rack::createMenuLabel("R:"));
 					menu->addChild(new QTextField([=](std::string text) { 
 						if (isInteger(text)) {
-							preview.r = clamp<float>(0, 1, std::stoi(text)/255); 
+							preview.r = clamp<float>(0, 1, std::stoi(text)/255.f); 
 							updateToPreview();
 						}
 					}, 100, "0"));
@@ -262,7 +264,7 @@ struct GreenscreenWidget : QuestionableWidget {
 					menu->addChild(rack::createMenuLabel("G:"));
 					menu->addChild(new QTextField([=](std::string text) { 
 						if (isInteger(text)) {
-							preview.g = clamp<float>(0, 1, std::stoi(text)/255); 
+							preview.g = clamp<float>(0, 1, std::stoi(text)/255.f); 
 							updateToPreview();
 						}
 					}, 100, "0"));
@@ -270,7 +272,7 @@ struct GreenscreenWidget : QuestionableWidget {
 					menu->addChild(rack::createMenuLabel("B:"));
 					menu->addChild(new QTextField([=](std::string text) { 
 						if (isInteger(text)) {
-							preview.b = clamp<float>(0, 1, std::stoi(text)/255); 
+							preview.b = clamp<float>(0, 1, std::stoi(text)/255.f); 
 							updateToPreview();
 						}
 					}, 100, "0"));
@@ -283,26 +285,24 @@ struct GreenscreenWidget : QuestionableWidget {
 
 						custom.push_back(preview);
 						userSettings.setArraySetting<Color>("greenscreenColors", custom);
-						preview = Color();
 					}));
 
 					menu->addChild(createMenuItem("Clear", "", [=]() { 
 						changeColor("Green", nvgRGB(4, 244, 4));
-						preview = Color();
 					}));
 				}));
 
 				if (!custom.empty()) menu->addChild(new MenuSeparator);
 
 				for (const auto & ccData : custom) {
-					menu->addChild(createMenuItem(ccData.name, "", [&]() { 
+					menu->addChild(createMenuItem(ccData.name, "", [=]() { 
 						changeColor(ccData.name, nvgRGBf(ccData.r, ccData.g, ccData.b));
 					}));
 				}
 			}));
-			for (const auto & pair : selectableColors) {
-				menu->addChild(createMenuItem(pair.first, "", [&]() { 
-					changeColor(pair.first, pair.second);
+			for (const auto & selectableColor : selectableColors) {
+				menu->addChild(createMenuItem(selectableColor.name, "", [=]() { 
+					changeColor(selectableColor.name, nvgRGBf(selectableColor.r, selectableColor.g, selectableColor.b));
 				}));
 			}
 		}));

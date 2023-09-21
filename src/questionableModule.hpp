@@ -279,7 +279,7 @@ T normalizeRange(T min, T max, T value) {
 	return (max-min)/(max-min)*(value-max)+max;
 }
 
-static bool isNumber(std::string s)
+inline static bool isNumber(std::string s)
 {
 	std::size_t char_pos(0);
 	// skip the whilespaces 
@@ -303,7 +303,7 @@ static bool isNumber(std::string s)
 	return char_pos == s.size(); // must reach the ending 0 of the string 
 }
 
-static bool isInteger(const std::string& s)
+inline static bool isInteger(const std::string& s)
 {
    if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
 

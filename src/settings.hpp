@@ -64,7 +64,11 @@ struct UserSettings {
 
 		if (!settings) settings = readSettings();
 
-		return jsonToType<T>(json_object_get(settings, setting.c_str()));
+		if constexpr (std::is_base_of<QuestionableJsonable, T>::value) {
+			T object;
+			object.fromJson(json_object_get(settings, setting.c_str()));
+			return object;
+		} else return jsonToType<T>(json_object_get(settings, setting.c_str()));
 
 		throw std::runtime_error("QuestionableModules::UserSettings::getSetting function for type not defined. :(");
 	}
@@ -73,7 +77,10 @@ struct UserSettings {
 	void setSetting(std::string setting, T value) {
 		std::lock_guard<std::mutex> guard(lock);
 
-		json_t* v = typeToJson<T>(value);
+		json_t* v = nullptr;
+		
+		if constexpr (std::is_base_of<QuestionableJsonable, T>::value) v = value.toJson();
+		else v = typeToJson<T>(value);
 
 		if (v) {
 			json_t* settings = readSettings();
