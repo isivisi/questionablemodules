@@ -120,8 +120,11 @@ struct RGBSliderQuantity : QQuantity {
 		return label;
 	}
 
-	int getDisplayPrecision() override {
-		return 1;
+	std::string getDisplayValueString() {
+		float v = getDisplayValue();
+		if (std::isnan(v))
+			return "NaN";
+		return std::to_string((int)getDisplayValue());
 	}
 };
 
@@ -308,15 +311,15 @@ struct GreenscreenWidget : QuestionableWidget {
 
 					menu->addChild(new RGBSlider("R",
 						[=]() { return preview.r; }, 
-						[=](float value) { preview.r = clamp<float>(0, 1, value); }
+						[=](float value) { preview.r = clamp<float>(0, 1, value); updateToPreview(); }
 					));
 					menu->addChild(new RGBSlider("G",
 						[=]() { return preview.g; }, 
-						[=](float value) { preview.g = clamp<float>(0, 1, value); }
+						[=](float value) { preview.g = clamp<float>(0, 1, value); updateToPreview(); }
 					));
 					menu->addChild(new RGBSlider("B",
 						[=]() { return preview.b; },
-						[=](float value) { preview.b = clamp<float>(0, 1, value); }
+						[=](float value) { preview.b = clamp<float>(0, 1, value); updateToPreview(); }
 					));
 
 					menu->addChild(new MenuSeparator);
