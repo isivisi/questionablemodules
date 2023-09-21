@@ -1,6 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
-#include "textfield.cpp"
+#include "ui.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
 #include <iostream>
@@ -595,6 +595,37 @@ struct Treequencer : QuestionableModule {
 
 };
 
+struct NodeChanceQuantity : QQuantity {
+	float getDefaultValue() override {
+		return 0.0f;
+	}
+	float getDisplayValue() override {
+		return getValue() * 100;
+	}
+	void setDisplayValue(float displayValue) override {
+		setValue(displayValue / 100);
+	}
+	std::string getUnit() override {
+		return "%";
+	}
+	std::string getLabel() override {
+		return "Chance";
+	}
+	int getDisplayPrecision() override {
+		return 3;
+	}
+};
+
+struct NodeChanceSlider : ui::Slider {
+	NodeChanceSlider(quantityGetFunc valueGet, quantitySetFunc valueSet) {
+		quantity = new QQuantity(valueGet, valueSet);
+		box.size.x = 150.0;
+	}
+	~NodeChanceSlider() {
+		delete quantity;
+	}
+};
+
 struct NodeDisplay : Widget {
 	Treequencer* module;
 
@@ -679,11 +710,10 @@ struct NodeDisplay : Widget {
 
 		menu->addChild(rack::createMenuLabel("Node Chance:"));
 
-		ui::TextField* param = new QTextField([=](std::string text) { 
-			if (text.length() < 4 && isNumber(text)) mod->onAudioThread([=](){ node->setChance((float)::atof(text.c_str())); });
-		});
-		param->box.size.x = 100;
-		param->text = std::to_string(node->chance);
+		NodeChanceSlider* param = new NodeChanceSlider(
+			[=]() { return node->getChance(); }, 
+			[=](float value) { mod->onAudioThread([=](){ node->setChance(value);}); }
+		);
 		menu->addChild(param);
 
 		menu->addChild(createMenuItem("Preview", "", [=]() { 
