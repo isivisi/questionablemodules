@@ -106,16 +106,16 @@ struct GreenscreenWidget : QuestionableWidget {
 		float g;
 		float b;
 
-		json_t* toJson() {
+		json_t* toJson() override {
 			json_t* rootJ = new json_t();
 			json_object_set_new(rootJ, "colorR", json_real(r));
 			json_object_set_new(rootJ, "colorG", json_real(g));
 			json_object_set_new(rootJ, "colorB", json_real(b));
 			json_object_set_new(rootJ, "text", json_string(name.c_str()));
 			return rootJ;
-		} 
+		}
 
-		void fromJson(json_t* rootJ) {
+		void fromJson(json_t* rootJ) override {
 			if (json_t* rj = json_object_get(rootJ, "r")) r = json_real_value(rj);
 			if (json_t* gj = json_object_get(rootJ, "g")) g = json_real_value(gj);
 			if (json_t* bj = json_object_get(rootJ, "b")) b = json_real_value(bj);
@@ -150,12 +150,16 @@ struct GreenscreenWidget : QuestionableWidget {
 	void changeColor(std::string name, NVGcolor c) {
 		//NVGcolor c = selectableColors.count(name) ? selectableColors[name] : c;
 		logoText = name;
+
 		setText();
+		color->setTextGroupVisibility("default", ((Greenscreen*)module)->showText);
+
 		background->color = c;
 		background->stroke = c;
 		if (newBackground) newBackground->color = c;
 		((Greenscreen*)module)->color = c;
 		((Greenscreen*)module)->text = name;
+
 	}
 
 	GreenscreenWidget(Greenscreen* module) {
@@ -190,7 +194,6 @@ struct GreenscreenWidget : QuestionableWidget {
 			} else WARN("Unable to find railWidget");
 			
 			changeColor(module->text, module->color);
-			color->setTextGroupVisibility("default", module->showText);
 		}
 
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
@@ -259,7 +262,7 @@ struct GreenscreenWidget : QuestionableWidget {
 					menu->addChild(createMenuItem("Save", "", [&]() {
 						std::vector<CustomColor> custom = userSettings.getArraySetting<CustomColor>("greenscreenCustomColors");
 						if (std::find(custom.begin(), custom.end(), preview) != custom.end()) return;
-						
+
 						custom.push_back(preview);
 						userSettings.setArraySetting<CustomColor>("greenscreenCustomColors", custom);
 						preview = CustomColor();
