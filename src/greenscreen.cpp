@@ -1,5 +1,6 @@
 #include "plugin.hpp"
 #include "imagepanel.cpp"
+#include "textfield.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
 #include <vector>
@@ -98,6 +99,29 @@ struct GreenscreenWidget : QuestionableWidget {
 
 	std::string logoText = "Green";
 
+	struct CustomColor : QuestionableJsonable {
+		std::string name;
+		float r;
+		float g;
+		float b;
+
+		json_t* toJson() {
+			json_t* rootJ = new json_t();
+			json_object_set_new(rootJ, "colorR", json_real(r));
+			json_object_set_new(rootJ, "colorG", json_real(g));
+			json_object_set_new(rootJ, "colorB", json_real(b));
+			json_object_set_new(rootJ, "text", json_string(name.c_str()));
+			return rootJ;
+		} 
+
+		void fromJson(json_t* rootJ) {
+			if (json_t* rj = json_object_get(rootJ, "r")) r = json_real_value(rj);
+			if (json_t* gj = json_object_get(rootJ, "g")) g = json_real_value(gj);
+			if (json_t* bj = json_object_get(rootJ, "b")) b = json_real_value(bj);
+			if (json_t* t = json_object_get(rootJ, "name")) name = json_string_value(t);
+		}
+	};
+
 	std::map<std::string, NVGcolor> selectableColors = {
 		{"Green", nvgRGB(4, 244, 4)},
 		{"Black", nvgRGB(0, 0, 0)},
@@ -131,29 +155,6 @@ struct GreenscreenWidget : QuestionableWidget {
 
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
-
-		struct CustomColor : QuestionableJsonable {
-			std::string name;
-			float r;
-			float g;
-			float b;
-
-			json_t* toJson() {
-				json_t* rootJ = new json_t();
-				json_object_set_new(rootJ, "colorR", json_real(r));
-				json_object_set_new(rootJ, "colorG", json_real(g));
-				json_object_set_new(rootJ, "colorB", json_real(b));
-				json_object_set_new(rootJ, "text", json_string(name.c_str()));
-				return rootJ;
-			} 
-
-			void fromJson(json_t* rootJ) {
-				json_t* r = json_object_get(rootJ, "r");
-				json_t* g = json_object_get(rootJ, "g");
-				json_t* b = json_object_get(rootJ, "b");
-				if (json_t* t = json_object_get(rootJ, "name")) text = json_string_value(t);
-			}
-		};
 
 		supportsThemes = false;
 		toggleableDescriptors = false;
@@ -197,7 +198,13 @@ struct GreenscreenWidget : QuestionableWidget {
 		if (newBackground) APP->scene->rack->removeChild(newBackground);
 	}
 
-	 void appendContextMenu(Menu *menu) override
+	CustomColor preview;
+
+	void updateToPreview() {
+		changeColor(preview.name, nvgRGBf(preview.r, preview.g, preview.b));
+	}
+
+	void appendContextMenu(Menu *menu) override
   	{
 
 		Greenscreen* mod = (Greenscreen*)module;
@@ -209,7 +216,29 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 			menu->addChild(createSubmenuItem("Custom", "", [=](Menu* menu) {
-				settings.getArraySettings<CustomColor>("greenscreenCustomColors");
+				std::vector<CustomColor> custom = userSettings.getArraySetting<QuestionableJsonable>("greenscreenCustomColors");
+
+				menu->addChild(createSubmenuItem("Add Color", "", [=](Menu* menu) {
+					menu->addChild(rack::createMenuLabel("Name:"));
+					menu->addChild(new QTextField([=](std::string text) { preview.name = text; updateToPreview(); }, 100, ""));
+
+					menu->addChild(rack::createMenuLabel("R:"));
+					menu->addChild(new QTextField([=](std::string text) { preview.r = clamp<int>(0, 255, std::stoi(text)/255); updateToPreview(); }, 100, "50"));
+					menu->addChild(rack::createMenuLabel("G:"));
+					menu->addChild(new QTextField([=](std::string text) { preview.g = clamp<int>(0, 255, std::stoi(text)/255); updateToPreview(); }, 100, "50"));
+					menu->addChild(rack::createMenuLabel("B:"));
+					menu->addChild(new QTextField([=](std::string text) { preview.b = clamp<int>(0, 255, std::stoi(text)/255); updateToPreview(); }, 100, "50"));
+
+					menu->addChild(createMenuItem("Save", "", [&]() {  }));
+					menu->addChild(createMenuItem("Clear", "", [&]() {  }));
+				}));
+
+				for (const auto & ccData : custom) {
+					menu->addChild(createMenuItem(ccData.name, "", [&]() { 
+						changeColor(ccData.name, nvgRGBf(ccData.r, ccData.g, ccData.b));
+						color->setTextGroupVisibility("default", mod->showText);
+					}));
+				}
 			}));
 			for (const auto & pair : selectableColors) {
 				menu->addChild(createMenuItem(pair.first, "", [&]() { 

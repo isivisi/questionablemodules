@@ -6,9 +6,11 @@ struct QTextField : ui::TextField {
 
 	textLambda functionPtr;
 
-	QTextField(textLambda fn) : TextField() {
+	QTextField(textLambda fn, int xsize = 100, std::string defaultText = "") : TextField() {
 
 		functionPtr = fn;
+		box.size.x = xsize;
+		text = defaultText;
 
 	}
 
