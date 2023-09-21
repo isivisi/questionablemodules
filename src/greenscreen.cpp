@@ -187,7 +187,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
 
 		static Color getClosestTo(std::vector<Color> list, Color other) {
-			Color returnColor;
+			Color returnColor("None", nvgRGB(0,0,0));
 			for (auto c : list) {
 				if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
 			}
@@ -235,7 +235,13 @@ struct GreenscreenWidget : QuestionableWidget {
 		Color{"Beige", 245,245,220},
 		Color{"Red", 255,0,0},
 		Color{"Lime", 0,255,0},
-		Color{"Blue",  0,0,255}
+		Color{"Blue",  0,0,255},
+		Color{"Sienna", 160,82,45},
+		Color("Brown", 139,69,19),
+		Color("Honeydew", 240,255,240),
+		Color("Pink", 255,192,203),
+		Color("Hot Pink", 255,105,180),
+		Color("Sky Blue", 135,206,235)
 	};
 
 	void setText() {
