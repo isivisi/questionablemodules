@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <app/RailWidget.hpp>
+#include <memory>
 
 const int MODULE_SIZE = 3;
 
@@ -216,7 +217,9 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 			menu->addChild(createSubmenuItem("Custom", "", [=](Menu* menu) {
-				std::vector<CustomColor> custom = userSettings.getArraySetting<QuestionableJsonable>("greenscreenCustomColors");
+				//std::vector<CustomColor> custom = userSettings.getArraySettingFunc<CustomColor>("greenscreenCustomColors" [=](json_t*) { return 0; });
+
+				std::vector<CustomColor> custom = userSettings.getArraySetting<CustomColor>("greenscreenCustomColors");
 
 				menu->addChild(createSubmenuItem("Add Color", "", [=](Menu* menu) {
 					menu->addChild(rack::createMenuLabel("Name:"));

@@ -7,14 +7,15 @@ using namespace rack;
 #include <fstream>
 #include <stdexcept>
 #include <mutex>
+#include <memory>
 
 // https://stackoverflow.com/questions/17032310/how-to-make-a-variadic-is-same
 template <class T, class... Ts>
 struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
 
 struct QuestionableJsonable {
-	virtual json_t* toJson() { };
-	virtual void fromJson(json_t*) { };
+	virtual json_t* toJson() = 0;
+	virtual void fromJson(json_t*) = 0;
 };
 
 // Global module settings
@@ -60,7 +61,6 @@ struct UserSettings {
 	template <typename T>
 	T getSetting(std::string setting, json_t* settings=nullptr) {
 		std::lock_guard<std::mutex> guard(lock);
-		static_assert(is_any<T, int, bool, float, std::string, json_t*, QuestionableJsonable>::value, "getSetting has no function defined for type");
 
 		if (!settings) settings = readSettings();
 
@@ -72,7 +72,6 @@ struct UserSettings {
 	template <typename T>
 	void setSetting(std::string setting, T value) {
 		std::lock_guard<std::mutex> guard(lock);
-		static_assert(is_any<T, int, bool, float, std::string, json_t*, QuestionableJsonable>::value, "setSetting has no function defined for type");
 
 		json_t* v = typeToJson<T>(value);
 
@@ -90,7 +89,6 @@ struct UserSettings {
 	template<typename T>
 	std::vector<T> getArraySetting(std::string setting, json_t* settings=nullptr) {
 		std::lock_guard<std::mutex> guard(lock);
-		static_assert(is_any<T, int, bool, float, std::string, json_t*, QuestionableJsonable>::value, "setArraySetting has no function defined for type");
 
 		if (!settings) settings = readSettings();
 		std::vector<T> ret;
@@ -99,7 +97,11 @@ struct UserSettings {
 		json_t* value;
 		json_t* array = json_object_get(settings, setting.c_str());
 		json_array_foreach(array, index, value) {
-			ret.push_back(jsonToType<T>(value));
+			if constexpr (std::is_base_of<QuestionableJsonable, T>::value) {
+				T object;
+				object.fromJson(value);
+				ret.push_back(object);
+			} else ret.push_back(jsonToType<T>(value));
 		}
 
 		return ret;
@@ -108,37 +110,38 @@ struct UserSettings {
 	template<typename T>
 	void setArraySetting(std::string setting, std::vector<T> value) {
 		std::lock_guard<std::mutex> guard(lock);
-		static_assert(is_any<T, int, bool, float, std::string, json_t*, QuestionableJsonable>::value, "setArraySetting has no function defined for type");
 		json_t* settings = readSettings();
 
 		json_t* array = json_array();
 		for (size_t i = 0; i < value.size(); i++) {
-			json_array_append_new(array, typeToJson<T>(value[i]));
+			if constexpr (std::is_base_of<QuestionableJsonable, T>::value) json_array_append_new(array, value[i].toJson());
+			else json_array_append_new(array, typeToJson<T>(value[i]));
 		}
 
 		json_object_set(settings, setting.c_str(), array);
 		saveSettings(settings);
 	}
 
+
 	private:
 
 	template<typename T> 
 	T jsonToType(json_t* json) {
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "no function defined for type");
 		if constexpr (std::is_same<T, int>::value) return json_integer_value(json);
 		if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json);
 		if constexpr (std::is_same<T, float>::value) return json_real_value(json);
 		if constexpr (std::is_same<T, std::string>::value) return json_string_value(json);
-		if constexpr (std::is_same<T, QuestionableJsonable>::value) return (QuestionableJsonable()).fromJson(json);
 		if constexpr (std::is_same<T, json_t*>::value) return json;
 	}
 
 	template<typename T> 
 	json_t* typeToJson(T value) {
+		static_assert(is_any<T, int, bool, float, std::string, json_t*>::value, "no function defined for type");
 		if constexpr (std::is_same<T, int>::value) return json_integer(value);
 		if constexpr (std::is_same<T, bool>::value) return json_boolean(value);
 		if constexpr (std::is_same<T, float>::value) return json_real(value);
 		if constexpr (std::is_same<T, std::string>::value) return json_string(value.c_str());
-		if constexpr (std::is_same<T, QuestionableJsonable>::value) return value.toJson();
 		if constexpr (std::is_same<T, json_t*>::value) return value;
 	}
 
