@@ -115,13 +115,24 @@ struct GreenscreenWidget : QuestionableWidget {
 			this->b = b / 255.f;
 		}
 
+		Color(std::string name, NVGcolor c) {
+			this->name = name;
+			r = c.r;
+			g = c.g;
+			b = c.b;
+		}
+
 		// https://stackoverflow.com/a/9733452
 		float getBrightness() {
-			return (0.2126*r + 0.7152*g + 0.0722*b) / 1000;
+			return (0.2126*r + 0.7152*g + 0.0722*b);
 		}
 
 		float getContrast(Color other) {
 			return abs(getBrightness() - other.getBrightness());
+		}
+
+		float getContrast(NVGcolor other) {
+			return abs(getBrightness() - Color("", other).getBrightness());
 		}
 
 		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
@@ -167,18 +178,19 @@ struct GreenscreenWidget : QuestionableWidget {
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
-	void changeColor(std::string name, NVGcolor c) {
+	void changeColor(Color c) {
 		//NVGcolor c = selectableColors.count(name) ? selectableColors[name] : c;
-		logoText = name;
+		logoText = c.name; 
 
 		setText();
+		if (c.getContrast(nvgRGB(0,0,0)) > 0.75) color->setFontColor(nvgRGB(25,25,25));
 		color->setTextGroupVisibility("default", ((Greenscreen*)module)->showText);
 
-		background->color = c;
-		background->stroke = c;
-		if (newBackground) newBackground->color = c;
-		((Greenscreen*)module)->color = c;
-		((Greenscreen*)module)->text = name;
+		background->color = c.getNVGColor();
+		background->stroke = c.getNVGColor();
+		if (newBackground) newBackground->color = c.getNVGColor();
+		((Greenscreen*)module)->color = c.getNVGColor();
+		((Greenscreen*)module)->text = c.name;
 
 	}
 
@@ -213,7 +225,7 @@ struct GreenscreenWidget : QuestionableWidget {
 				APP->scene->rack->addChildAbove(newBackground, *railWidget);
 			} else WARN("Unable to find railWidget");
 			
-			changeColor(module->text, module->color);
+			changeColor(Color(module->text, module->color));
 		}
 
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
@@ -229,7 +241,7 @@ struct GreenscreenWidget : QuestionableWidget {
 	Color preview;
 
 	void updateToPreview() {
-		changeColor(preview.name, preview.getNVGColor());
+		changeColor(preview);
 	}
 
 	void appendContextMenu(Menu *menu) override
@@ -288,7 +300,7 @@ struct GreenscreenWidget : QuestionableWidget {
 					}));
 
 					menu->addChild(createMenuItem("Clear", "", [=]() { 
-						changeColor("Green", nvgRGB(4, 244, 4));
+						changeColor(Color("Green", nvgRGB(4, 244, 4)));
 					}));
 				}));
 
@@ -296,13 +308,13 @@ struct GreenscreenWidget : QuestionableWidget {
 
 				for (const auto & ccData : custom) {
 					menu->addChild(createMenuItem(ccData.name, "", [=]() { 
-						changeColor(ccData.name, nvgRGBf(ccData.r, ccData.g, ccData.b));
+						changeColor(ccData);
 					}));
 				}
 			}));
 			for (const auto & selectableColor : selectableColors) {
 				menu->addChild(createMenuItem(selectableColor.name, "", [=]() { 
-					changeColor(selectableColor.name, nvgRGBf(selectableColor.r, selectableColor.g, selectableColor.b));
+					changeColor(selectableColor);
 				}));
 			}
 		}));

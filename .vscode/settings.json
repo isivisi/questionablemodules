@@ -97,6 +97,7 @@
         "shared_mutex": "cpp",
         "stdfloat": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "*.ipp": "cpp"
     }
 }
