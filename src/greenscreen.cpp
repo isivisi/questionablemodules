@@ -121,6 +121,10 @@ struct GreenscreenWidget : QuestionableWidget {
 			if (json_t* bj = json_object_get(rootJ, "b")) b = json_real_value(bj);
 			if (json_t* t = json_object_get(rootJ, "name")) name = json_string_value(t);
 		}
+
+		bool operator==(CustomColor other) {
+			return name == other.name;
+		}
 	};
 
 	std::map<std::string, NVGcolor> selectableColors = {
@@ -222,31 +226,62 @@ struct GreenscreenWidget : QuestionableWidget {
 				std::vector<CustomColor> custom = userSettings.getArraySetting<CustomColor>("greenscreenCustomColors");
 
 				menu->addChild(createSubmenuItem("Add Color", "", [=](Menu* menu) {
+
 					menu->addChild(rack::createMenuLabel("Name:"));
 					menu->addChild(new QTextField([=](std::string text) { preview.name = text; updateToPreview(); }, 100, ""));
 
 					menu->addChild(rack::createMenuLabel("R:"));
-					menu->addChild(new QTextField([=](std::string text) { preview.r = clamp<int>(0, 255, std::stoi(text)/255); updateToPreview(); }, 100, "50"));
-					menu->addChild(rack::createMenuLabel("G:"));
-					menu->addChild(new QTextField([=](std::string text) { preview.g = clamp<int>(0, 255, std::stoi(text)/255); updateToPreview(); }, 100, "50"));
-					menu->addChild(rack::createMenuLabel("B:"));
-					menu->addChild(new QTextField([=](std::string text) { preview.b = clamp<int>(0, 255, std::stoi(text)/255); updateToPreview(); }, 100, "50"));
+					menu->addChild(new QTextField([=](std::string text) { 
+						if (isNumber(text)) {
+							preview.r = clamp<int>(0, 255, std::stoi(text)/255); 
+							updateToPreview();
+						}
+					}, 100, "0"));
 
-					menu->addChild(createMenuItem("Save", "", [&]() {  }));
-					menu->addChild(createMenuItem("Clear", "", [&]() {  }));
+					menu->addChild(rack::createMenuLabel("G:"));
+					menu->addChild(new QTextField([=](std::string text) { 
+						if (isNumber(text)) {
+							preview.g = clamp<int>(0, 255, std::stoi(text)/255); 
+							updateToPreview();
+						}
+					}, 100, "0"));
+
+					menu->addChild(rack::createMenuLabel("B:"));
+					menu->addChild(new QTextField([=](std::string text) { 
+						if (isNumber(text)) {
+							preview.b = clamp<int>(0, 255, std::stoi(text)/255); 
+							updateToPreview();
+						}
+					}, 100, "0"));
+
+					menu->addChild(new MenuSeparator);
+
+					menu->addChild(createMenuItem("Save", "", [&]() {
+						std::vector<CustomColor> custom = userSettings.getArraySetting<CustomColor>("greenscreenCustomColors");
+						if (std::find(custom.begin(), custom.end(), preview) != custom.end()) return;
+						
+						custom.push_back(preview);
+						userSettings.setArraySetting<CustomColor>("greenscreenCustomColors", custom);
+						preview = CustomColor();
+					}));
+
+					menu->addChild(createMenuItem("Clear", "", [&]() { 
+						changeColor("Green", nvgRGB(4, 244, 4));
+						preview = CustomColor();
+					}));
 				}));
+
+				if (!custom.empty()) menu->addChild(new MenuSeparator);
 
 				for (const auto & ccData : custom) {
 					menu->addChild(createMenuItem(ccData.name, "", [&]() { 
 						changeColor(ccData.name, nvgRGBf(ccData.r, ccData.g, ccData.b));
-						color->setTextGroupVisibility("default", mod->showText);
 					}));
 				}
 			}));
 			for (const auto & pair : selectableColors) {
 				menu->addChild(createMenuItem(pair.first, "", [&]() { 
 					changeColor(pair.first, pair.second);
-					color->setTextGroupVisibility("default", mod->showText);
 				}));
 			}
 		}));
