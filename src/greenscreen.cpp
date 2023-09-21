@@ -181,10 +181,18 @@ struct GreenscreenWidget : QuestionableWidget {
 		 
 		// https://stackoverflow.com/a/1847112
 		float getDifferenceFrom(Color other) {
-			return sqrt(std::pow(other.r-r, 2) + std::pow(other.g-g, 2) + std::pow(other.b-b, 2));
+			return sqrt(std::pow((other.r-r)*0.30, 2) + std::pow((other.g-g)*0.59, 2) + std::pow((other.b-b)*0.11, 2));
 		}
 
 		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
+
+		static Color getClosestTo(std::vector<Color> list, Color other) {
+			Color returnColor;
+			for (auto c : list) {
+				if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
+			}
+			return returnColor;
+		}
 
 		json_t* toJson() override {
 			json_t* rootJ = json_object();
@@ -294,14 +302,7 @@ struct GreenscreenWidget : QuestionableWidget {
 
 	void updateToPreview() {
 		changeColor(preview);
-	}
-
-	Color getClosestTo(Color other) {
-		Color returnColor;
-		for (auto c : selectableColors) {
-			if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
-		}
-		return returnColor;
+		if (setPreviewText) preview.name = Color::getClosestTo(selectableColors, preview).name + std::string("'ish");
 	}
 
 	void appendContextMenu(Menu *menu) override
@@ -317,7 +318,6 @@ struct GreenscreenWidget : QuestionableWidget {
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 			std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 
-
 				menu->addChild(createSubmenuItem("Add Custom Color", "", [=](Menu* menu) {
 
 					menu->addChild(rack::createMenuLabel("Name:"));
@@ -326,31 +326,32 @@ struct GreenscreenWidget : QuestionableWidget {
 						updateToPreview();
 						setPreviewText = false;
 					}, 100, "");
-					if (setPreviewText) textField->text = getClosestTo(preview).name + std::string("'ish");
+					if (setPreviewText) preview.name = Color::getClosestTo(selectableColors, preview).name + std::string("'ish");
+					textField->text = preview.name;
 					menu->addChild(textField);
 
 					menu->addChild(new RGBSlider("R",
-						[&]() { return preview.r; },
-						[&](float value) { 
+						[=]() { return preview.r; },
+						[=](float value) { 
 							preview.r = clamp<float>(0, 1, value); 
 							updateToPreview();
-							if (setPreviewText) textField->text = getClosestTo(preview).name + std::string("'ish");
+							if (setPreviewText) textField->text = preview.name;
 						}
 					));
 					menu->addChild(new RGBSlider("G",
-						[&]() { return preview.g; }, 
-						[&](float value) { 
+						[=]() { return preview.g; }, 
+						[=](float value) { 
 							preview.g = clamp<float>(0, 1, value); 
 							updateToPreview();
-							if (setPreviewText) textField->text = getClosestTo(preview).name + std::string("'ish");
+							if (setPreviewText) textField->text = preview.name;
 						}
 					));
 					menu->addChild(new RGBSlider("B",
-						[&]() { return preview.b; },
-						[&](float value) { 
+						[=]() { return preview.b; },
+						[=](float value) { 
 							preview.b = clamp<float>(0, 1, value); 
 							updateToPreview();
-							if (preview.name.empty()) textField->text = getClosestTo(preview).name + std::string("'ish");
+							if (setPreviewText) textField->text = preview.name;
 						}
 					));
 
@@ -373,6 +374,20 @@ struct GreenscreenWidget : QuestionableWidget {
 					}));
 
 			}));
+
+			if (!custom.empty()) {
+				menu->addChild(createSubmenuItem("Remove Custom Color", "", [=](Menu* menu) {
+					for (const auto & ccData : custom) {
+						menu->addChild(createMenuItem(ccData.name, "-", [=]() { 
+							std::vector<Color> customList = userSettings.getArraySetting<Color>("greenscreenCustomColors");
+							auto it = std::remove(customList.begin(), customList.end(), ccData);
+							if (it == customList.end()) return;
+							customList.erase(it);
+							userSettings.setArraySetting<Color>("greenscreenCustomColors", customList);
+						}));
+					}
+				}));
+			}
 
 			menu->addChild(new MenuSeparator);
 
