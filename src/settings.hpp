@@ -12,6 +12,11 @@ using namespace rack;
 template <class T, class... Ts>
 struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
 
+struct QuestionableJsonable {
+	virtual json_t* toJson() = 0;
+	virtual void fromJson(json_t*) = 0;
+};
+
 // Global module settings
 struct UserSettings {
 	std::mutex lock;
@@ -123,6 +128,7 @@ struct UserSettings {
 		if constexpr (std::is_same<T, bool>::value) return json_boolean_value(json);
 		if constexpr (std::is_same<T, float>::value) return json_real_value(json);
 		if constexpr (std::is_same<T, std::string>::value) return json_string_value(json);
+		if constexpr (std::is_same<T, QuestionableJsonable::value) return (QuestionableJsonable()).fromJson(json);
 		if constexpr (std::is_same<T, json_t*>::value) return json;
 	}
 
@@ -132,6 +138,7 @@ struct UserSettings {
 		if constexpr (std::is_same<T, bool>::value) return json_boolean(value);
 		if constexpr (std::is_same<T, float>::value) return json_real(value);
 		if constexpr (std::is_same<T, std::string>::value) return json_string(value.c_str());
+		if constexpr (std::is_same<T, QuestionableJsonable::value) return value.toJson();
 		if constexpr (std::is_same<T, json_t*>::value) return value;
 	}
 

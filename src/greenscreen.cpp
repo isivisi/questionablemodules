@@ -132,6 +132,29 @@ struct GreenscreenWidget : QuestionableWidget {
 	GreenscreenWidget(Greenscreen* module) {
 		setModule(module);
 
+		struct CustomColor : QuestionableJsonable {
+			std::string name;
+			float r;
+			float g;
+			float b;
+
+			json_t* toJson() {
+				json_t* rootJ = new json_t();
+				json_object_set_new(rootJ, "colorR", json_real(r));
+				json_object_set_new(rootJ, "colorG", json_real(g));
+				json_object_set_new(rootJ, "colorB", json_real(b));
+				json_object_set_new(rootJ, "text", json_string(name.c_str()));
+				return rootJ;
+			} 
+
+			void fromJson(json_t* rootJ) {
+				json_t* r = json_object_get(rootJ, "r");
+				json_t* g = json_object_get(rootJ, "g");
+				json_t* b = json_object_get(rootJ, "b");
+				if (json_t* t = json_object_get(rootJ, "name")) text = json_string_value(t);
+			}
+		};
+
 		supportsThemes = false;
 		toggleableDescriptors = false;
 
@@ -185,6 +208,9 @@ struct GreenscreenWidget : QuestionableWidget {
 		}));
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
+			menu->addChild(createSubmenuItem("Custom", "", [=](Menu* menu) {
+				settings.getArraySettings<CustomColor>("greenscreenCustomColors");
+			}));
 			for (const auto & pair : selectableColors) {
 				menu->addChild(createMenuItem(pair.first, "", [&]() { 
 					changeColor(pair.first, pair.second);
