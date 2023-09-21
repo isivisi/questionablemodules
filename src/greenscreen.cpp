@@ -221,11 +221,21 @@ struct GreenscreenWidget : QuestionableWidget {
 		Color{"White", 255, 255, 255},
 		Color{"Cyan", 0, 255, 255},
 		Color{"Grey", 50, 50, 50},
+		Color{"Dark Grey", 20, 20, 20},
 		Color{"Yellow", 255, 255, 0},
+		Color{"Dark Red", 139,0,0},
 		Color{"Maroon", 128, 0, 0},
 		Color{"Dark Green", 0, 128, 0},
 		Color{"Purple", 128, 0, 128},
-		Color{"Teal", 0, 128, 128}
+		Color{"Teal", 0, 128, 128},
+		Color{"Brown", 165,42,42},
+		Color{"Olive", 128,128,0},
+		Color{"Navy", 0,0,128},
+		Color{"Pink", 255,192,203},
+		Color{"Beige", 245,245,220},
+		Color{"Red", 255,0,0},
+		Color{"Lime", 0,255,0},
+		Color{"Blue",  0,0,255}
 	};
 
 	void setText() {
@@ -326,7 +336,7 @@ struct GreenscreenWidget : QuestionableWidget {
 						updateToPreview();
 						setPreviewText = false;
 					}, 100, "");
-					if (setPreviewText) preview.name = Color::getClosestTo(selectableColors, preview).name + std::string("'ish");
+					//if (setPreviewText) preview.name = Color::getClosestTo(selectableColors, preview).name + std::string("'ish");
 					textField->text = preview.name;
 					menu->addChild(textField);
 
