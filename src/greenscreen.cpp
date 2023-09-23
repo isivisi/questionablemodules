@@ -181,7 +181,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		 
 		// https://stackoverflow.com/a/1847112
 		float getDifferenceFrom(Color other) {
-			return sqrt(std::pow((other.r-r)*0.30, 2) + std::pow((other.g-g)*0.59, 2) + std::pow((other.b-b)*0.11, 2));
+			return sqrt(std::pow((other.r-r), 2) + std::pow((other.g-g), 2) + std::pow((other.b-b), 2));
 		}
 
 		NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
