@@ -116,7 +116,7 @@ struct Scale {
 
 		assert(std::find(notes.begin(), notes.end(), abs(offsetToNote(offset)%12)) != notes.end());
 
-		return offsetToNote(offset);
+		return offsetToNote(back + offset);
 	}
 
 	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
