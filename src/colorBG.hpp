@@ -20,6 +20,7 @@ static std::unordered_map<std::string, ColorBGTheme> BG_THEMES = {
 struct ColorBGSimple : Widget {
 	NVGcolor color;
 	NVGcolor stroke;
+	bool drawBackground = true;
 
 	ColorBGSimple(Vec s, NVGcolor c = nvgRGB(225, 225, 225), NVGcolor st = nvgRGB(215, 215, 215)) {
 		box.size = s;
@@ -28,6 +29,7 @@ struct ColorBGSimple : Widget {
 	}
 
 	void draw(const DrawArgs &args) override {
+		if (!drawBackground) return;
 		nvgFillColor(args.vg, color);
 		nvgBeginPath(args.vg);
 		nvgRect(args.vg, 0,0, box.size.x, box.size.y);

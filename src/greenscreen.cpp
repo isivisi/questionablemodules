@@ -63,6 +63,7 @@ struct Greenscreen : QuestionableModule {
 };
 
 struct BackgroundWidget : Widget {
+	Greenscreen* module;
 	NVGcolor color;
 
 	BackgroundWidget() {
@@ -70,6 +71,9 @@ struct BackgroundWidget : Widget {
 	}
 
 	void draw(const DrawArgs& args) override {
+		if (!module) return;
+		if (module->isBypassed()) return;
+
 		math::Vec min = args.clipBox.getTopLeft();
 		math::Vec max = args.clipBox.getBottomRight();
 		nvgFillColor(args.vg, color);
@@ -295,6 +299,7 @@ struct GreenscreenWidget : QuestionableWidget {
 			if (railWidget != APP->scene->rack->children.end()) {
 				newBackground = new BackgroundWidget;
 				newBackground->color = nvgRGB(0, 175, 26);
+				newBackground->module = module;
 				APP->scene->rack->addChildAbove(newBackground, *railWidget);
 			} else WARN("Unable to find railWidget");
 			
