@@ -1,0 +1,21 @@
+<span class="dropdown">
+    <button data-bs-toggle="dropdown" class="btn btn-dark btn-md dropdown-toggle" id="vdropdown" style="float:right; margin-right: 15px; margin-top: 15px;">v2.1.11</button>
+    <ul class="dropdown-menu" id="ddList">
+    </ul>
+</span>
+
+<script>
+var versionDropdown = document.getElementById("vdropdown")
+var dropdownList = document.getElementById("ddList")
+
+var currFile = window.location.pathname.split("/").pop();
+if (!currFile.includes(".html")) currFile += ".html";
+
+versionDropdown.innerHTML = DocVersion
+
+for (var i = 0; i < previousVersions.length; i++) {
+    var version = previousVersions[i]
+    if (version.hasOwnProperty("commit")) dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://rawcdn.githack.com/isivisi/questionablemodules/${version.commit}/docs/${currFile}">${version.version}</a></li>`
+    else dropdownList.innerHTML += `<li><a class="dropdown-item" href="https://github.com/isivisi/questionablemodules/wiki/${currFile.replace(".html", "")}">${version.version}</a></li>`
+}
+</script>
