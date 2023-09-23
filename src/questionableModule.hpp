@@ -163,9 +163,10 @@ struct QuestionableWidget : ModuleWidget {
 	std::string getReportBody(bool json) {
 		char* jsondump = json_dumps(module->toJson(), 0);
 		std::string body = std::string("Module: ") + model->name +
-		std::string("\nPlugin Version: ") + model->plugin->version + 
+		"\nPlugin Version: " + model->plugin->version + 
+		"\nRack Version: " + APP_VERSION + "-" + APP_OS + "-" + APP_CPU +
 		(json ? std::string("\nJSON: `") + std::string(jsondump) : "") +
-		std::string("`\n---------- Please describe your problem below: ----------\n\n");
+		"`\n---------- Please describe your problem below: ----------\n\n";
 		free(jsondump);
 		return body;
 	}
