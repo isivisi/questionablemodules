@@ -20,16 +20,6 @@ const int MODULE_SIZE = 22;
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
-static int div_floor(int a, int b)
-{
-    int res = a / b;
-    int rem = a % b;
-    // Correct division result downwards if up-rounding happened,
-    // (for non-zero remainder of sign different than the divisor).
-    int corr = (rem != 0 && ((rem < 0) != (b < 0)));
-    return res - corr;
-}
-
 struct Scale {
 	std::string name;
 	std::vector<int> notes;
