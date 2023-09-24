@@ -127,11 +127,11 @@ struct Scale {
 
 	// get absolute notes octave
 	static int noteOctave(int note) { 
-		return (int)(note/12);
+		return (int)std::floor(((float)note/12.f));
 	}
 
 	int relativeOctave(int offset) {
-		return (int)(offset/(int)notes.size());
+		return (int)std::floor((float)offset/(int)notes.size());
 	}
 	
 	// convert absolute note to scale position offset
