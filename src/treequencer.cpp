@@ -525,7 +525,7 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
-	int sequencePos = 0;
+	int sequencePos = 0; // keep this signed, the current logic assumes it.
 	void processSequence(bool newSequence = false) {
 		bool lastBounce = bouncing;
 		if (newSequence) {
@@ -540,7 +540,7 @@ struct Treequencer : QuestionableModule {
 				if (bouncing) sequencePulse.trigger(1e-3f); // signal sequence completed
 				bouncing = false;
 				sequencePos = 0;
-			} else if (sequencePos >= activeSequence.size()) {
+			} else if (sequencePos >= (int)activeSequence.size()) {
 				if (params[BOUNCE].getValue()) {
 					bouncing = true;
 					sequencePos--;
