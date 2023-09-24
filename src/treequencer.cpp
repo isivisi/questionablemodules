@@ -20,6 +20,16 @@ const int MODULE_SIZE = 22;
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
+static int div_floor(int a, int b)
+{
+    int res = a / b;
+    int rem = a % b;
+    // Correct division result downwards if up-rounding happened,
+    // (for non-zero remainder of sign different than the divisor).
+    int corr = (rem != 0 && ((rem < 0) != (b < 0)));
+    return res - corr;
+}
+
 struct Scale {
 	std::string name;
 	std::vector<int> notes;
@@ -104,8 +114,8 @@ struct Scale {
 
 	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
 		std::string noteStrings[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-		if (includeOctaveOffset) return noteStrings[abs(note%12)] + std::to_string((int)((note/12)+4));
-		else return noteStrings[abs(note%12)];
+		if (includeOctaveOffset) return noteStrings[abs((note % 12 + 12) % 12)] + std::to_string((int)std::floor(((float)note/12.f)+4));
+		else return noteStrings[abs((note % 12 + 12) % 12)];
 	}
 	
 	// convert note to position offset
