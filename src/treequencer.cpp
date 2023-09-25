@@ -417,6 +417,8 @@ struct Treequencer : QuestionableModule {
 	Node rootNode;
 	Node* activeNode;
 	std::vector<Node*> activeSequence;
+	size_t historyPos = 0;
+	std::vector<json_t*> history;
 
 	void onAudioThread(std::function<void()> func) {
 		audioThreadQueue.push(func);
@@ -427,6 +429,33 @@ struct Treequencer : QuestionableModule {
 			audioThreadQueue.front()();
 			audioThreadQueue.pop();
 		}
+	}
+
+	void pushHistory() {
+		if (historyPos != history.size()) 
+		history.push_back(rootNode.toJson());
+		historyPos = history.size();
+	}
+
+	void historyGoBack() {
+		if (history.empty()) return;
+		if (historyPos == history.size()) pushHistory();
+		historyPos = clamp(historyPos-1, 1, history.size());
+		setRootNodeFromJson(history[historyPos-1]);
+	}
+
+	void historyGoForward() {
+		if (historyPos >= history.size()) return;
+		historyPos = clamp(historyPos+1, 1, history.size());
+		setRootNodeFromJson(history[historyPos-1]);
+	}
+
+	// resets the root and loads a tree from json
+	void setRootNodeFromJson(json_t* json) {
+		rootNode.children.clear();
+		activeNode = &rootNode;
+		rootNode.fromJson(json);
+		isDirty = true;
 	}
 
 	Treequencer() {
@@ -635,14 +664,7 @@ struct Treequencer : QuestionableModule {
 
 		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
-		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
-
-			rootNode.children.clear();
-			activeNode = &rootNode;
-			rootNode.fromJson(rn);
-
-			isDirty = true;
-		}
+		if (json_t* rn = json_object_get(rootJ, "rootNode")) setRootNodeFromJson(rn);
 
 	}
 
@@ -687,6 +709,41 @@ struct NodeChanceSlider : ui::Slider {
 	~NodeChanceSlider() {
 		delete quantity;
 	}
+};
+
+struct TreequencerHistoryButton : SvgButton, QuestionableThemed {
+	Treequencer* module;
+	bool isBack = false;
+
+	TreequencerHistoryButton(bool isBack, Vec pos, Treequencer* module) {
+		this->isBack = isBack;
+		this->module = module;
+		box.pos = pos;
+
+		initializeFrames(module ? module->theme : "");
+	}
+
+	void onThemeChange(std::string t) override {
+		initializeFrames(t);
+		//onChange(ChangeEvent());
+	}
+
+	void initializeFrames(std::string t) {
+		frames.clear();
+		bool useLight = t == "Dark" || t == "";
+		addFrame(Svg::load(asset::plugin(pluginInstance, useLight ?  isBack ? "res/back-white.svg" : "res/forward-white.svg" : isBack ? "res/back-dark.svg" : "res/forward-dark.svg")));
+	}
+	
+	void onButton(const ButtonEvent& e) override {
+		OpaqueWidget::onButton(e);
+		if (!module) return;
+
+		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+			if (isBack) module->historyGoBack();
+			else module->historyGoForward();
+		}
+	}
+
 };
 
 struct NodeDisplay : Widget {
@@ -765,7 +822,7 @@ struct NodeDisplay : Widget {
 		menu->addChild(rack::createMenuLabel("Node Output:"));
 
 		ui::TextField* outparam = new QTextField([=](std::string text) {
-			if (text.length() < 4 && isInteger(text)) mod->onAudioThread([=](){ node->setOutput(std::stoi(text)-1); });
+			if (text.length() < 4 && isInteger(text)) mod->onAudioThread([=](){ mod->pushHistory(); node->setOutput(std::stoi(text)-1); });
 		});
 		outparam->box.size.x = 100;
 		outparam->text = std::to_string(node->output + 1);
@@ -775,7 +832,7 @@ struct NodeDisplay : Widget {
 
 		NodeChanceSlider* param = new NodeChanceSlider(
 			[=]() { return node->getChance(); }, 
-			[=](float value) { mod->onAudioThread([=](){ node->setChance(value);}); }
+			[=](float value) { mod->onAudioThread([=](){ /*mod->pushHistory();*/ node->setChance(value);}); }
 		);
 		menu->addChild(param);
 
@@ -790,6 +847,7 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
+				mod->pushHistory();
 				node->addChild(getScale(mod->defaultScale).getNextInSequence(node->getHistory())); 
 				renderStateDirty();
 			});
@@ -797,6 +855,7 @@ struct NodeDisplay : Widget {
 
 		if (node != &module->rootNode) menu->addChild(createMenuItem("Remove", "", [=]() {
 			mod->onAudioThread([=](){
+				mod->pushHistory();
 				mod->resetActiveNode();
 				node->remove();
 				renderStateDirty();
@@ -807,6 +866,7 @@ struct NodeDisplay : Widget {
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
+						mod->pushHistory();
 						node->generateSequencesToDepth(scales[i], 8);
 						renderStateDirty();
 					});
@@ -1196,6 +1256,9 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(color);
 		addChild(display);
 		addChild(dirt);
+
+		addChild(new TreequencerHistoryButton(true, Vec(100, 255), module));
+		addChild(new TreequencerHistoryButton(false, Vec(150, 255), module));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
