@@ -104,7 +104,7 @@ struct Scale {
 		}
 
 		// keep root octave or not
-		if (randomReal<float>(0,1) < 0.95) {
+		if (randomReal<float>(0,1) < 0.5) {
 			int relativeOctDiff = notes.size() * (relativeOctave(front) - relativeOctave(offset));
 			offset += relativeOctDiff;
 		}
