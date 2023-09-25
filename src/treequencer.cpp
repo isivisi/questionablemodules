@@ -99,14 +99,14 @@ struct Scale {
 
 		// keep root octave or not
 		if (true) { //randomReal<float>(0,1) < 0.95) {
-			int relativeOctDiff = relativeOctave(front) - relativeOctave(offset);
-			relativeOctDiff = relativeOctDiff < 0 ? relativeOctDiff-1 : relativeOctDiff > 0 ? relativeOctDiff+1 : relativeOctDiff;
-			offset -= relativeOctDiff;
+			//int relativeOctDiff = relativeOctave(front) - relativeOctave(offset);
+			//relativeOctDiff = relativeOctDiff < 0 ? relativeOctDiff-1 : relativeOctDiff > 0 ? relativeOctDiff+1 : relativeOctDiff;
+			//offset -= relativeOctDiff;
 		}
 
-		assert(std::find(notes.begin(), notes.end(), abs(offsetToNote(offset)%12)) != notes.end());
+		//assert(std::find(notes.begin(), notes.end(), abs(offsetToNote(offset)%12)) != notes.end());
 
-		return offsetToNote(back + offset);
+		return offsetToNote(offset);
 	}
 
 	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
@@ -121,7 +121,7 @@ struct Scale {
 	}
 
 	int relativeOctave(int offset) {
-		return (int)std::floor((float)offset/(int)notes.size());
+		return (int)std::floor((float)offset/(float)notes.size());
 	}
 	
 	// convert absolute note to scale position offset
@@ -138,7 +138,7 @@ struct Scale {
 	int offsetToNote(int offset) {
 		int absOctave = 12 * relativeOctave(offset);
 		absOctave = absOctave < 0 ? absOctave-1 : absOctave > 0 ? absOctave+1 : absOctave;
-		return notes[offset%notes.size()] + absOctave;
+		return notes[offset%notes.size()] + absOctave; //notes[(offset%notes.size() + notes.size()) % 12]; // + absOctave;
 	}
 
 	Scale getTransposedBy(int note) {
