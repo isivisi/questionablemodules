@@ -77,21 +77,26 @@ struct Scale {
 		}
 		return note;*/
 
+		int lookback = 4;
+
 		// convert back to offset values
-		int front = noteToOffset(sequence.front());
+		int front = sequence.size() >= lookback ? sequence[(sequence.size()-1)-lookback] :  noteToOffset(sequence.front());
 		int back = noteToOffset(sequence.back());
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
-			int randomType = randomInt<int>(0, 0);
+			int randomType = randomInt<int>(0, 3);
 			switch (randomType) {
-				case 0: // move a 3rd
+				case 0: // move anywere
+					offset = back; //back + randomInt<int>(-notes.size(), notes.size());
+					break;
+				case 1: // move a 3rd
 					offset = (randomInt<int>(0,1) ? back+3 : back-3);// * std::max(1, (int)(back / 12));
 					break;
-				case 1: // move a 5th
+				case 2: // move a 5th
 					offset = (randomInt<int>(0,1) ? back+5 : back-5);// * std::max(1, (int)(back / 12));
 					break;
-				case 2: // move a 7th
+				case 3: // move a 7th
 					offset = (randomInt<int>(0,1) ? back+7 : back-7);// * std::max(1, (int)(back / 12));
 					break;
 			}
@@ -99,12 +104,10 @@ struct Scale {
 
 		// keep root octave or not
 		if (true) { //randomReal<float>(0,1) < 0.95) {
-			//int relativeOctDiff = relativeOctave(front) - relativeOctave(offset);
-			//relativeOctDiff = relativeOctDiff < 0 ? relativeOctDiff-1 : relativeOctDiff > 0 ? relativeOctDiff+1 : relativeOctDiff;
-			//offset -= relativeOctDiff;
+			int relativeOctDiff = relativeOctave(front) - relativeOctave(offset);
+			relativeOctDiff = relativeOctDiff < 0 ? relativeOctDiff-1 : relativeOctDiff > 0 ? relativeOctDiff+1 : relativeOctDiff;
+			offset -= relativeOctDiff;
 		}
-
-		//assert(std::find(notes.begin(), notes.end(), abs(offsetToNote(offset)%12)) != notes.end());
 
 		return offsetToNote(offset);
 	}
@@ -138,7 +141,7 @@ struct Scale {
 	int offsetToNote(int offset) {
 		int absOctave = 12 * relativeOctave(offset);
 		absOctave = absOctave < 0 ? absOctave-1 : absOctave > 0 ? absOctave+1 : absOctave;
-		return notes[offset%notes.size()] + absOctave; //notes[(offset%notes.size() + notes.size()) % 12]; // + absOctave;
+		return notes[(offset%notes.size() + notes.size()) % notes.size()] + absOctave;
 	}
 
 	Scale getTransposedBy(int note) {
