@@ -77,10 +77,11 @@ struct Scale {
 		}
 		return note;*/
 
-		int lookback = 4;
+		//int lookback = randomInt<int>(8, 16);
+		//int front = sequence.size() >= lookback ? sequence[(sequence.size())-lookback] :  noteToOffset(sequence.front());
 
 		// convert back to offset values
-		int front = sequence.size() >= lookback ? sequence[(sequence.size()-1)-lookback] :  noteToOffset(sequence.front());
+		int front = noteToOffset(sequence.front());
 		int back = noteToOffset(sequence.back());
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
@@ -88,7 +89,7 @@ struct Scale {
 			int randomType = randomInt<int>(0, 3);
 			switch (randomType) {
 				case 0: // move anywere
-					offset = back; //back + randomInt<int>(-notes.size(), notes.size());
+					offset = back + randomInt<int>(-notes.size(), notes.size());
 					break;
 				case 1: // move a 3rd
 					offset = (randomInt<int>(0,1) ? back+3 : back-3);// * std::max(1, (int)(back / 12));
@@ -103,10 +104,9 @@ struct Scale {
 		}
 
 		// keep root octave or not
-		if (true) { //randomReal<float>(0,1) < 0.95) {
-			int relativeOctDiff = relativeOctave(front) - relativeOctave(offset);
-			relativeOctDiff = relativeOctDiff < 0 ? relativeOctDiff-1 : relativeOctDiff > 0 ? relativeOctDiff+1 : relativeOctDiff;
-			offset -= relativeOctDiff;
+		if (randomReal<float>(0,1) < 0.95) {
+			int relativeOctDiff = notes.size() * (relativeOctave(front) - relativeOctave(offset));
+			offset += relativeOctDiff;
 		}
 
 		return offsetToNote(offset);
@@ -130,7 +130,7 @@ struct Scale {
 	// convert absolute note to scale position offset
 	int noteToOffset(int note) {
 		int relativeOctave = (int)notes.size() * noteOctave(note);
-		relativeOctave = relativeOctave < 0 ? relativeOctave-1 : relativeOctave > 0 ? relativeOctave+1 : relativeOctave;
+		//relativeOctave = relativeOctave < 0 ? relativeOctave-1 : relativeOctave > 0 ? relativeOctave+1 : relativeOctave;
 		for (size_t i = 0; i < notes.size(); i++) {
 			if (notes[i] == abs(note%12)) return i + relativeOctave;
 		}
@@ -140,7 +140,7 @@ struct Scale {
 	// convert scale offset to absolute note
 	int offsetToNote(int offset) {
 		int absOctave = 12 * relativeOctave(offset);
-		absOctave = absOctave < 0 ? absOctave-1 : absOctave > 0 ? absOctave+1 : absOctave;
+		//absOctave = absOctave < 0 ? absOctave-1 : absOctave > 0 ? absOctave+1 : absOctave;
 		return notes[(offset%notes.size() + notes.size()) % notes.size()] + absOctave;
 	}
 
