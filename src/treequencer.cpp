@@ -419,6 +419,7 @@ struct Treequencer : QuestionableModule {
 	std::vector<Node*> activeSequence;
 	size_t historyPos = 0;
 	std::vector<json_t*> history;
+	bool historyDirty = true;
 
 	void onAudioThread(std::function<void()> func) {
 		audioThreadQueue.push(func);
@@ -432,14 +433,19 @@ struct Treequencer : QuestionableModule {
 	}
 
 	void pushHistory() {
-		if (historyPos != history.size()) 
+		if (historyPos != history.size()) history.erase(history.begin() + historyPos-1, history.end());
 		history.push_back(rootNode.toJson());
 		historyPos = history.size();
+		historyDirty = true; // assume new data not saved after this function is called
 	}
 
 	void historyGoBack() {
+		if (historyPos <= 0) return;
 		if (history.empty()) return;
-		if (historyPos == history.size()) pushHistory();
+		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
+			pushHistory();
+			historyDirty = false;
+		}
 		historyPos = clamp(historyPos-1, 1, history.size());
 		setRootNodeFromJson(history[historyPos-1]);
 	}
