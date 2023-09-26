@@ -329,15 +329,13 @@ struct NightbinButton : ui::Button {
 		return QRemotePluginInfo::fromJson(request, plugin);
 	}
 
-	std::vector<Plugin*> getPluginsSorted(std::vector<Plugin*> plugins = rack::plugin::plugins) {
+	static std::vector<Plugin*> getPluginsSorted(std::vector<Plugin*> plugins = rack::plugin::plugins) {
 		std::sort(plugins.begin(), plugins.end(), [](const Plugin* a, const Plugin* b) { return a->name < b->name; });
 		return plugins;
 	}
 
 	// check if plugin has everytinh needed to query updates
-	bool isPluginValid(Plugin* p) {
-		if (!p) return false;
-		if (p->pluginUrl.empty()) return false;
+	static bool isPluginValid(Plugin* p) {
 		if (p->pluginUrl.find("github") == std::string::npos) return false; // github only atm
 		return true;
 	}
@@ -391,8 +389,7 @@ struct NightbinButton : ui::Button {
 			}
 
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
-				//if (!isPluginValid(plugin)) continue;
-				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }, isPluginValid(plugin)));
+				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }, !isPluginValid(plugin)));
 			}
 		}));
 
