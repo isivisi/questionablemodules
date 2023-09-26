@@ -329,14 +329,16 @@ struct NightbinButton : ui::Button {
 		return QRemotePluginInfo::fromJson(request, plugin);
 	}
 
-	static std::vector<Plugin*> getPluginsSorted(std::vector<Plugin*> plugins = rack::plugin::plugins) {
+	std::vector<Plugin*> getPluginsSorted(std::vector<Plugin*> plugins = rack::plugin::plugins) {
 		std::sort(plugins.begin(), plugins.end(), [](const Plugin* a, const Plugin* b) { return a->name < b->name; });
 		return plugins;
 	}
 
 	// check if plugin has everytinh needed to query updates
-	static bool isPluginValid(Plugin* p) {
-		if (p->pluginUrl.find("github") == std::string::npos) return false; // github only atm
+	bool isPluginValid(Plugin* p) {
+		if (!p) return false;
+		if (p->sourceUrl.empty()) return false;
+		if (p->sourceUrl.find("github") == std::string::npos) return false; // github only atm
 		return true;
 	}
 
@@ -389,6 +391,7 @@ struct NightbinButton : ui::Button {
 			}
 
 			for (plugin::Plugin* plugin : getPluginsSorted()) {
+				//if (!isPluginValid(plugin)) continue;
 				if (std::find(selected.begin(), selected.end(), plugin) == selected.end()) menu->addChild(createMenuItem(plugin->name, "+",[=]() { addPlugin(plugin->slug); }, !isPluginValid(plugin)));
 			}
 		}));
