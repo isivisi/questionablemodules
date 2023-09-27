@@ -725,6 +725,9 @@ struct TreequencerButton : SvgButton {
 	SvgWidget* iconWidget = nullptr;
 
 	bool disabled = false;
+	bool latch = false;
+
+	bool latchState = false;
 
 	TreequencerButton(std::string icon, Vec pos, Treequencer* module) {
 		this->module = module;
@@ -747,6 +750,22 @@ struct TreequencerButton : SvgButton {
 		SvgButton::draw(args);
 		iconWidget->draw(args);
 		nvgRestore(args.vg);
+	}
+
+	void onDragStart(const DragStartEvent& e) override {
+		if (latch) {
+			setLatchState(!latchState);
+		} else SvgButton::onDragStart(e);
+	}
+
+	void onDragEnd(const DragEndEvent& e) override {
+		if (!latch) SvgButton::onDragEnd(e);
+	}
+
+	void setLatchState(bool state) {
+		latchState = state;
+		sw->setSvg(frames[state]);
+		fb->setDirty();
 	}
 
 };
@@ -778,7 +797,8 @@ struct TreequencerHistoryButton : TreequencerButton {
 struct TreequencerFollowButton : TreequencerButton {
 
 	TreequencerFollowButton(Vec pos, Treequencer* module) : TreequencerButton("res/treequencer/follow.svg", pos, module) {
-
+		latch = true;
+		setLatchState(module ? module->followNodes : false);
 	}
 
 	void step() override {
@@ -1259,7 +1279,8 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
 
-		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(149, 285), "descriptor");
+		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(107.5, 285), "descriptor");
+		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(146, 285), "descriptor");
 		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(184, 285), "descriptor");
 		
 		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
@@ -1311,8 +1332,8 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(display);
 		addChild(dirt);
 
-		addChild(new TreequencerFollowButton(Vec(105, 257), module));
-		addChild(new TreequencerHistoryButton(true, Vec(140, 257), module));
+		addChild(new TreequencerFollowButton(Vec(98, 257), module));
+		addChild(new TreequencerHistoryButton(true, Vec(137, 257), module));
 		addChild(new TreequencerHistoryButton(false, Vec(175, 257), module));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
