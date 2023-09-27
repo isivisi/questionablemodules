@@ -717,7 +717,7 @@ struct NodeChanceSlider : ui::Slider {
 	}
 };
 
-struct TreequencerHistoryButton : SvgButton, QuestionableThemed {
+struct TreequencerHistoryButton : SvgButton {
 	Treequencer* module;
 	bool isBack = false;
 
@@ -726,18 +726,12 @@ struct TreequencerHistoryButton : SvgButton, QuestionableThemed {
 		this->module = module;
 		box.pos = pos;
 
-		initializeFrames(module ? module->theme : "");
+		initializeFrames();
 	}
 
-	void onThemeChange(std::string t) override {
-		initializeFrames(t);
-		//onChange(ChangeEvent());
-	}
-
-	void initializeFrames(std::string t) {
+	void initializeFrames() {
 		frames.clear();
-		bool useLight = t == "Dark" || t == "";
-		addFrame(Svg::load(asset::plugin(pluginInstance, useLight ?  isBack ? "res/back-white.svg" : "res/forward-white.svg" : isBack ? "res/back-dark.svg" : "res/forward-dark.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, isBack ? "res/back-dark.svg" : "res/forward-dark.svg")));
 	}
 	
 	void onButton(const ButtonEvent& e) override {
@@ -1263,8 +1257,8 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(display);
 		addChild(dirt);
 
-		addChild(new TreequencerHistoryButton(true, Vec(100, 255), module));
-		addChild(new TreequencerHistoryButton(false, Vec(150, 255), module));
+		addChild(new TreequencerHistoryButton(true, Vec(140, 257), module));
+		addChild(new TreequencerHistoryButton(false, Vec(175, 257), module));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
