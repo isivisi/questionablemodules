@@ -724,6 +724,8 @@ struct TreequencerButton : SvgButton {
 	SvgWidget* background = nullptr;
 	SvgWidget* iconWidget = nullptr;
 
+	bool disabled = false;
+
 	TreequencerButton(std::string icon, Vec pos, Treequencer* module) {
 		this->module = module;
 		box.pos = pos;
@@ -740,8 +742,11 @@ struct TreequencerButton : SvgButton {
 	}
 
 	void draw(const DrawArgs &args) override {
+		nvgSave(args.vg);
+		if (disabled) nvgTint(args.vg, nvgRGB(180,180,180));
 		SvgButton::draw(args);
 		iconWidget->draw(args);
+		nvgRestore(args.vg);
 	}
 
 };
@@ -752,6 +757,11 @@ struct TreequencerHistoryButton : TreequencerButton {
 	TreequencerHistoryButton(bool isBack, Vec pos, Treequencer* module) : TreequencerButton(isBack ? "res/treequencer/back.svg" : "res/treequencer/forward.svg", pos, module) {
 		this->isBack = isBack;
 	}
+
+	void step() override {
+		if (!module) return;
+		disabled = isBack ? module->historyPos <= 1 : module->historyPos >= module->history.size();
+	}
 	
 	void onButton(const ButtonEvent& e) override {
 		OpaqueWidget::onButton(e);
@@ -760,6 +770,28 @@ struct TreequencerHistoryButton : TreequencerButton {
 		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
 			if (isBack) module->historyGoBack();
 			else module->historyGoForward();
+		}
+	}
+
+};
+
+struct TreequencerFollowButton : TreequencerButton {
+
+	TreequencerFollowButton(Vec pos, Treequencer* module) : TreequencerButton("res/treequencer/follow.svg", pos, module) {
+
+	}
+
+	void step() override {
+		if (!module) return;
+		disabled = !module->followNodes;
+	}
+	
+	void onButton(const ButtonEvent& e) override {
+		OpaqueWidget::onButton(e);
+		if (!module) return;
+
+		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+			module->followNodes = !module->followNodes;
 		}
 	}
 
@@ -1279,6 +1311,7 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(display);
 		addChild(dirt);
 
+		addChild(new TreequencerFollowButton(Vec(105, 257), module));
 		addChild(new TreequencerHistoryButton(true, Vec(140, 257), module));
 		addChild(new TreequencerHistoryButton(false, Vec(175, 257), module));
 

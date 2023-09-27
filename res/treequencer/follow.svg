@@ -63,17 +63,12 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <text
-       xml:space="preserve"
-       style="font-size:8.73682px;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';fill:none;fill-opacity:1;stroke:#d8d8d8;stroke-width:0.728;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       x="1.3491832"
-       y="11.805867"
+    <path
+       d="M 4.1095143,9.1935579 V 8.6518751 H 5.8486456 V 9.1935579 Z M 7.5261184,11.3865 V 10.696291 L 10.155901,8.9227165 V 8.8877692 L 7.5261184,7.1141947 V 6.4239859 L 10.784952,8.6344015 V 9.1760843 Z M 12.576004,9.1935579 V 8.6518751 h 1.739132 v 0.5416828 z"
        id="text2"
-       transform="scale(0.99122694,1.0088507)"><tspan
-         sodipodi:role="line"
-         id="tspan1"
-         x="1.3491832"
-         y="11.805867"
-         style="fill:none;fill-opacity:1;stroke-width:0.728;stroke-dasharray:none;stroke-dashoffset:0">-&gt;-</tspan></text>
+       style="font-size:8.73682px;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';fill:none;stroke:#d8d8d8;stroke-width:0.728"
+       transform="scale(0.99122694,1.0088507)"
+       aria-label="-&gt;-"
+       sodipodi:nodetypes="ccccccccccccccccccc" />
   </g>
 </svg>
