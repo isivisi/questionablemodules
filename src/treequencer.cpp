@@ -717,21 +717,40 @@ struct NodeChanceSlider : ui::Slider {
 	}
 };
 
-struct TreequencerHistoryButton : SvgButton {
+struct TreequencerButton : SvgButton {
 	Treequencer* module;
-	bool isBack = false;
+	std::string icon = "";
 
-	TreequencerHistoryButton(bool isBack, Vec pos, Treequencer* module) {
-		this->isBack = isBack;
+	SvgWidget* background = nullptr;
+	SvgWidget* iconWidget = nullptr;
+
+	TreequencerButton(std::string icon, Vec pos, Treequencer* module) {
 		this->module = module;
 		box.pos = pos;
+		this->icon = icon;
+		shadow->opacity = 0;
 
-		initializeFrames();
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg-clicked.svg")));
+
+		iconWidget = new SvgWidget();
+		iconWidget->setSvg(Svg::load(asset::plugin(pluginInstance, icon)));
+		addChild(iconWidget);
+
 	}
 
-	void initializeFrames() {
-		frames.clear();
-		addFrame(Svg::load(asset::plugin(pluginInstance, isBack ? "res/back-dark.svg" : "res/forward-dark.svg")));
+	void draw(const DrawArgs &args) override {
+		SvgButton::draw(args);
+		iconWidget->draw(args);
+	}
+
+};
+
+struct TreequencerHistoryButton : TreequencerButton {
+	bool isBack = false;
+
+	TreequencerHistoryButton(bool isBack, Vec pos, Treequencer* module) : TreequencerButton(isBack ? "res/treequencer/back.svg" : "res/treequencer/forward.svg", pos, module) {
+		this->isBack = isBack;
 	}
 	
 	void onButton(const ButtonEvent& e) override {
@@ -1228,7 +1247,7 @@ struct TreequencerWidget : QuestionableWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer.jpg");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer/treequencer.jpg");
 		backdrop->scalar = 3.49;
 		backdrop->visible = true;
 
