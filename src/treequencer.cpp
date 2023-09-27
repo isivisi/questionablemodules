@@ -779,7 +779,7 @@ struct TreequencerHistoryButton : TreequencerButton {
 
 	void step() override {
 		if (!module) return;
-		disabled = isBack ? module->historyPos <= 1 : module->historyPos >= module->history.size();
+		disabled = isBack ? module->history.size() == 0 || module->historyPos <= 1 : module->historyPos >= module->history.size();
 	}
 	
 	void onButton(const ButtonEvent& e) override {

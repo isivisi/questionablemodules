@@ -47,7 +47,7 @@
          offset="0.86119872"
          id="stop7" />
       <stop
-         style="stop-color:#000000;stop-opacity:0.24242428;"
+         style="stop-color:#a4a4a4;stop-opacity:0.24242428;"
          offset="1"
          id="stop12" />
     </linearGradient>
@@ -97,7 +97,7 @@
        x="-0.0207191"
        y="0.0015197695" />
     <rect
-       style="fill:url(#radialGradient4);fill-opacity:1;stroke:#0f0f0f;stroke-width:0.708814;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:url(#radialGradient4);fill-opacity:1;stroke:#0f0f0f;stroke-width:0.709;stroke-dasharray:none;stroke-opacity:1"
        id="rect1-0"
        width="17.291304"
        height="17.291037"
