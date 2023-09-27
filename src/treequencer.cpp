@@ -1207,6 +1207,9 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("HOLD", "OpenSans-Bold.ttf", c, 7, Vec(223, 314), "descriptor");
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
+
+		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(149, 285), "descriptor");
+		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(184, 285), "descriptor");
 		
 		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
 		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
