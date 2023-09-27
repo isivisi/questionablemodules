@@ -18,14 +18,14 @@
       "name": "Discombobulator",
       "description": "Randomly switches inputs and outputs",
       "manualUrl": "https://isivisi.github.io/questionablemodules/discombobulator",
-      "tags": ["Random", "Utility"]
+      "tags": ["Random", "Utility", "Switch"]
     },
     {
       "slug": "nandomizer",
       "name": "Nandomizer",
       "description": "Randomly switches inputs",
       "manualUrl": "https://isivisi.github.io/questionablemodules/nandomizer",
-      "tags": ["Random", "Utility"]
+      "tags": ["Random", "Utility", "Switch"]
     },
     {
       "slug": "treequencer",
