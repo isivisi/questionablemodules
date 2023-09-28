@@ -85,9 +85,14 @@ struct ColorBG : Widget {
 		setTextGroupVisibility("nondefault", theme.name != "");
 	}
 
-	void addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default", float rotation = 0, NVGalign align = NVGalign::NVG_ALIGN_CENTER) {
+	size_t addText(std::string text, std::string font, NVGcolor color, float size, Vec pos, std::string group="default", float rotation = 0, NVGalign align = NVGalign::NVG_ALIGN_CENTER) {
 		textList.push_back(drawableText{text,font,group,true,color,size,pos, rotation, align});
 		if (group == "nondefault") textList.back().enabled = currTheme != "";
+		return textList.size()-1;
+	}
+
+	void updateText(size_t pos, std::string text) {
+		textList[pos].text = text;
 	}
 
 	void setTextGroupVisibility(std::string group, bool visibility) {

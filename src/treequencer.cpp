@@ -822,13 +822,15 @@ struct TreequencerFollowButton : TreequencerButton {
 
 template <typename T>
 struct TreequencerClockPhasorComboPort : QuestionablePort<T> {
+	ColorBG* background = nullptr;
 	static_assert(std::is_base_of<PortWidget, T>::value, "T must inherit from PortWidget");
 
 	void appendContextMenu(Menu* menu) override {
-		if (!this->module) return;
+		if (!this->module || !background) return;
 		Treequencer* mod = (Treequencer*)this->module;
 		menu->addChild(createMenuItem(mod->clockInPhasorMode ? "Switch to Clock" : "Switch to Phaser", "", [=]() {
 			mod->clockInPhasorMode = !mod->clockInPhasorMode;
+			background->updateText(3, mod->clockInPhasorMode ? "PHASOR" : "CLOCK");
 		}));
 		QuestionablePort<T>::appendContextMenu(menu);
 	}
@@ -1287,12 +1289,13 @@ struct TreequencerWidget : QuestionableWidget {
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
+		Treequencer* mod = module ? ((Treequencer*)module) : nullptr;
 		color->textList.clear();
 		color->addText("TREEQUENCER", "OpenSans-ExtraBold.ttf", c, 14, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 20));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
 		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 48), "descriptor"); // 38
-		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(69, 48), "descriptor");
+		color->addText(mod ? mod->clockInPhasorMode ? "PHASOR" : "CLOCK" : "CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(69, 48), "descriptor");
 		color->addText("RESET", "OpenSans-Bold.ttf", c, 7, Vec(108, 48), "descriptor");
 
 		color->addText("SEQ COM", "OpenSans-Bold.ttf", c, 7, Vec(261.5, 48), "descriptor");
@@ -1308,7 +1311,7 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(165, 285), "descriptor");
 		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(185, 285), "descriptor");
 		
-		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
+		bool isNumber = mod ? mod->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
 		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
 		color->addText(isNumber ? "2" : Scale::getNoteString(1, true), "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
 		color->addText(isNumber ? "3" : Scale::getNoteString(2, true), "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
@@ -1368,6 +1371,7 @@ struct TreequencerWidget : QuestionableWidget {
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
 		addInput(createInputCentered<TreequencerClockPhasorComboPort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
+		((TreequencerClockPhasorComboPort<PJ301MPort>*)getInput(Treequencer::CLOCK))->background = color;
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
 
 		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
