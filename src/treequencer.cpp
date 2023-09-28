@@ -1280,9 +1280,9 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
 
-		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(107.5, 285), "descriptor");
-		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(146, 285), "descriptor");
-		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(184, 285), "descriptor");
+		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(135, 285), "descriptor");
+		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(165, 285), "descriptor");
+		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(185, 285), "descriptor");
 		
 		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
 		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
@@ -1333,9 +1333,9 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(display);
 		addChild(dirt);
 
-		addChild(new TreequencerFollowButton(Vec(98, 257), module));
-		addChild(new TreequencerHistoryButton(true, Vec(137, 257), module));
-		addChild(new TreequencerHistoryButton(false, Vec(175, 257), module));
+		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(135, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(165, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(false, Vec(185, 266), module)));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));

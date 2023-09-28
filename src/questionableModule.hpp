@@ -242,6 +242,12 @@ struct QuestionableDrawWidget : Widget {
 };
 
 //helpers
+template <typename T>
+T* createQuestionableWidgetCentered(T* widget, QuestionableModule* module=nullptr) {
+	//if (module) widget->module = module;
+	widget->box.pos = widget->box.pos.minus(widget->box.size.div(2));
+	return widget;
+}
 
 template <typename T>
 static T lerp(T point1, T point2, T t) {
