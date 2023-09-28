@@ -593,7 +593,7 @@ struct Treequencer : QuestionableModule {
 
 		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		bool isGateTriggered = !params[HOLD].getValue() && gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
-		bool isClockTriggered = !params[HOLD].getValue() && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f);
+		bool isClockTriggered = !params[HOLD].getValue() && !clockInPhasorMode && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f);
 		bool holdSwap = holdTrigger.process(inputs[HOLD_INPUT].getVoltage(), 0.1, 2.f);
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
@@ -635,6 +635,14 @@ struct Treequencer : QuestionableModule {
 			processSequence();
 			activeNode->enabled = true;
 			pulse.trigger(1e-3f);
+		}
+
+		// Phasor mode
+		if (clockInPhasorMode) {
+			if (activeNode) activeNode->enabled = false;
+			size_t position = clamp<size_t>(0, activeSequence.size()-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size());
+			activeNode = activeSequence[position];
+			activeNode->enabled = true;
 		}
 
 		bool activeP = pulse.process(args.sampleTime);
