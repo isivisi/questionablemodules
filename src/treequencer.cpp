@@ -432,15 +432,15 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
-	void pushHistory() {
+	void pushHistory(json_t* state = nullptr) {
 		if (historyPos != history.size()) history.erase(history.begin() + historyPos-1, history.end());
-		history.push_back(rootNode.toJson());
+		history.push_back(state ? state : rootNode.toJson());
 		historyPos = history.size();
 		historyDirty = true; // assume new data not saved after this function is called
 	}
 
 	void historyGoBack() {
-		if (historyPos <= 0) return;
+		if (historyPos <= 1) return;
 		if (history.empty()) return;
 		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
 			pushHistory();
@@ -889,12 +889,20 @@ struct NodeDisplay : Widget {
 
 		Treequencer* mod = module;
 
-		auto menu = rack::createMenu();
+		auto menu = rack::createMenu<QuestionableMenu>();
+
+		int oldNodeOutput = node->output;
+		float oldNodeChance = node->chance;
+		json_t* prevState = mod->rootNode.toJson();
+		menu->onDestruct = [=](){
+			if (oldNodeOutput != node->output) mod->pushHistory(prevState);
+			if (oldNodeChance != node->chance) mod->pushHistory(prevState);
+		};
 
 		menu->addChild(rack::createMenuLabel("Node Output:"));
 
 		ui::TextField* outparam = new QTextField([=](std::string text) {
-			if (text.length() < 4 && isInteger(text)) mod->onAudioThread([=](){ mod->pushHistory(); node->setOutput(std::stoi(text)-1); });
+			if (text.length() < 4 && isInteger(text)) mod->onAudioThread([=](){ node->setOutput(std::stoi(text)-1); });
 		});
 		outparam->box.size.x = 100;
 		outparam->text = std::to_string(node->output + 1);
@@ -904,7 +912,7 @@ struct NodeDisplay : Widget {
 
 		NodeChanceSlider* param = new NodeChanceSlider(
 			[=]() { return node->getChance(); }, 
-			[=](float value) { mod->onAudioThread([=](){ /*mod->pushHistory();*/ node->setChance(value);}); }
+			[=](float value) { mod->onAudioThread([=](){ node->setChance(value);}); }
 		);
 		menu->addChild(param);
 
