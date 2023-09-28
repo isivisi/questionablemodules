@@ -31,7 +31,48 @@
      inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer1">
+    <sodipodi:guide
+       position="0,18"
+       orientation="0,18"
+       id="guide1"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="18,18"
+       orientation="18,0"
+       id="guide2"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="18,0"
+       orientation="0,-18"
+       id="guide3"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="0,0"
+       orientation="-18,0"
+       id="guide4"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="0,18"
+       orientation="0,18"
+       id="guide5"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="18,18"
+       orientation="18,0"
+       id="guide6"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="18,0"
+       orientation="0,-18"
+       id="guide7"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="0,0"
+       orientation="-18,0"
+       id="guide8"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
   <defs
      id="defs1" />
   <g
@@ -39,8 +80,8 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="font-weight:900;font-size:16.9021px;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro Heavy';fill:#e3e3e3;stroke-width:0.421932;stroke-opacity:0.369295"
-       d="M 12.979662,15.177581 4.9770022,10.154674 V 7.8240433 L 12.979662,2.8011339 V 5.895246 L 7.835095,8.9491751 v 0.080366 l 5.144567,3.0539279 z"
+       style="font-weight:900;font-size:16.9021px;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro Heavy';fill:#e3e3e3;stroke-width:0.249597;stroke-opacity:0.369295"
+       d="M 11.396058,12.501369 6.6620243,9.5300309 V 8.1513287 L 11.396058,5.1799886 V 7.010334 L 8.3527507,8.8169089 v 0.047541 l 3.0433073,1.8065741 z"
        id="text1"
        aria-label="&lt;" />
   </g>
