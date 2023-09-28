@@ -401,6 +401,7 @@ struct Treequencer : QuestionableModule {
 	int noteRepresentation = 2;
 	bool followNodes = false;
 	std::string defaultScale = "Pentatonic"; // scale for new node gen
+	bool clockInPhasorMode = false;
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -466,7 +467,7 @@ struct Treequencer : QuestionableModule {
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Gate");
-		configInput(CLOCK, "Clock");
+		configInput(CLOCK, "Clock/Phasor");
 		configInput(RESET, "Reset");
 		configInput(CHANCE_MOD_INPUT, "Chance Mod VC");
 		configInput(BOUNCE_GATE, "Bounce Gate");
@@ -649,6 +650,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
 		json_object_set_new(rootJ, "followNodes", json_boolean(followNodes));
 		json_object_set_new(rootJ, "defaultScale", json_string(defaultScale.c_str()));
+		json_object_set_new(rootJ, "clockInPhasorMode", json_boolean(clockInPhasorMode));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -664,6 +666,7 @@ struct Treequencer : QuestionableModule {
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
 		if (json_t* fn = json_object_get(rootJ, "followNodes")) followNodes = json_boolean_value(fn);
 		if (json_t* ds = json_object_get(rootJ, "defaultScale")) defaultScale = json_string_value(ds);
+		if (json_t* fm = json_object_get(rootJ, "clockInPhasorMode")) clockInPhasorMode = json_boolean_value(fm);
 
 		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
 		else noteRepresentation = 0; // preserve previous users visuals
@@ -815,6 +818,20 @@ struct TreequencerFollowButton : TreequencerButton {
 		}
 	}
 
+};
+
+template <typename T>
+struct TreequencerClockPhasorComboPort : QuestionablePort<T> {
+	static_assert(std::is_base_of<PortWidget, T>::value, "T must inherit from PortWidget");
+
+	void appendContextMenu(Menu* menu) override {
+		if (!this->module) return;
+		Treequencer* mod = (Treequencer*)this->module;
+		menu->addChild(createMenuItem(mod->clockInPhasorMode ? "Switch to Clock" : "Switch to Phaser", "", [=]() {
+			mod->clockInPhasorMode = !mod->clockInPhasorMode;
+		}));
+		QuestionablePort<T>::appendContextMenu(menu);
+	}
 };
 
 struct NodeDisplay : Widget {
@@ -1350,7 +1367,7 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
+		addInput(createInputCentered<TreequencerClockPhasorComboPort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
 
 		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
