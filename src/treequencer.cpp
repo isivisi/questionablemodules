@@ -611,6 +611,7 @@ struct Treequencer : QuestionableModule {
 		}
 
 		if (!seqTrigger && activeSequence.size()) activeSequence.clear();
+		else if (seqTrigger && activeSequence.empty()) activeSequence = getWholeSequence(&rootNode);
 
 		if (!seqTrigger) isGateTriggered = isGateTriggered || isClockTriggered;
 
