@@ -464,6 +464,11 @@ struct Treequencer : QuestionableModule {
 		isDirty = true;
 	}
 
+	enum TrigType {
+		STEP,
+		SEQUENCE,
+	};
+
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Gate");
@@ -473,7 +478,7 @@ struct Treequencer : QuestionableModule {
 		configInput(BOUNCE_GATE, "Bounce Gate");
 		configInput(HOLD_INPUT, "Hold Gate");
 		configInput(TTYPE_GATE, "Trigger Type Gate");
-		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 0.f, "Trigger Type", {"Step", "Sequence"});
+		configSwitch(TRIGGER_TYPE, TrigType::STEP, TrigType::SEQUENCE, TrigType::STEP, "Trigger Type", {"Step", "Sequence"});
 		configSwitch(BOUNCE, 0.f, 1.f, 0.f, "Bounce", {"Off", "On"});
 		configParam(CHANCE_MOD, -1.f, 1.f, 0.0f, "Chance Mod");
 		configSwitch(HOLD, 0.f, 1.f, 0.f, "Hold", {"Off", "On"});
@@ -592,6 +597,8 @@ struct Treequencer : QuestionableModule {
 		bool holdSwap = holdTrigger.process(inputs[HOLD_INPUT].getVoltage(), 0.1, 2.f);
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
+
+		if (clockInPhasorMode && params[TRIGGER_TYPE].getValue() == TrigType::STEP) params[TRIGGER_TYPE].setValue(TrigType::SEQUENCE);
 
 		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
 		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
