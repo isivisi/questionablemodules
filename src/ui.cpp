@@ -42,3 +42,12 @@ struct QQuantity : Quantity {
 	}
 
 };
+
+struct QuestionableMenu : Menu {
+	std::function<void()> onDestruct = nullptr;
+
+	~QuestionableMenu() override {
+		if (onDestruct) onDestruct();
+	}
+
+};

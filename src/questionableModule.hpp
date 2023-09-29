@@ -241,15 +241,6 @@ struct QuestionableDrawWidget : Widget {
 	}
 };
 
-struct QuestionableMenu : Menu {
-	std::function<void()> onDestruct = nullptr;
-
-	~QuestionableMenu() override {
-		if (onDestruct) onDestruct();
-	}
-
-};
-
 //helpers
 template <typename T>
 T* createQuestionableWidgetCentered(T* widget, QuestionableModule* module=nullptr) {
