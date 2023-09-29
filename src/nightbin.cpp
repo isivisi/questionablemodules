@@ -357,7 +357,7 @@ struct NightbinButton : ui::Button {
 		if (!userSettings.getSetting<std::string>("gitPersonalAccessToken").size()) {
 			menu->addChild(createMenuLabel("Github Access Token:"));
 
-			ui::TextField* param = new QTextField([=](std::string text) { 
+			ui::TextField* param = new QuestionableTextField([=](std::string text) { 
 				if (text.length()) userSettings.setSetting("gitPersonalAccessToken", text); // https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 			});
 			param->box.size.x = 100;

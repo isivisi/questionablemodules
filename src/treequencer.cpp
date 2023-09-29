@@ -678,9 +678,9 @@ struct Treequencer : QuestionableModule {
 
 };
 
-struct NodeChanceQuantity : QQuantity {
+struct NodeChanceQuantity : QuestionableQuantity {
 
-	NodeChanceQuantity(quantityGetFunc g, quantitySetFunc s) : QQuantity(g, s) { }
+	NodeChanceQuantity(quantityGetFunc g, quantitySetFunc s) : QuestionableQuantity(g, s) { }
 
 	float getDefaultValue() override {
 		return 0.0f;
@@ -901,7 +901,7 @@ struct NodeDisplay : Widget {
 
 		menu->addChild(rack::createMenuLabel("Node Output:"));
 
-		ui::TextField* outparam = new QTextField([=](std::string text) {
+		ui::TextField* outparam = new QuestionableTextField([=](std::string text) {
 			if (text.length() < 4 && isInteger(text)) mod->onAudioThread([=](){ node->setOutput(std::stoi(text)-1); });
 		});
 		outparam->box.size.x = 100;

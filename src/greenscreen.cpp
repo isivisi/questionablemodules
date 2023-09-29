@@ -98,9 +98,9 @@ struct BackgroundWidget : Widget {
 
 };*/
 
-struct RGBSliderQuantity : QQuantity {
+struct RGBSliderQuantity : QuestionableQuantity {
 	std::string label;
-	RGBSliderQuantity(std::string label, quantityGetFunc g, quantitySetFunc s) : QQuantity(g, s) { 
+	RGBSliderQuantity(std::string label, quantityGetFunc g, quantitySetFunc s) : QuestionableQuantity(g, s) { 
 		this->label = label;
 	}
 
@@ -340,7 +340,7 @@ struct GreenscreenWidget : QuestionableWidget {
 				menu->addChild(createSubmenuItem("Add Custom Color", "", [=](Menu* menu) {
 
 					menu->addChild(rack::createMenuLabel("Name:"));
-					QTextField* textField = new QTextField([=](std::string text) { 
+					QuestionableTextField* textField = new QuestionableTextField([=](std::string text) { 
 						preview.name = text; 
 						updateToPreview();
 						setPreviewText = false;
@@ -426,7 +426,7 @@ struct GreenscreenWidget : QuestionableWidget {
 			}
 		}));
 
-		/*ui::TextField* param = new QTextField([=](std::string text) {
+		/*ui::TextField* param = new QuestionableTextField([=](std::string text) {
 			if (text.length()) changeColor();
 		});
 		param->box.size.x = 100;
