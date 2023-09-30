@@ -58,3 +58,7 @@ footer a {
     border-color:#fff; 
     background-color: #fff;
 }}
+
+.bg-middark {
+    background-color: rgb(37, 40, 46);
+}
