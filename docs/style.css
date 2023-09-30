@@ -12,12 +12,25 @@
     padding-right: 0 !important;
 }
 
+header a {
+    text-decoration: none;
+}
+
 .text-bg {
     background-image: url("./images/logobg.jpg");
     background-clip: text;
     -webkit-background-clip: text;
     background-size: 100%;
     background-position: 25px -50px;
+    -webkit-text-fill-color: transparent;
+}
+
+.text-bg-large {
+    background-image: url("./images/logobg.jpg");
+    background-clip: text;
+    -webkit-background-clip: text;
+    background-size: 100%;
+    background-position: 25px -60px;
     -webkit-text-fill-color: transparent;
 }
 

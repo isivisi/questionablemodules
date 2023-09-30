@@ -42,16 +42,17 @@
       }
 
       .module{
-        margin-bottom: 25px;
+        margin-bottom: 50px;
       }
     </style>
 
     <body class="bg-dark">
-    
 
         <header class="site-header">
           <nav class="container d-flex flex-column flex-md-row justify-content-between">
-            <span class="display-1 fw-bold text-light text-bg">Questionable Modules</span>
+            <p>
+            <span class="display-1 fw-bold text-light text-bg-large">Questionable Modules</span>
+            <span class="text-light" id="version">version</span></p>
 
             <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
               <!--<a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>-->
@@ -63,10 +64,10 @@
 
           <div class="text-light mb-2">
             
-            <p class="display-6 col-md-8">Collection of VCVRack Modules.</p>
+            <p class="display-6 col-md-8">Collection of VCVRack Modules by John Iannandrea.</p>
             <div style="height: 15px;"></div>
             <a href="https://library.vcvrack.com/questionablemodules"><button class="btn btn-light btn-lg" type="button">Get in Library</button></a>
-            <a href="./slurp.html" class="text-light" style="margin-left:15px; text-decoration: none;">Download Directly</a> 
+            <a href="https://github.com/isivisi/questionablemodules/releases/latest" class="text-light" style="margin-left:15px; text-decoration: none;">Download from Github</a> 
           </div>
 
           <div style="height: 50px"></div>
@@ -74,6 +75,7 @@
           <div class="row">
 
             <div class="col-auto module">
+              <a href="slurp.html" style="text-decoration:none;">
               <div class="row">
                 <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png"></div>
                 <div class="col-auto">
@@ -81,9 +83,11 @@
                   <p class="col-md-8 fs-5 text-white">Quaternion based oscillation</p>
                 </div>
               </div>
+              </a>
             </div>
 
             <div class="col-auto module">
+              <a href="treequencer.html" style="text-decoration:none;">
               <div class="row">
                 <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/treequencer.png"></div>
                 <div class="col-auto">
@@ -91,9 +95,11 @@
                   <p class="col-md-8 fs-5 text-white">Binary tree based sequencing</p>
                 </div>
               </div>
+              </a>
             </div>
 
             <div class="col-auto module">
+              <a href="greenscreen.html" style="text-decoration:none;">
               <div class="row">
                 <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/greenscreen.png"></div>
                 <div class="col-auto">
@@ -101,9 +107,11 @@
                   <p class="col-md-8 fs-5 text-white">Background colors</p>
                 </div>
               </div>
+              </a>
             </div>
 
             <div class="col-auto module">
+              <a href="discombobulator.html" style="text-decoration:none;">
               <div class="row">
                 <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/discombobulator.png"></div>
                 <div class="col-auto">
@@ -111,9 +119,11 @@
                   <p class="col-md-8 fs-5 text-white">Random inputs and outputs</p>
                 </div>
               </div>
+              </a>
             </div>
 
             <div class="col-auto module">
+              <a href="nandomizer.html" style="text-decoration:none;">
               <div class="row">
                 <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/nandomizer.png"></div>
                 <div class="col-auto">
@@ -121,16 +131,19 @@
                   <p class="col-md-8 fs-5 text-white">Random inputs</p>
                 </div>
               </div>
+              </a>
             </div>
 
             <div class="col-auto module">
+              <a href="nightbin.html" style="text-decoration:none;">
               <div class="row">
                 <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/nightbin.png"></div>
                 <div class="col-auto">
-                  <h2 class="fw-bold text-white">Nandomizer</h2>
+                  <h2 class="fw-bold text-white">Night-bin</h2>
                   <p class="col-md-8 fs-5 text-white">Github nightly builds</p>
                 </div>
               </div>
+              </a>
             </div>
             
           </div>
@@ -139,5 +152,10 @@
 
 
     </body>
+
+    <script>
+      var version = document.getElementById("version")
+      version.innerHTML = DocVersion
+    </script>
 
 </html>
