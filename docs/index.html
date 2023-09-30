@@ -24,31 +24,34 @@
 
       .slurpbg {
         background-image: url('./images/slurpview.jpg'); 
-        background-position: 200px 0px;
+        background-position: calc(0% + 150px) -5px;
         background-size: 1200px;
         min-height: 500px;
 
         text-shadow:1px 1px 15px black;
       }
 
-      .treebg {
-        background-image: url('./images/treeview.jpg');
-        background-position: right 0px bottom 0px; 
-        background-size: 1200px;
-        background-repeat: no-repeat;
-        background-position: -295px -155px;
-        min-height: 350px;
+      .smallbg {
+        min-height: 250px;
+        margin-bottom: 10px;
+      }
 
-        text-shadow:1px 1px 15px black;
+      .screenshot {
+        object-fit: scale-down;
+        height: 300px;
+      }
+
+      .module{
+        margin-bottom: 25px;
       }
     </style>
 
-    <body class="bg-secondary">
+    <body class="bg-dark">
     
 
-        <header class="site-header bg-dark">
+        <header class="site-header">
           <nav class="container d-flex flex-column flex-md-row justify-content-between">
-            <span class="display-6 fw-bold text-light text-bg">Questionable Modules</span>
+            <span class="display-1 fw-bold text-light text-bg">Questionable Modules</span>
 
             <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
               <!--<a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>-->
@@ -56,89 +59,81 @@
           </nav>
         </header>
 
-        <div class="container mt-2 py-4 bg-light">
+        <div class="container mt-2 py-4">
 
-          <div class="bg-light text-light slurpbg mb-2">
-            <div>
-              <div class="container-fluid py-5" style="padding: 3rem">
-                <h1 class="display-5 fw-bold">SLURP</h1>
-                <p class="col-md-8 fs-4">Quaternion based oscillation.</p>
-                <a href="./slurp.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a> 
-                <a href="https://library.vcvrack.com/questionablemodules/quatosc"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
-              </div>
-            </div>
+          <div class="text-light mb-2">
+            
+            <p class="display-6 col-md-8">Collection of VCVRack Modules.</p>
+            <div style="height: 15px;"></div>
+            <a href="https://library.vcvrack.com/questionablemodules"><button class="btn btn-light btn-lg" type="button">Get in Library</button></a>
+            <a href="./slurp.html" class="text-light" style="margin-left:15px; text-decoration: none;">Download Directly</a> 
           </div>
+
+          <div style="height: 50px"></div>
 
           <div class="row">
-            <div class="col-6" style="padding-right: 0;">
-              <div class="text-white treebg">
-                <div class="p-5" >
-                  <h1 class="display-5 fw-bold">Treequencer</h2>
-                  <p class="col-md-8 fs-4">Binary tree sequencing</p>
-                  <a href="./treequencer.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a>
-                  <a href="https://library.vcvrack.com/questionablemodules/treequencer"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
+
+            <div class="col-auto module">
+              <div class="row">
+                <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png"></div>
+                <div class="col-auto">
+                  <h2 class="fw-bold text-white">SLURP</h2>
+                  <p class="col-md-8 fs-5 text-white">Quaternion based oscillation</p>
                 </div>
               </div>
             </div>
 
-            <!-- <div class="col-6" style="padding-left: 0;">
-              <div class="text-white">
-                <div class="p-5" style="backdrop-filter: blur(3px);"">
-                  <h1 class="display-5 fw-bold">Discombobulator</h2>
-                  <p class="col-md-8 fs-4">Randomly swap inputs and outputs</p>
-                  <a href="./discombobulator.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a>
-                  <button class="btn btn-light btn-lg" type="button">View in Library</button>
+            <div class="col-auto module">
+              <div class="row">
+                <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/treequencer.png"></div>
+                <div class="col-auto">
+                  <h2 class="fw-bold text-white">Treequencer</h2>
+                  <p class="col-md-8 fs-5 text-white">Binary tree based sequencing</p>
                 </div>
               </div>
-            </div>
             </div>
 
-            <div class="row">
-              <div class="col-6" style="padding-right: 0;">
-                <div class="text-white">
-                  <div class="p-5" style="backdrop-filter: blur(3px);">
-                    <h1 class="display-5 fw-bold">Nandomizer</h2>
-                    <p class="col-md-8 fs-4">Randomly swap inputs.</p>
-                    <a href="./discombobulator.html"><button class="btn btn-light btn-lg" type="button">Documentation</button> </a>
-                    <button class="btn btn-light btn-lg" type="button">View in Library</button>
-                  </div>
+            <div class="col-auto module">
+              <div class="row">
+                <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/greenscreen.png"></div>
+                <div class="col-auto">
+                  <h2 class="fw-bold text-white">Greenscreen</h2>
+                  <p class="col-md-8 fs-5 text-white">Background colors</p>
                 </div>
               </div>
-            </div> -->
+            </div>
+
+            <div class="col-auto module">
+              <div class="row">
+                <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/discombobulator.png"></div>
+                <div class="col-auto">
+                  <h2 class="fw-bold text-white">Discombobulator</h2>
+                  <p class="col-md-8 fs-5 text-white">Random inputs and outputs</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-auto module">
+              <div class="row">
+                <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/nandomizer.png"></div>
+                <div class="col-auto">
+                  <h2 class="fw-bold text-white">Nandomizer</h2>
+                  <p class="col-md-8 fs-5 text-white">Random inputs</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-auto module">
+              <div class="row">
+                <div class="col-auto"><img class="screenshot" src="https://library.vcvrack.com/screenshots/200/questionablemodules/nightbin.png"></div>
+                <div class="col-auto">
+                  <h2 class="fw-bold text-white">Nandomizer</h2>
+                  <p class="col-md-8 fs-5 text-white">Github nightly builds</p>
+                </div>
+              </div>
+            </div>
             
           </div>
-
-        <!--
-
-          <div class="row align-items-md-stretch">
-            <div class="col-md-6">
-              <div class="h-100 p-5 text-white bg-dark">
-                <h2>Treequencer</h2>
-                <p>Binary tree sequencing</p>
-                <button class="btn btn-outline-light" type="button">Documentation</button>
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="h-100 p-5 bg-light border">
-                <h2>Nandomizer</h2>
-                <p>Random</p>
-                <button class="btn btn-outline-secondary" type="button">Documentation</button>
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="h-100 p-5 bg-light border">
-                <h2>Nandomizer</h2>
-                <p>Random</p>
-                <button class="btn btn-outline-secondary" type="button">Documentation</button>
-              </div>
-            </div>
-          </div>
-
-          -->
-
-          <script> importHTML("footer.html") </script>
 
         </div>
 
