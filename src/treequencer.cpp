@@ -440,7 +440,6 @@ struct Treequencer : QuestionableModule {
 	}
 
 	void historyGoBack() {
-		if (historyPos <= 1) return;
 		if (history.empty()) return;
 		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
 			pushHistory();
@@ -780,7 +779,7 @@ struct TreequencerHistoryButton : TreequencerButton {
 
 	void step() override {
 		if (!module) return;
-		disabled = isBack ? module->history.size() == 0 || module->historyPos <= 1 : module->historyPos >= module->history.size();
+		disabled = isBack ? module->history.size() == 0 || module->historyPos < 1 : module->historyPos >= module->history.size();
 	}
 	
 	void onButton(const ButtonEvent& e) override {
