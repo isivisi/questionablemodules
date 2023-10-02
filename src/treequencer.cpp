@@ -587,6 +587,31 @@ struct Treequencer : QuestionableModule {
 		if (!lastBounce && (lastBounce != bouncing)) processSequence();
 	}
 
+	void processPhasorSequence() {
+		bool bounce = params[BOUNCE].getValue();
+		Node* prevActiveNode = nullptr;
+		if (activeNode) {
+			activeNode->enabled = false;
+			prevActiveNode = activeNode;
+		}
+
+		size_t position = 0;
+
+		if (bounce) {
+			position = clamp<size_t>(0, (activeSequence.size()-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size()*2);
+			if (position > activeSequence.size()-1) position = (activeSequence.size()-1) - (position - (activeSequence.size()-1)); // reverse
+		} else position = clamp<size_t>(0, activeSequence.size()-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size());
+
+		activeNode = activeSequence[position];
+		activeNode->enabled = true;
+
+		if (prevActiveNode != nullptr) {
+			// assume sequence complete if moved off last node in sequence to first if not bouncing
+			if (!bounce && prevActiveNode == activeSequence.back() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
+			else if (bounce && prevActiveNode != activeSequence.front() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
+		}
+	}
+
 	void process(const ProcessArgs& args) override {
 
 		processOffThreadQueue();
@@ -598,7 +623,8 @@ struct Treequencer : QuestionableModule {
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
 
-		if (clockInPhasorMode && params[TRIGGER_TYPE].getValue() == TrigType::STEP) params[TRIGGER_TYPE].setValue(TrigType::SEQUENCE);
+		// Phasor mode only supports sequence trigger type atm
+		if (clockInPhasorMode && params[TRIGGER_TYPE].getValue() != TrigType::SEQUENCE) params[TRIGGER_TYPE].setValue(TrigType::SEQUENCE);
 
 		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
 		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
@@ -637,12 +663,10 @@ struct Treequencer : QuestionableModule {
 			pulse.trigger(1e-3f);
 		}
 
-		// Phasor mode
+		// Phasor clock mode
 		if (clockInPhasorMode) {
-			if (activeNode) activeNode->enabled = false;
-			size_t position = clamp<size_t>(0, activeSequence.size()-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size());
-			activeNode = activeSequence[position];
-			activeNode->enabled = true;
+			processPhasorSequence();
+			pulse.trigger(1e-3f);
 		}
 
 		bool activeP = pulse.process(args.sampleTime);
