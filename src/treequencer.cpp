@@ -593,6 +593,10 @@ struct Treequencer : QuestionableModule {
 		if (activeNode) {
 			activeNode->enabled = false;
 			prevActiveNode = activeNode;
+		} else {
+			// sequence is broken
+			activeSequence = getWholeSequence(&rootNode);
+			activeNode = &rootNode;
 		}
 
 		size_t position = 0;
