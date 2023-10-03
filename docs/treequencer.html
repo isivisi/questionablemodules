@@ -28,7 +28,9 @@
 
         <header class="site-header bg-dark">
           <nav class="container d-flex flex-column flex-md-row justify-content-between">
-            <span class="display-6 fw-bold text-light text-bg">Questionable Modules</span>
+            <a href="./index.html">
+              <span class="display-6 fw-bold text-light text-bg">Questionable Modules</span>
+            </a>
 
             <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
               <a href="https://library.vcvrack.com/questionablemodules/treequencer"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
@@ -76,7 +78,7 @@
               <p class=""><span class="fw-bold">Preview</span> Sets the selected node to the active node and enables hold. This allows you to easily preview the node output.</p>
               <p class=""><span class="fw-bold">Add Child</span> Adds a child to this node, maximum 2 children.</p>
               <p class=""><span class="fw-bold">Remove</span> Removes the selected node and all attached to this node. (children and their children)</p>
-              <p class=""><span class="badge bg-warning">Beta</span> <span class="fw-bold">Generate Sequence</span> Allows you to automatically generate an entire node structure and use a specific scale for selecting randomized output notes (Chromatic, Major, Minor, Pentatonic, Blues, Dorian, Mixolydian)</p>
+              <p class="SeqGen"><span class="fw-bold">Generate Sequence</span> Allows you to automatically generate an entire node structure and use a specific scale for selecting randomized output notes (Chromatic, Major, Minor, Pentatonic, Blues, Dorian, Mixolydian)</p>
 
               <img src="./images/treequencer.svg" width="100%"/>
             
@@ -109,12 +111,6 @@
               <p id="VOct" class=""><span class="fw-bold">VOct Out</span> outputs the current node value divided by 12 to be used as octave control (This uses the 1V/oct standard). Node values higher than 8 will still output here.</p>
               <p id="Sequence" class=""><span class="fw-bold">Outputs 1-8</span>, values 1 through 8 will activate these corresponding output triggers. Values higher and lower than 8 will not be output here but will still output to VOct.</p>
               
-
-              <h2>Note Representation</h2>
-              <p id="NoteRep">There are 3 ways you can represent the specified note for a node. You can set this via the <span class="fw-bold">Note Representation</span> submenu in the modules <span class="fw-bold">context menu</span>.</p>
-                <p><span class="fw-bold">Squares</span> the original method before I figured out text, uses up to 12 squares to represent the number. </p>
-                <p><span class="fw-bold">Letters</span> uses the <a href="#VOct">VOct Out</a> note letter representation (C#1, F2, etc..)</p>
-                <p><span class="fw-bold">Numbers</span> The raw output number value (1, 2, 3, etc...)</p>
             </div>
            </div> 
 
@@ -126,6 +122,15 @@
 
               <h2>Labels</h2>
               <p>Knob and plug labels can be toggled via the <span class="fw-bold">toggle labels</span> option in the context menu. </p>
+
+              <h2>Note Representation</h2>
+              <p id="NoteRep">There are 3 ways you can represent the specified note for a node. You can set this via the <span class="fw-bold">Note Representation</span> submenu in the modules context menu.</p>
+                <p><span class="fw-bold">Squares</span> the original method before I figured out text, uses up to 12 squares to represent the number. </p>
+                <p><span class="fw-bold">Letters</span> uses the <a href="#VOct">VOct Out</a> note letter representation (C#1, F2, etc..)</p>
+                <p><span class="fw-bold">Numbers</span> The raw output number value (1, 2, 3, etc...)</p>
+
+              <h2>Default Scale</h2>
+              <p>This is the scale the randomly selected output value a new child node will use. This can be changed in the modules context menu.</p>
             </div>
           </div>
               

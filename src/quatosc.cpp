@@ -165,9 +165,9 @@ struct QuatOSC : QuestionableModule {
 		configParam(X_POS_I_PARAM, 0.f, 1.f, 1.f, "X Position Influence");
 		configParam(Y_POS_I_PARAM, 0.f, 1.f, 1.f, "Y Position Influence");
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 1.f, "Z Position Influence");
-		configSwitch(VOCT1_OCT, 0.f, 8.f, 0.f, "VOct 1 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(VOCT2_OCT, 0.f, 8.f, 6.f, "VOct 2 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(VOCT3_OCT, 0.f, 8.f, 0.f, "VOct 3 Octave", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT1_OCT, -1.f, 8.f, 0.f, "VOct 1 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT2_OCT, -1.f, 8.f, 6.f, "VOct 2 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT3_OCT, -1.f, 8.f, 0.f, "VOct 3 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(STEREO, 0.f, 2.f, 0.f, "Stereo", {"Mono", "Full Stereo", "Sides"});
 		configSwitch(SPREAD, 1.f, 16.f, 1.f, "Spread", {"Off", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
 		configInput(VOCT, "VOct");
@@ -221,6 +221,7 @@ struct QuatOSC : QuestionableModule {
 
 	inline float calcVOctFreq(int input) {
 		float voctOffset = quantizedVOCT[input] ? std::round(getValue(input)) : getValue(input);
+		if (voctOffset < 0.f) return 1.f;
 		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
 	}
 
@@ -592,6 +593,16 @@ struct SLURPOCTParamWidget : QuestionableParam<T> {
 	}
 };
 
+template <typename T>
+struct SLURPVOCTPortWidget : QuestionablePort<T> {
+	void draw(const Widget::DrawArgs &args) override {
+		nvgSave(args.vg);
+		if (this->module && this->module->params[this->portId].getValue() < 0.f) nvgTint(args.vg, nvgRGB(150, 150, 150));
+		QuestionablePort<T>::draw(args);
+		nvgRestore(args.vg);
+	}
+};
+
 struct QuatOSCWidget : QuestionableWidget {
 	ImagePanel *fade;
 	QuatDisplay *display;
@@ -726,9 +737,9 @@ struct QuatOSCWidget : QuestionableWidget {
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*3), 90+ hOff)), module, QuatOSC::Y_FLO_I_INPUT));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 90+ hOff)), module, QuatOSC::Z_FLO_I_INPUT));
 
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*0.5), 65)), module, QuatOSC::VOCT));
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
+		addInput(createInputCentered<SLURPVOCTPortWidget<PJ301MPort>>(mm2px(Vec(start + (next*0.5), 65)), module, QuatOSC::VOCT));
+		addInput(createInputCentered<SLURPVOCTPortWidget<PJ301MPort>>(mm2px(Vec(start + (next*2.5), 65)), module, QuatOSC::VOCT2));
+		addInput(createInputCentered<SLURPVOCTPortWidget<PJ301MPort>>(mm2px(Vec(start + (next*4.5), 65)), module, QuatOSC::VOCT3));
 
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*4), 115)), module, QuatOSC::OUT));
 		addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(start + (next*5), 115)), module, QuatOSC::OUT2));

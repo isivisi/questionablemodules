@@ -140,7 +140,7 @@ struct QuestionableWidget : ModuleWidget {
 		}
 
 		if (toggleableDescriptors) {
-			menu->addChild(createMenuItem("Toggle Labels", "", [=]() {
+			menu->addChild(createMenuItem("Toggle Labels", mod->showDescriptors ? "On" : "Off", [=]() {
 				mod->showDescriptors = !mod->showDescriptors;
 				if (color) color->setTextGroupVisibility("descriptor", mod->showDescriptors);
 				userSettings.setSetting<bool>("showDescriptors", mod->showDescriptors);
@@ -163,9 +163,10 @@ struct QuestionableWidget : ModuleWidget {
 	std::string getReportBody(bool json) {
 		char* jsondump = json_dumps(module->toJson(), 0);
 		std::string body = std::string("Module: ") + model->name +
-		std::string("\nPlugin Version: ") + model->plugin->version + 
+		"\nPlugin Version: " + model->plugin->version + 
+		"\nRack Version: " + APP_VERSION + "-" + APP_OS + "-" + APP_CPU +
 		(json ? std::string("\nJSON: `") + std::string(jsondump) : "") +
-		std::string("`\n---------- Please describe your problem below: ----------\n\n");
+		"`\n---------- Please describe your problem below: ----------\n\n";
 		free(jsondump);
 		return body;
 	}
@@ -241,6 +242,12 @@ struct QuestionableDrawWidget : Widget {
 };
 
 //helpers
+template <typename T>
+T* createQuestionableWidgetCentered(T* widget, QuestionableModule* module=nullptr) {
+	//if (module) widget->module = module;
+	widget->box.pos = widget->box.pos.minus(widget->box.size.div(2));
+	return widget;
+}
 
 template <typename T>
 static T lerp(T point1, T point2, T t) {

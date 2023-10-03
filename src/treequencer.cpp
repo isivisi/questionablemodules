@@ -20,16 +20,6 @@ const int MODULE_SIZE = 22;
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
-static int div_floor(int a, int b)
-{
-    int res = a / b;
-    int rem = a % b;
-    // Correct division result downwards if up-rounding happened,
-    // (for non-zero remainder of sign different than the divisor).
-    int corr = (rem != 0 && ((rem < 0) != (b < 0)));
-    return res - corr;
-}
-
 struct Scale {
 	std::string name;
 	std::vector<int> notes;
@@ -66,7 +56,7 @@ struct Scale {
 		return sequence;
 	}
 
-	int getNextInSequence(std::vector<int> sequence, int maxSize) {
+	int getNextInSequence(std::vector<int> sequence, int maxSize=1) {
 		int offset = 0;
 
 		/*auto probs = getProbabilities();
@@ -87,29 +77,39 @@ struct Scale {
 		}
 		return note;*/
 
+		//int lookback = randomInt<int>(8, 16);
+		//int front = sequence.size() >= lookback ? sequence[(sequence.size())-lookback] :  noteToOffset(sequence.front());
+
 		// convert back to offset values
-		int front = toOffset(sequence.front());
-		int back = toOffset(sequence.back());
+		int front = noteToOffset(sequence.front());
+		int back = noteToOffset(sequence.back());
 
 		if (!sequence.size()) offset = randomInt<int>(0, maxSize);
 		else {
 			int randomType = randomInt<int>(0, 3);
 			switch (randomType) {
-				case 0: // random number nearby
-					offset = randomInt<int>(back-9, back+9);
+				case 0: // move anywere
+					offset = back + randomInt<int>(-notes.size(), notes.size());
 					break;
 				case 1: // move a 3rd
-					offset = (randomInt<int>(0,1) ? front+3 : front-3) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? back+3 : back-3);// * std::max(1, (int)(back / 12));
 					break;
 				case 2: // move a 5th
-					offset = (randomInt<int>(0,1) ? front+5 : front-5) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? back+5 : back-5);// * std::max(1, (int)(back / 12));
 					break;
 				case 3: // move a 7th
-					offset = (randomInt<int>(0,1) ? front+7 : front-7) * std::max(1, (int)(back / 12));
+					offset = (randomInt<int>(0,1) ? back+7 : back-7);// * std::max(1, (int)(back / 12));
 					break;
 			}
 		}
-		return notes[offset%notes.size()] * std::max(1, (int)(offset/(int)notes.size()));
+
+		// keep root octave or not
+		if (randomReal<float>(0,1) < 0.5) {
+			int relativeOctDiff = notes.size() * (relativeOctave(front) - relativeOctave(offset));
+			offset += relativeOctDiff;
+		}
+
+		return offsetToNote(offset);
 	}
 
 	static std::string getNoteString(int note, bool includeOctaveOffset=false) {
@@ -117,13 +117,31 @@ struct Scale {
 		if (includeOctaveOffset) return noteStrings[abs((note % 12 + 12) % 12)] + std::to_string((int)std::floor(((float)note/12.f)+4));
 		else return noteStrings[abs((note % 12 + 12) % 12)];
 	}
+
+	// get absolute notes octave
+	static int noteOctave(int note) { 
+		return (int)std::floor(((float)note/12.f));
+	}
+
+	int relativeOctave(int offset) {
+		return (int)std::floor((float)offset/(float)notes.size());
+	}
 	
-	// convert note to position offset
-	int toOffset(int note) {
+	// convert absolute note to scale position offset
+	int noteToOffset(int note) {
+		int relativeOctave = (int)notes.size() * noteOctave(note);
+		//relativeOctave = relativeOctave < 0 ? relativeOctave-1 : relativeOctave > 0 ? relativeOctave+1 : relativeOctave;
 		for (size_t i = 0; i < notes.size(); i++) {
-			if (notes[i] == abs(note % (int)notes.size())) return i * (note / (int)notes.size());
+			if (notes[i] == abs(note%12)) return i + relativeOctave;
 		}
 		return 0;
+	}
+
+	// convert scale offset to absolute note
+	int offsetToNote(int offset) {
+		int absOctave = 12 * relativeOctave(offset);
+		//absOctave = absOctave < 0 ? absOctave-1 : absOctave > 0 ? absOctave+1 : absOctave;
+		return notes[(offset%notes.size() + notes.size()) % notes.size()] + absOctave;
 	}
 
 	Scale getTransposedBy(int note) {
@@ -133,6 +151,10 @@ struct Scale {
 			newScale.notes.push_back(notes[i] + note);
 		}
 		return newScale;
+	}
+
+	bool operator==(const std::string other) {
+		return name == other;
 	}
 };
 
@@ -146,6 +168,12 @@ std::vector<Scale> scales = {
 	Scale{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
 	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
 };
+
+static Scale getScale(std::string scaleName) {
+	auto found = std::find(scales.begin(), scales.end(), scaleName);
+	if (found != scales.end()) return *found;
+	return Scale{"None", {}};
+}
 
 // A node in the tree
 struct Node {
@@ -210,6 +238,13 @@ struct Node {
 		return children;
 	}
 
+	std::vector<int> getHistory() {
+		if (!parent) return {output};
+		std::vector history = parent->getHistory();
+		history.push_back(output);
+		return history;
+	}
+
 	// Fill each Node with 2 other nodes until depth is met
 	// assumes EMPTY
   	void fillToDepth(int desiredDepth) {
@@ -224,13 +259,13 @@ struct Node {
 		children.push_back(child2);
   	}
 
-	Node* addChild() {
+	Node* addChild(int out = randomInt<int>(-1, 7), float c = randomReal<float>(0, 0.9f)) {
 		if (children.size() > 1) return nullptr;
 
 		Node* child = new Node(this);
 		child->parent = this;
-		child->chance = randomReal<float>(0, 0.9f);
-		child->output = randomInt<int>(-1, 7);
+		child->chance = c;
+		child->output = out;
 		children.push_back(child);
 
 		return child;
@@ -254,20 +289,26 @@ struct Node {
 	}
 
 	void generateSequencesToDepth(Scale s, int d, std::vector<int> history=std::vector<int>()) {
+		if (history.empty()) history = getHistory();
 		if (d <= 0) return;
 		if (depth >= 21) return;
+		
+
+		if (randomReal<float>() > 0.9) return;
 
 		if (Node* child1 = addChild()) {
 			std::vector<int> c1History = history;
-			c1History.push_back(output);
-			child1->output = s.getNextInSequence(c1History, 48);
+			child1->output = s.getNextInSequence(history, 48);
+			c1History.push_back(child1->output);
 			child1->generateSequencesToDepth(s, d-1, c1History);
 		}
+
+		if (randomReal<float>() > 0.9) return;
 		
 		if (Node* child2 = addChild()) {
 			std::vector<int> c2History = history;
-			c2History.push_back(output);
-			child2->output = s.getNextInSequence(c2History, 48);
+			child2->output = s.getNextInSequence(history, 48);
+			c2History.push_back(child2->output);
 			child2->generateSequencesToDepth(s, d-1, c2History);
 		}
 	}
@@ -359,6 +400,7 @@ struct Treequencer : QuestionableModule {
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
 	bool followNodes = false;
+	std::string defaultScale = "Pentatonic"; // scale for new node gen
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -375,6 +417,9 @@ struct Treequencer : QuestionableModule {
 	Node rootNode;
 	Node* activeNode;
 	std::vector<Node*> activeSequence;
+	size_t historyPos = 0;
+	std::vector<json_t*> history;
+	bool historyDirty = true;
 
 	void onAudioThread(std::function<void()> func) {
 		audioThreadQueue.push(func);
@@ -385,6 +430,44 @@ struct Treequencer : QuestionableModule {
 			audioThreadQueue.front()();
 			audioThreadQueue.pop();
 		}
+	}
+
+	void clearHistory() {
+		history.clear();
+		historyPos = 0;
+		historyDirty = false;
+	}
+
+	void pushHistory(json_t* state = nullptr) {
+		if (historyPos != history.size()) history.erase(history.begin() + historyPos-1, history.end());
+		history.push_back(state ? state : rootNode.toJson());
+		historyPos = history.size();
+		historyDirty = true; // assume new data not saved after this function is called
+	}
+
+	void historyGoBack() {
+		if (history.empty()) return;
+		if (historyPos == 1) return;
+		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
+			pushHistory();
+			historyDirty = false;
+		}
+		historyPos = clamp(historyPos-1, 1, history.size());
+		setRootNodeFromJson(history[historyPos-1]);
+	}
+
+	void historyGoForward() {
+		if (historyPos >= history.size()) return;
+		historyPos = clamp(historyPos+1, 1, history.size());
+		setRootNodeFromJson(history[historyPos-1]);
+	}
+
+	// resets the root and loads a tree from json
+	void setRootNodeFromJson(json_t* json) {
+		rootNode.children.clear();
+		activeNode = &rootNode;
+		rootNode.fromJson(json);
+		isDirty = true;
 	}
 
 	Treequencer() {
@@ -416,6 +499,8 @@ struct Treequencer : QuestionableModule {
 		
 		rootNode.enabled = true;
 		activeNode = &rootNode;
+
+		pushHistory();
 		
 	}
 
@@ -476,7 +561,7 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
-	int sequencePos = 0;
+	int sequencePos = 0; // keep this signed, the current logic assumes it.
 	void processSequence(bool newSequence = false) {
 		bool lastBounce = bouncing;
 		if (newSequence) {
@@ -491,7 +576,7 @@ struct Treequencer : QuestionableModule {
 				if (bouncing) sequencePulse.trigger(1e-3f); // signal sequence completed
 				bouncing = false;
 				sequencePos = 0;
-			} else if (sequencePos >= activeSequence.size()) {
+			} else if (sequencePos >= (int)activeSequence.size()) {
 				if (params[BOUNCE].getValue()) {
 					bouncing = true;
 					sequencePos--;
@@ -534,6 +619,7 @@ struct Treequencer : QuestionableModule {
 		}
 
 		if (!seqTrigger && activeSequence.size()) activeSequence.clear();
+		else if (seqTrigger && activeSequence.empty()) activeSequence = getWholeSequence(&rootNode);
 
 		if (!seqTrigger) isGateTriggered = isGateTriggered || isClockTriggered;
 
@@ -571,6 +657,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "colorMode", json_integer(colorMode));
 		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
 		json_object_set_new(rootJ, "followNodes", json_boolean(followNodes));
+		json_object_set_new(rootJ, "defaultScale", json_string(defaultScale.c_str()));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -585,29 +672,27 @@ struct Treequencer : QuestionableModule {
 		if (json_t* sy = json_object_get(rootJ, "startOffsetY")) startOffsetY = json_real_value(sy);
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
 		if (json_t* fn = json_object_get(rootJ, "followNodes")) followNodes = json_boolean_value(fn);
+		if (json_t* ds = json_object_get(rootJ, "defaultScale")) defaultScale = json_string_value(ds);
 
 		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
 		else noteRepresentation = 0; // preserve previous users visuals
 
 		if (json_t* s = json_object_get(rootJ, "theme")) theme = json_string_value(s);
 
-		if (json_t* rn = json_object_get(rootJ, "rootNode")) {
+		if (json_t* rn = json_object_get(rootJ, "rootNode")) setRootNodeFromJson(rn);
 
-			rootNode.children.clear();
-			activeNode = &rootNode;
-			rootNode.fromJson(rn);
-
-			isDirty = true;
-		}
+		clearHistory();
+		pushHistory();
+		historyDirty = false;
 
 	}
 
 
 };
 
-struct NodeChanceQuantity : QQuantity {
+struct NodeChanceQuantity : QuestionableQuantity {
 
-	NodeChanceQuantity(quantityGetFunc g, quantitySetFunc s) : QQuantity(g, s) { }
+	NodeChanceQuantity(quantityGetFunc g, quantitySetFunc s) : QuestionableQuantity(g, s) { }
 
 	float getDefaultValue() override {
 		return 0.0f;
@@ -643,6 +728,106 @@ struct NodeChanceSlider : ui::Slider {
 	~NodeChanceSlider() {
 		delete quantity;
 	}
+};
+
+struct TreequencerButton : SvgButton {
+	Treequencer* module;
+	std::string icon = "";
+
+	SvgWidget* background = nullptr;
+	SvgWidget* iconWidget = nullptr;
+
+	bool disabled = false;
+	bool latch = false;
+
+	bool latchState = false;
+
+	TreequencerButton(std::string icon, Vec pos, Treequencer* module) {
+		this->module = module;
+		box.pos = pos;
+		this->icon = icon;
+		shadow->opacity = 0;
+
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg.svg")));
+		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg-clicked.svg")));
+
+		iconWidget = new SvgWidget();
+		iconWidget->setSvg(Svg::load(asset::plugin(pluginInstance, icon)));
+		addChild(iconWidget);
+
+	}
+
+	void draw(const DrawArgs &args) override {
+		nvgSave(args.vg);
+		if (disabled) nvgTint(args.vg, nvgRGB(180,180,180));
+		SvgButton::draw(args);
+		iconWidget->draw(args);
+		nvgRestore(args.vg);
+	}
+
+	void onDragStart(const DragStartEvent& e) override {
+		if (latch) {
+			setLatchState(!latchState);
+		} else SvgButton::onDragStart(e);
+	}
+
+	void onDragEnd(const DragEndEvent& e) override {
+		if (!latch) SvgButton::onDragEnd(e);
+	}
+
+	void setLatchState(bool state) {
+		latchState = state;
+		sw->setSvg(frames[state]);
+		fb->setDirty();
+	}
+
+};
+
+struct TreequencerHistoryButton : TreequencerButton {
+	bool isBack = false;
+
+	TreequencerHistoryButton(bool isBack, Vec pos, Treequencer* module) : TreequencerButton(isBack ? "res/treequencer/back.svg" : "res/treequencer/forward.svg", pos, module) {
+		this->isBack = isBack;
+	}
+
+	void step() override {
+		if (!module) return;
+		disabled = isBack ? module->history.size() == 0 || module->historyPos <= 1 : module->historyPos >= module->history.size();
+	}
+	
+	void onButton(const ButtonEvent& e) override {
+		OpaqueWidget::onButton(e);
+		if (!module) return;
+
+		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+			if (isBack) module->historyGoBack();
+			else module->historyGoForward();
+		}
+	}
+
+};
+
+struct TreequencerFollowButton : TreequencerButton {
+
+	TreequencerFollowButton(Vec pos, Treequencer* module) : TreequencerButton("res/treequencer/follow.svg", pos, module) {
+		latch = true;
+		setLatchState(module ? module->followNodes : false);
+	}
+
+	void step() override {
+		if (!module) return;
+		disabled = !module->followNodes;
+	}
+	
+	void onButton(const ButtonEvent& e) override {
+		OpaqueWidget::onButton(e);
+		if (!module) return;
+
+		if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+			module->followNodes = !module->followNodes;
+		}
+	}
+
 };
 
 struct NodeDisplay : Widget {
@@ -716,11 +901,19 @@ struct NodeDisplay : Widget {
 
 		Treequencer* mod = module;
 
-		auto menu = rack::createMenu();
+		auto menu = rack::createMenu<QuestionableMenu>();
+
+		int oldNodeOutput = node->output;
+		float oldNodeChance = node->chance;
+		json_t* prevState = mod->rootNode.toJson();
+		menu->onDestruct = [=](){
+			if (oldNodeOutput != node->output) mod->pushHistory(prevState);
+			if (oldNodeChance != node->chance) mod->pushHistory(prevState);
+		};
 
 		menu->addChild(rack::createMenuLabel("Node Output:"));
 
-		ui::TextField* outparam = new QTextField([=](std::string text) {
+		ui::TextField* outparam = new QuestionableTextField([=](std::string text) {
 			if (text.length() < 4 && isInteger(text)) mod->onAudioThread([=](){ node->setOutput(std::stoi(text)-1); });
 		});
 		outparam->box.size.x = 100;
@@ -746,13 +939,15 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
-				node->addChild(); 
+				mod->pushHistory();
+				node->addChild(getScale(mod->defaultScale).getNextInSequence(node->getHistory())); 
 				renderStateDirty();
 			});
 		}));
 
 		if (node != &module->rootNode) menu->addChild(createMenuItem("Remove", "", [=]() {
 			mod->onAudioThread([=](){
+				mod->pushHistory();
 				mod->resetActiveNode();
 				node->remove();
 				renderStateDirty();
@@ -763,6 +958,7 @@ struct NodeDisplay : Widget {
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
+						mod->pushHistory();
 						node->generateSequencesToDepth(scales[i], 8);
 						renderStateDirty();
 					});
@@ -1103,6 +1299,10 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("HOLD", "OpenSans-Bold.ttf", c, 7, Vec(223, 314), "descriptor");
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
+
+		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(135, 285), "descriptor");
+		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(165, 285), "descriptor");
+		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(185, 285), "descriptor");
 		
 		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
 		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
@@ -1121,7 +1321,7 @@ struct TreequencerWidget : QuestionableWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer.jpg");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/treequencer/treequencer.jpg");
 		backdrop->scalar = 3.49;
 		backdrop->visible = true;
 
@@ -1152,6 +1352,10 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(color);
 		addChild(display);
 		addChild(dirt);
+
+		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(135, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(165, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(false, Vec(185, 266), module)));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -1202,6 +1406,14 @@ struct TreequencerWidget : QuestionableWidget {
 		
 		menu->addChild(createMenuItem("Toggle Follow Nodes", mod->followNodes ? "On" : "Off", [=]() {
 			mod->followNodes = !mod->followNodes;
+		}));
+
+		menu->addChild(rack::createSubmenuItem("Default Scale", "", [=](ui::Menu* menu) {
+			for (size_t i = 0; i < scales.size(); i++) {
+				menu->addChild(createMenuItem(scales[i].name, scales[i].name == mod->defaultScale ? "•" : "",[=]() {
+						mod->defaultScale = scales[i].name;
+				}));
+			}
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Screen Color Mode", "", [=](ui::Menu* menu) {
