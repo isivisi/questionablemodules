@@ -248,6 +248,7 @@ T* createQuestionableWidgetCentered(T* widget, QuestionableModule* module=nullpt
 	widget->box.pos = widget->box.pos.minus(widget->box.size.div(2));
 	return widget;
 }
+
 template <typename T>
 static T lerp(T point1, T point2, T t) {
 	T diff = point2 - point1;

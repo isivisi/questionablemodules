@@ -433,6 +433,12 @@ struct Treequencer : QuestionableModule {
 		}
 	}
 
+	void clearHistory() {
+		history.clear();
+		historyPos = 0;
+		historyDirty = false;
+	}
+
 	void pushHistory(json_t* state = nullptr) {
 		if (historyPos != history.size()) history.erase(history.begin() + historyPos-1, history.end());
 		history.push_back(state ? state : rootNode.toJson());
@@ -442,6 +448,7 @@ struct Treequencer : QuestionableModule {
 
 	void historyGoBack() {
 		if (history.empty()) return;
+		if (historyPos == 1) return;
 		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
 			pushHistory();
 			historyDirty = false;
@@ -468,7 +475,7 @@ struct Treequencer : QuestionableModule {
 		STEP,
 		SEQUENCE,
 	};
-
+  
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Gate");
@@ -498,6 +505,8 @@ struct Treequencer : QuestionableModule {
 		
 		rootNode.enabled = true;
 		activeNode = &rootNode;
+
+		pushHistory();
 		
 	}
 
@@ -718,6 +727,10 @@ struct Treequencer : QuestionableModule {
 
 		if (json_t* rn = json_object_get(rootJ, "rootNode")) setRootNodeFromJson(rn);
 
+		clearHistory();
+		pushHistory();
+		historyDirty = false;
+
 	}
 
 
@@ -825,7 +838,7 @@ struct TreequencerHistoryButton : TreequencerButton {
 
 	void step() override {
 		if (!module) return;
-		disabled = isBack ? module->history.size() == 0 || module->historyPos < 1 : module->historyPos >= module->history.size();
+		disabled = isBack ? module->history.size() == 0 || module->historyPos <= 1 : module->historyPos >= module->history.size();
 	}
 	
 	void onButton(const ButtonEvent& e) override {
@@ -862,6 +875,7 @@ struct TreequencerFollowButton : TreequencerButton {
 	}
 
 };
+
 
 template <typename T>
 struct TreequencerClockPhasorComboPort : QuestionablePort<T> {
