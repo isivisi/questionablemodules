@@ -15,6 +15,9 @@ struct Greenscreen : QuestionableModule {
 		PARAMS_LEN
 	};
 	enum InputId {
+		INPUT_R,
+		INPUT_G,
+		INPUT_B,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -27,9 +30,14 @@ struct Greenscreen : QuestionableModule {
 	NVGcolor color = nvgRGB(4, 244, 4);
 	std::string text = "Green";
 	bool showText = true;
+	bool showInputs = false;
 
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+
+		configInput(INPUT_R, "red");
+		configInput(INPUT_G, "green");
+		configInput(INPUT_B, "blue");
 
 		supportsThemes = false;
 		toggleableDescriptors = false;
@@ -47,6 +55,7 @@ struct Greenscreen : QuestionableModule {
 		json_object_set_new(rootJ, "colorB", json_real(color.b));
 		json_object_set_new(rootJ, "text", json_string(text.c_str()));
 		json_object_set_new(rootJ, "showText", json_boolean(showText));
+		json_object_set_new(rootJ, "showInputs", json_boolean(showInputs));
 		return rootJ;
 	}
 
@@ -57,6 +66,7 @@ struct Greenscreen : QuestionableModule {
 		json_t* b = json_object_get(rootJ, "colorB");
 		if (r && g && b) color = nvgRGBf(json_real_value(r), json_real_value(g), json_real_value(b));
 		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
+		if (json_t* i = json_object_get(rootJ, "showInputs")) showInputs = json_boolean_value(i);
 		if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
 	}
 
@@ -139,6 +149,16 @@ struct RGBSlider : ui::Slider {
 	}
 	~RGBSlider() {
 		delete quantity;
+	}
+};
+
+struct GreenscreenPort : PJ301MPort {
+	void draw(const DrawArgs &args) override {
+		if (!module || (module && !((Greenscreen*)module)->showInputs)) return;
+		nvgFillColor(args.vg, nvgRGB(255, 255, 255));
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
+		nvgFill(args.vg);
 	}
 };
 
@@ -253,7 +273,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 	}
 
-	void changeColor(Color c) {
+	void changeColor(Color c, bool save = true) {
 		//NVGcolor c = selectableColors.count(name) ? selectableColors[name] : c;
 		logoText = c.name; 
 
@@ -264,8 +284,8 @@ struct GreenscreenWidget : QuestionableWidget {
 		background->color = c.getNVGColor();
 		background->stroke = c.getNVGColor();
 		if (newBackground) newBackground->color = c.getNVGColor();
-		((Greenscreen*)module)->color = c.getNVGColor();
-		((Greenscreen*)module)->text = c.name;
+		if (save) ((Greenscreen*)module)->color = c.getNVGColor();
+		if (save) ((Greenscreen*)module)->text = c.name;
 
 	}
 
@@ -306,10 +326,39 @@ struct GreenscreenWidget : QuestionableWidget {
 			changeColor(Color(module->text, module->color));
 		}
 
+		addInput(createInputCentered<QuestionablePort<GreenscreenPort>>(mm2px(Vec(7.8f, 90.f)), module, Greenscreen::INPUT_R));
+		addInput(createInputCentered<QuestionablePort<GreenscreenPort>>(mm2px(Vec(7.8f, 100.f)), module, Greenscreen::INPUT_G));
+		addInput(createInputCentered<QuestionablePort<GreenscreenPort>>(mm2px(Vec(7.8f, 110.f)), module, Greenscreen::INPUT_B));
+
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	}
+
+	void step() override {
+		if (!module) return;
+		Greenscreen* mod = (Greenscreen*)module;
+
+		float deltaTime = APP->window->getFrameTime();
+		
+		bool rConnected = module->inputs[Greenscreen::INPUT_R].isConnected();
+		bool gConnected = module->inputs[Greenscreen::INPUT_G].isConnected();
+		bool bConnected = module->inputs[Greenscreen::INPUT_B].isConnected();
+
+		float rVal = math::clamp(abs(module->inputs[Greenscreen::INPUT_R].getVoltage()));
+		float gVal = math::clamp(abs(module->inputs[Greenscreen::INPUT_R].getVoltage()));
+		float bVal = math::clamp(abs(module->inputs[Greenscreen::INPUT_R].getVoltage()));
+
+		if (rConnected || gConnected || bConnected) {
+			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, 0.1f) : mod->color.r;
+			float g = gConnected ? lerp<float>(newBackground->color.g, gVal, 0.1f) : mod->color.g;
+			float b = bConnected ? lerp<float>(newBackground->color.b, bVal, 0.1f) : mod->color.b;
+			Color c = Color(logoText, nvgRGBf(r,g,b));
+			c.name = Color::getClosestTo(selectableColors, c).name + std::string("'ish");
+			changeColor(c, false);
+		}
+		
 	}
 
 	~GreenscreenWidget() {
@@ -332,6 +381,10 @@ struct GreenscreenWidget : QuestionableWidget {
 		menu->addChild(createMenuItem("Toggle Text", "",[=]() {
 			mod->showText = !mod->showText;
 			color->setTextGroupVisibility("default", mod->showText);
+		}));
+
+		menu->addChild(createMenuItem("Toggle CV Inputs", "",[=]() {
+			mod->showInputs = !mod->showInputs;
 		}));
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
