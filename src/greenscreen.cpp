@@ -346,14 +346,14 @@ struct GreenscreenWidget : QuestionableWidget {
 		bool gConnected = module->inputs[Greenscreen::INPUT_G].isConnected();
 		bool bConnected = module->inputs[Greenscreen::INPUT_B].isConnected();
 
-		float rVal = math::clamp(abs(module->inputs[Greenscreen::INPUT_R].getVoltage()));
-		float gVal = math::clamp(abs(module->inputs[Greenscreen::INPUT_R].getVoltage()));
-		float bVal = math::clamp(abs(module->inputs[Greenscreen::INPUT_R].getVoltage()));
+		float rVal = fmod(module->inputs[Greenscreen::INPUT_R].getVoltage(), 1.f);
+		float gVal = fmod(module->inputs[Greenscreen::INPUT_G].getVoltage(), 1.f);
+		float bVal = fmod(module->inputs[Greenscreen::INPUT_B].getVoltage(), 1.f);
 
 		if (rConnected || gConnected || bConnected) {
-			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, 0.1f) : mod->color.r;
-			float g = gConnected ? lerp<float>(newBackground->color.g, gVal, 0.1f) : mod->color.g;
-			float b = bConnected ? lerp<float>(newBackground->color.b, bVal, 0.1f) : mod->color.b;
+			float r = rConnected ? lerp<float>(newBackground->color.r, mod->color.r + rVal, 0.1f) : mod->color.r;
+			float g = gConnected ? lerp<float>(newBackground->color.g, mod->color.g + gVal, 0.1f) : mod->color.g;
+			float b = bConnected ? lerp<float>(newBackground->color.b, mod->color.b + bVal, 0.1f) : mod->color.b;
 			Color c = Color(logoText, nvgRGBf(r,g,b));
 			c.name = Color::getClosestTo(selectableColors, c).name + std::string("'ish");
 			changeColor(c, false);
