@@ -355,7 +355,7 @@ struct GreenscreenWidget : QuestionableWidget {
 			float g = gConnected ? lerp<float>(newBackground->color.g, mod->color.g + gVal, 0.1f) : mod->color.g;
 			float b = bConnected ? lerp<float>(newBackground->color.b, mod->color.b + bVal, 0.1f) : mod->color.b;
 			Color c = Color(logoText, nvgRGBf(r,g,b));
-			c.name = Color::getClosestTo(selectableColors, c).name + std::string("'ish");
+			c.name = Color::getClosestTo(selectableColors, Color("", nvgRGBf(mod->color.r + rVal, mod->color.g + gVal, mod->color.b + bVal))).name + std::string("'ish");
 			changeColor(c, false);
 		}
 		
