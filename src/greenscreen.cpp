@@ -160,6 +160,18 @@ struct GreenscreenPort : PJ301MPort {
 		nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 		nvgFill(args.vg);
 	}
+
+	void createTooltip() {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::createTooltip();
+	}
+
+	void onDragDrop(const DragDropEvent& e) override {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::onDragDrop(e);
+	}
+
+	void onDragStart(const DragStartEvent& e) override {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::onDragStart(e);
+	}
 };
 
 struct GreenscreenWidget : QuestionableWidget {
