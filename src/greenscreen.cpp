@@ -337,18 +337,17 @@ struct GreenscreenWidget : QuestionableWidget {
 	}
 
 	void step() override {
+		QuestionableWidget::step();
 		if (!module) return;
 		Greenscreen* mod = (Greenscreen*)module;
-
-		float deltaTime = APP->window->getFrameTime();
 		
 		bool rConnected = module->inputs[Greenscreen::INPUT_R].isConnected();
 		bool gConnected = module->inputs[Greenscreen::INPUT_G].isConnected();
 		bool bConnected = module->inputs[Greenscreen::INPUT_B].isConnected();
 
-		float rVal = abs(fmod(mod->color.r + module->inputs[Greenscreen::INPUT_R].getVoltage(), 1.f));
-		float gVal = abs(fmod(mod->color.g + module->inputs[Greenscreen::INPUT_G].getVoltage(), 1.f));
-		float bVal = abs(fmod(mod->color.b + module->inputs[Greenscreen::INPUT_B].getVoltage(), 1.f));
+		float rVal = abs(fmod(mod->color.r + (module->inputs[Greenscreen::INPUT_R].getVoltage()/10.f), deltaTime));
+		float gVal = abs(fmod(mod->color.g + (module->inputs[Greenscreen::INPUT_G].getVoltage()/10.f), deltaTime));
+		float bVal = abs(fmod(mod->color.b + (module->inputs[Greenscreen::INPUT_B].getVoltage()/10.f), deltaTime));
 
 		if (rConnected || gConnected || bConnected) {
 			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, 0.1f) : mod->color.r;
@@ -373,8 +372,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		if (setPreviewText) preview.name = Color::getClosestTo(selectableColors, preview).name + std::string("'ish");
 	}
 
-	void appendContextMenu(Menu *menu) override
-  	{
+	void appendContextMenu(Menu *menu) override {
 
 		Greenscreen* mod = (Greenscreen*)module;
 
