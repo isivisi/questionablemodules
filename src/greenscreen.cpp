@@ -172,6 +172,10 @@ struct GreenscreenPort : PJ301MPort {
 	void onDragStart(const DragStartEvent& e) override {
 		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::onDragStart(e);
 	}
+
+	void appendContextMenu(ui::Menu* menu) override {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::appendContextMenu(menu); 
+	}
 };
 
 struct GreenscreenWidget : QuestionableWidget {
