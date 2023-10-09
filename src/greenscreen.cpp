@@ -160,6 +160,22 @@ struct GreenscreenPort : PJ301MPort {
 		nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 		nvgFill(args.vg);
 	}
+
+	void createTooltip() {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::createTooltip();
+	}
+
+	void onDragDrop(const DragDropEvent& e) override {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::onDragDrop(e);
+	}
+
+	void onDragStart(const DragStartEvent& e) override {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::onDragStart(e);
+	}
+
+	void appendContextMenu(ui::Menu* menu) override {
+		if (module && ((Greenscreen*)module)->showInputs) PJ301MPort::appendContextMenu(menu); 
+	}
 };
 
 struct GreenscreenWidget : QuestionableWidget {
@@ -307,9 +323,6 @@ struct GreenscreenWidget : QuestionableWidget {
 		
 		setPanel(background);
 		addChild(color);
-
-		//addChild(new QuestionableDrawWidget(Vec(18, 100), [module](const DrawArgs &args) {
-		//}));
 		
 		if (module) {
 			// sneak our own background widget after the rail widget.
@@ -336,29 +349,34 @@ struct GreenscreenWidget : QuestionableWidget {
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	}
 
+	bool lastCVConnected = false;
 	void step() override {
+		QuestionableWidget::step();
 		if (!module) return;
 		Greenscreen* mod = (Greenscreen*)module;
-
-		float deltaTime = APP->window->getFrameTime();
 		
 		bool rConnected = module->inputs[Greenscreen::INPUT_R].isConnected();
 		bool gConnected = module->inputs[Greenscreen::INPUT_G].isConnected();
 		bool bConnected = module->inputs[Greenscreen::INPUT_B].isConnected();
 
-		float rVal = fmod(module->inputs[Greenscreen::INPUT_R].getVoltage(), 1.f);
-		float gVal = fmod(module->inputs[Greenscreen::INPUT_G].getVoltage(), 1.f);
-		float bVal = fmod(module->inputs[Greenscreen::INPUT_B].getVoltage(), 1.f);
+		float rVal = abs(fmod(mod->color.r + (module->inputs[Greenscreen::INPUT_R].getVoltage()/10.f), deltaTime));
+		float gVal = abs(fmod(mod->color.g + (module->inputs[Greenscreen::INPUT_G].getVoltage()/10.f), deltaTime));
+		float bVal = abs(fmod(mod->color.b + (module->inputs[Greenscreen::INPUT_B].getVoltage()/10.f), deltaTime));
+		
+		bool cvConnected = rConnected || gConnected || bConnected;
 
-		if (rConnected || gConnected || bConnected) {
-			float r = rConnected ? lerp<float>(newBackground->color.r, mod->color.r + rVal, 0.1f) : mod->color.r;
-			float g = gConnected ? lerp<float>(newBackground->color.g, mod->color.g + gVal, 0.1f) : mod->color.g;
-			float b = bConnected ? lerp<float>(newBackground->color.b, mod->color.b + bVal, 0.1f) : mod->color.b;
+		if (cvConnected) {
+			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, 0.1f) : mod->color.r;
+			float g = gConnected ? lerp<float>(newBackground->color.g, gVal, 0.1f) : mod->color.g;
+			float b = bConnected ? lerp<float>(newBackground->color.b, bVal, 0.1f) : mod->color.b;
 			Color c = Color(logoText, nvgRGBf(r,g,b));
-			c.name = Color::getClosestTo(selectableColors, c).name + std::string("'ish");
+			c.name = std::string("RGB(") + to_string(rVal) + ", " + to_string(gVal) + ", " + to_string(bVal) + ")";
 			changeColor(c, false);
 		}
-		
+
+		if (cvConnected == false && lastCVConnected == true) changeColor(Color(mod->text, mod->color));
+
+		lastCVConnected = cvConnected;
 	}
 
 	~GreenscreenWidget() {
@@ -373,8 +391,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		if (setPreviewText) preview.name = Color::getClosestTo(selectableColors, preview).name + std::string("'ish");
 	}
 
-	void appendContextMenu(Menu *menu) override
-  	{
+	void appendContextMenu(Menu *menu) override {
 
 		Greenscreen* mod = (Greenscreen*)module;
 

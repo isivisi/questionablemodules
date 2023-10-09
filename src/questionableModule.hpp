@@ -61,12 +61,16 @@ struct QuestionableThemed {
 };
 
 struct QuestionableWidget : ModuleWidget {
+	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+	double deltaTime = 0.016;
+
 	ImagePanel *backdrop = nullptr;
 	ColorBG* color = nullptr;
 	bool lastPreferDark = false;
 
 	bool supportsThemes = true;
 	bool toggleableDescriptors = true;
+	
 
 	QuestionableWidget() {
 
@@ -77,6 +81,12 @@ struct QuestionableWidget : ModuleWidget {
 			lastPreferDark = settings::preferDarkPanels;
 			if (!module) setWidgetTheme(settings::preferDarkPanels ? "Dark" : "");
 		}
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsedTime = currentTime - startTime;
+		deltaTime = elapsedTime.count();
+		//fps = 1 / elapsedTime.count();
+
 		ModuleWidget::step();
 	}
 
@@ -284,6 +294,10 @@ T dtor(T deg) {
 template <typename T>
 T normalizeRange(T min, T max, T value) {
 	return (max-min)/(max-min)*(value-max)+max;
+}
+
+inline std::string to_string(float val, unsigned int precision=1) {
+	return std::to_string(val).substr(0, std::to_string(val).find(".") + precision + 1);
 }
 
 inline static bool isNumber(std::string s)
