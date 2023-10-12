@@ -237,7 +237,7 @@ template <typename T>
 struct Resizable : T {
 	static_assert(std::is_base_of<Widget, T>::value, "T must inherit from Widget");
 
-	float scale = 1.f;
+	dirtyable<float> scale = 1.f;
 	bool centered = true;
 	
 	bool hasUpdatedBox = false;
@@ -248,7 +248,7 @@ struct Resizable : T {
 	}
 
 	void step() override {
-		if (!hasUpdatedBox) {
+		if (scale.isDirty() || !hasUpdatedBox) {
 			if (centered) this->box.pos = this->box.pos.plus(this->box.size.mult(1.f-scale).div(2));
 			this->box.size = this->box.size.mult(scale);
 			hasUpdatedBox = true;
