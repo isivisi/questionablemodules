@@ -37,6 +37,8 @@ struct SyncMute : QuestionableModule {
 		IN6,
 		IN7,
 		IN8,
+		CLOCK,
+		RESET,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -86,6 +88,8 @@ struct SyncMute : QuestionableModule {
 		configOutput(OUT6, "6");
 		configOutput(OUT7, "7");
 		configOutput(OUT8, "8");
+		configInput(CLOCK, "clock");
+		configInput(RESET, "reset");
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -155,12 +159,14 @@ struct SyncMuteWidget : QuestionableWidget {
 
 
 		for (size_t i = 0; i < 8; i++) {
-			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 15 + (14* i))), module, SyncMute::IN + i));
-			addParam(createParamCentered<QuestionableParam<RoundLargeBlackKnob>>(mm2px(Vec(20.2, 15 + (14* i))), module, SyncMute::TIME_SIG + i));
-			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 15 + (14* i))), module, SyncMute::MUTE + i));
-			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 15 + (14 * i))), module, SyncMute::OUT + i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 15.2 + (13.2* i))), module, SyncMute::IN + i));
+			addParam(createParamCentered<QuestionableParam<RoundLargeBlackKnob>>(mm2px(Vec(20.2, 15.2 + (13.2* i))), module, SyncMute::TIME_SIG + i));
+			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 15.2 + (13.2* i))), module, SyncMute::MUTE + i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 15.2 + (13.2 * i))), module, SyncMute::OUT + i));
 		}
 
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 119)), module, SyncMute::CLOCK));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 119)), module, SyncMute::RESET));
 	}
 
 };
