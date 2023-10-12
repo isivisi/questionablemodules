@@ -54,6 +54,9 @@ struct SyncMute : QuestionableModule {
 		LIGHTS_LEN
 	};
 
+	bool shouldSwap[8] = {false};
+	bool muteState[8] = {false};
+
 	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
 
 	SyncMute() {
@@ -95,6 +98,25 @@ struct SyncMute : QuestionableModule {
 
 struct MuteButton : Resizable<CKD6> {
 	MuteButton() : Resizable(0.85, true) { }
+
+	void drawLayer(const DrawArgs &args, int layer) override {
+		if (!module) return;
+		SyncMute* mod = (SyncMute*)module;
+		
+		if (mod->muteState[paramId]) {
+			nvgFillColor(args.vg, nvgRGB(255, 0, 0));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
+			nvgFill(args.vg);
+		}
+
+		if (mod->shouldSwap[paramId]/* && mod->clockTick = true */) {
+			nvgFillColor(args.vg, nvgRGB(0, 255, 0));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
+			nvgFill(args.vg);
+		}
+	}
 };
 
 struct SyncMuteWidget : QuestionableWidget {
