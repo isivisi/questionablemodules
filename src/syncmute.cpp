@@ -59,7 +59,14 @@ struct SyncMute : QuestionableModule {
 	bool shouldSwap[8] = {false};
 	bool muteState[8] = {false};
 
-	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
+	dsp::SchmittTrigger resetTrigger;
+	dsp::SchmittTrigger clockTrigger;
+	dsp::Timer clockTimer;
+	float clockTime = 0.5f; // in seconds
+
+	float accumulatedTime[8] = {0.f};
+
+	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -94,7 +101,56 @@ struct SyncMute : QuestionableModule {
 
 	void process(const ProcessArgs& args) override {
 
-		//outputs[OUTPUT].setVoltage(0);
+		// clock stuff from lfo
+		if (inputs[CLOCK].isConnected()) {
+			clockTimer.process(args.sampleTime);
+			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
+				float clockTime = clockTimer.getTime();
+				clockTimer.reset();
+
+				if (0.001f <= clockTime && clockTime <= 1000.f) {
+					this->clockTime = clockTime;
+				}
+			}
+		} else clockTime = 0.5f;
+
+		// clocks
+		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
+		for (size_t i = 0; i < 8; i++) {
+			accumulatedTime[i] += args.sampleTime;
+			if (resetClocks) accumulatedTime[i] = 0.f;
+		}
+
+		// button checks
+		for (size_t i = 0; i < 8; i++) {
+			if (params[MUTE+i].getValue() == 1.f) shouldSwap[i] = true;
+		}
+
+		// swap checks
+		for (size_t i = 0; i < 8; i++) {
+			bool clockHit = false;
+			float timeSig = params[TIME_SIG+i].getValue();
+
+			if (shouldSwap[i] && timeSig == 0) clockHit = true;
+
+			if (timeSig < 0 && accumulatedTime[i] >= abs(timeSig)) { // clock divide
+				accumulatedTime[i] = 0.f;
+				clockHit = true;
+			} else if (timeSig > 0 && accumulatedTime[i] >= 1/timeSig) { // clock multiply
+				accumulatedTime[i] = 0.f;
+				clockHit = true;
+			}
+
+			if (shouldSwap[i] && clockHit) {
+				muteState[i] = !muteState[i];
+				shouldSwap[i] = false;
+			}
+		}
+		
+		// outputs
+		for (size_t i = 0; i < 8; i++) {
+			outputs[OUT+i].setVoltage(muteState[i] ? 0.f : inputs[IN+i].getVoltage());
+		}
 
 	}
 
@@ -114,7 +170,7 @@ struct MuteButton : Resizable<CKD6> {
 			nvgFill(args.vg);
 		}
 
-		if (mod->shouldSwap[paramId]/* && mod->clockTick = true */) {
+		if (mod->shouldSwap[paramId] && mod->inputs[SyncMute::CLOCK].getVoltage() > 0.f) {
 			nvgFillColor(args.vg, nvgRGB(0, 255, 0));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
