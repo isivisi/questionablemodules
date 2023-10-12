@@ -7,6 +7,57 @@
 #include <iomanip>
 #include <sstream>
 
+// simple variable that has a dirty state
+// designed for native types
+template <typename T>
+struct dirtyable {
+	T value;
+	T prev;
+
+	dirtyable(T value) {
+		this->value = value;
+		this->prev = value;
+	}
+
+	bool isDirty() {
+		bool dirty = value != prev;
+		prev = value;
+		return dirty;
+	}
+	
+	operator T() { return value; }
+	explicit operator T*() { return &value; }
+
+	// operator passthroughs
+	dirtyable<T>& operator=(T value) { this->value = value; return *this; }
+	dirtyable<T>& operator+=(T value) { this->value += value;  return *this; }
+	dirtyable<T>& operator-=(T value) { this->value -= value;  return *this; }
+	dirtyable<T>& operator*=(T value) { this->value *= value;  return *this; }
+	dirtyable<T>& operator/=(T value) { this->value /= value;  return *this; }
+	dirtyable<T>& operator%=(T value) { this->value %= value;  return *this; }
+	dirtyable<T>& operator|=(T value) { this->value |= value;  return *this; }
+	dirtyable<T>& operator&=(T value) { this->value &= value;  return *this; }
+	dirtyable<T>& operator^=(T value) { this->value ^= value;  return *this; }
+	bool operator==(const T& other) { return other == value; }
+	bool operator>(const T& other) { return value > other; }
+	bool operator<(const T& other) { return value < other; }
+	bool operator>=(const T& other) { return value >= other; }
+	bool operator<=(const T& other) { return value <= other; }
+	bool operator!=(const T& other) { return value != other; }
+	T operator+(T other) { return value + other; }
+	T operator-(T other) { return value - other; }
+	T operator*(T other) { return value * other; }
+	T operator/(T other) { return value / other; }
+	T operator%(T other) { return value % other; }
+	T operator|(T other) { return value | other; }
+	T operator&(T other) { return value & other; }
+	T operator^(T other) { return value ^ other; }
+	T& operator++(int d) { return value++; }
+	T& operator--(int d) { return value--; }
+	T& operator++() { return ++value; }
+	T& operator--() { return --value; }
+};
+
 struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
 	bool supportsThemes = true;

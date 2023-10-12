@@ -349,7 +349,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 	}
 
-	bool lastCVConnected = false;
+	dirtyable<bool> cvConnected = false;
 	void step() override {
 		QuestionableWidget::step();
 		if (!module) return;
@@ -363,7 +363,7 @@ struct GreenscreenWidget : QuestionableWidget {
 		float gVal = abs(fmod(mod->color.g + (module->inputs[Greenscreen::INPUT_G].getVoltage()/10.f), deltaTime));
 		float bVal = abs(fmod(mod->color.b + (module->inputs[Greenscreen::INPUT_B].getVoltage()/10.f), deltaTime));
 		
-		bool cvConnected = rConnected || gConnected || bConnected;
+		cvConnected = rConnected || gConnected || bConnected;
 
 		if (cvConnected) {
 			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, 0.1f) : mod->color.r;
@@ -374,9 +374,7 @@ struct GreenscreenWidget : QuestionableWidget {
 			changeColor(c, false);
 		}
 
-		if (cvConnected == false && lastCVConnected == true) changeColor(Color(mod->text, mod->color));
-
-		lastCVConnected = cvConnected;
+		if (cvConnected.isDirty() && cvConnected == false) changeColor(Color(mod->text, mod->color));
 	}
 
 	~GreenscreenWidget() {
