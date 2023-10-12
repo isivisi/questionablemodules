@@ -234,6 +234,36 @@ struct QuestionableWidget : ModuleWidget {
 };
 
 template <typename T>
+struct Resizable : T {
+	static_assert(std::is_base_of<Widget, T>::value, "T must inherit from Widget");
+
+	float scale = 1.f;
+	bool centered = true;
+
+	Resizable(float scale, bool centered) {
+		this->scale = scale;
+		this->centered = centered;
+	}
+
+	void step() override {
+		if (centered) {
+			this->box.pos = this->box.pos.plus(this->box.size.mult(1.f-scale).div(2));
+			centered = false;
+		}
+
+		T::step();
+	}
+	
+	void draw(const Widget::DrawArgs &args) override {
+		nvgSave(args.vg);
+		nvgScale(args.vg, scale, scale);
+		T::draw(args);
+		nvgRestore(args.vg);
+	}
+
+};
+
+template <typename T>
 struct QuestionableParam : T {
 	static_assert(std::is_base_of<ParamWidget, T>::value, "T must inherit from ParamWidget");
 

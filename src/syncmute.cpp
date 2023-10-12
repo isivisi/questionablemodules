@@ -19,7 +19,6 @@ struct SyncMute : QuestionableModule {
 		MUTE7,
 		MUTE8,
 		TIME_SIG,
-		TIME_SIG1,
 		TIME_SIG2,
 		TIME_SIG3,
 		TIME_SIG4,
@@ -55,13 +54,35 @@ struct SyncMute : QuestionableModule {
 		LIGHTS_LEN
 	};
 
+	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
+
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		//configParam(OFFSET_PARAM, 0.f, 8.f, 0.f, "Offset");
-		configInput(IN, "");
-		configOutput(OUT, "");
-		
+		configSwitch(TIME_SIG, -16.f, 16.f, 0.f, "Time Signature 1", sigsStrings);
+		configSwitch(TIME_SIG2, -16.f, 16.f, 0.f, "Time Signature 2", sigsStrings);
+		configSwitch(TIME_SIG3, -16.f, 16.f, 0.f, "Time Signature 3", sigsStrings);
+		configSwitch(TIME_SIG4, -16.f, 16.f, 0.f, "Time Signature 4", sigsStrings);
+		configSwitch(TIME_SIG5, -16.f, 16.f, 0.f, "Time Signature 5", sigsStrings);
+		configSwitch(TIME_SIG6, -16.f, 16.f, 0.f, "Time Signature 6", sigsStrings);
+		configSwitch(TIME_SIG7, -16.f, 16.f, 0.f, "Time Signature 7", sigsStrings);
+		configSwitch(TIME_SIG8, -16.f, 16.f, 0.f, "Time Signature 8", sigsStrings);
+		configInput(IN, "1");
+		configInput(IN2, "2");
+		configInput(IN3, "3");
+		configInput(IN4, "4");
+		configInput(IN5, "5");
+		configInput(IN6, "6");
+		configInput(IN7, "7");
+		configInput(IN8, "8");
+		configOutput(OUT, "1");
+		configOutput(OUT2, "2");
+		configOutput(OUT3, "3");
+		configOutput(OUT4, "4");
+		configOutput(OUT5, "5");
+		configOutput(OUT6, "6");
+		configOutput(OUT7, "7");
+		configOutput(OUT8, "8");
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -70,6 +91,10 @@ struct SyncMute : QuestionableModule {
 
 	}
 
+};
+
+struct MuteButton : Resizable<CKD6> {
+	MuteButton() : Resizable(0.85, true) { }
 };
 
 struct SyncMuteWidget : QuestionableWidget {
@@ -109,8 +134,8 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		for (size_t i = 0; i < 8; i++) {
 			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 15 + (14* i))), module, SyncMute::IN + i));
-			addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(Vec(18, 15 + (14* i)), module, SyncMute::TIME_SIG + i));
-			addParam(createParamCentered<QuestionableParam<CKD6>>(mm2px(Vec(20.2, 15 + (14* i))), module, SyncMute::MUTE + i));
+			addParam(createParamCentered<QuestionableParam<RoundLargeBlackKnob>>(mm2px(Vec(20.2, 15 + (14* i))), module, SyncMute::TIME_SIG + i));
+			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 15 + (14* i))), module, SyncMute::MUTE + i));
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 15 + (14 * i))), module, SyncMute::OUT + i));
 		}
 
