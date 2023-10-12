@@ -131,15 +131,13 @@ struct SyncMute : QuestionableModule {
 			bool clockHit = false;
 			float timeSig = params[TIME_SIG+i].getValue();
 
-			if (shouldSwap[i] && timeSig == 0) clockHit = true;
-
 			if (timeSig < 0 && accumulatedTime[i] >= abs(timeSig)) { // clock divide
 				accumulatedTime[i] = 0.f;
 				clockHit = true;
 			} else if (timeSig > 0 && accumulatedTime[i] >= 1/timeSig) { // clock multiply
 				accumulatedTime[i] = 0.f;
 				clockHit = true;
-			}
+			} else if (shouldSwap[i]) clockHit = true;
 
 			if (shouldSwap[i] && clockHit) {
 				muteState[i] = !muteState[i];
@@ -157,6 +155,7 @@ struct SyncMute : QuestionableModule {
 };
 
 struct MuteButton : Resizable<CKD6> {
+	
 	MuteButton() : Resizable(0.85, true) { }
 
 	void drawLayer(const DrawArgs &args, int layer) override {
@@ -215,10 +214,10 @@ struct SyncMuteWidget : QuestionableWidget {
 
 
 		for (size_t i = 0; i < 8; i++) {
-			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 15.2 + (13.2* i))), module, SyncMute::IN + i));
-			addParam(createParamCentered<QuestionableParam<RoundLargeBlackKnob>>(mm2px(Vec(20.2, 15.2 + (13.2* i))), module, SyncMute::TIME_SIG + i));
-			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 15.2 + (13.2* i))), module, SyncMute::MUTE + i));
-			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 15.2 + (13.2 * i))), module, SyncMute::OUT + i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 16 + (13.2* i))), module, SyncMute::IN + i));
+			addParam(createParamCentered<QuestionableParam<RoundLargeBlackKnob>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::TIME_SIG + i));
+			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 16 + (13.2 * i))), module, SyncMute::OUT + i));
 		}
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 119)), module, SyncMute::CLOCK));
