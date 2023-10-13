@@ -101,8 +101,13 @@ struct SyncMute : QuestionableModule {
 
 	float timeSigs[8] = {0.f};
 
+	uint64_t clockTicksSinceReset = 0;
+
 	void process(const ProcessArgs& args) override {
+		bool clockedThisTick = false;
 		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
+
+		if (resetClocks) clockTicksSinceReset = 0;
 
 		for (size_t i = 0; i < 8; i++) {
 			if (params[TIME_SIG+i].getValue() != timeSigs[i])
@@ -115,6 +120,7 @@ struct SyncMute : QuestionableModule {
 			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
 				clockTime = clockTimer.getTime();
 				clockTimer.reset();
+				clockTicksSinceReset += 1;
 			}
 		} else clockTime = 0.5f;
 
@@ -141,6 +147,7 @@ struct SyncMute : QuestionableModule {
 		// clock accumulation
 		for (size_t i = 0; i < 8; i++) {
 			accumulatedTime[i] += args.sampleTime;
+			if (clockedThisTick) accumulatedTime[i] = std::round(accumulatedTime[i]);
 			if (resetClocks) accumulatedTime[i] = 0.f;
 		}
 
