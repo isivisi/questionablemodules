@@ -99,22 +99,25 @@ struct SyncMute : QuestionableModule {
 		configInput(RESET, "reset");
 	}
 
+	float timeSigs[8] = {0.f};
+
 	void process(const ProcessArgs& args) override {
+
+		for (size_t i = 0; i < 8; i++) {
+			if (params[TIME_SIG+i].getValue() != timeSigs[i])
+			timeSigs[i] = params[TIME_SIG+i].getValue();
+		}
 
 		// clock stuff from lfo
 		if (inputs[CLOCK].isConnected()) {
 			clockTimer.process(args.sampleTime);
 			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
-				float clockTime = clockTimer.getTime();
+				clockTime = clockTimer.getTime();
 				clockTimer.reset();
-
-				if (0.001f <= clockTime && clockTime <= 1000.f) {
-					this->clockTime = clockTime;
-				}
 			}
 		} else clockTime = 0.5f;
 
-		// clocks
+		// clock accumulation
 		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		for (size_t i = 0; i < 8; i++) {
 			accumulatedTime[i] += args.sampleTime;
@@ -126,18 +129,19 @@ struct SyncMute : QuestionableModule {
 			if (params[MUTE+i].getValue() == 1.f) shouldSwap[i] = true;
 		}
 
-		// swap checks
+		// clock resets and swap checks
 		for (size_t i = 0; i < 8; i++) {
 			bool clockHit = false;
-			float timeSig = params[TIME_SIG+i].getValue();
+			
+			// on clock
+			if (timeSigs[i] < 0.f && accumulatedTime[i] >= clockTime*fabs(timeSigs[i])) clockHit = true; // clock divide
+			else if (timeSigs[i] > 0.f && accumulatedTime[i] >= clockTime/timeSigs[i]) clockHit = true; // clock multiply
 
-			if (timeSig < 0 && accumulatedTime[i] >= abs(timeSig)) { // clock divide
-				accumulatedTime[i] = 0.f;
-				clockHit = true;
-			} else if (timeSig > 0 && accumulatedTime[i] >= 1/timeSig) { // clock multiply
-				accumulatedTime[i] = 0.f;
-				clockHit = true;
-			} else if (shouldSwap[i]) clockHit = true;
+			// edge cases
+			if (resetClocks) clockHit = true; // on reset
+			if (shouldSwap[i] && timeSigs[i] == 0.f) clockHit = true; // on immediate
+
+			if (clockHit) accumulatedTime[i] = 0.f;
 
 			if (shouldSwap[i] && clockHit) {
 				muteState[i] = !muteState[i];
