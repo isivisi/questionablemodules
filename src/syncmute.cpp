@@ -102,6 +102,7 @@ struct SyncMute : QuestionableModule {
 	float timeSigs[8] = {0.f};
 
 	void process(const ProcessArgs& args) override {
+		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 
 		for (size_t i = 0; i < 8; i++) {
 			if (params[TIME_SIG+i].getValue() != timeSigs[i])
@@ -116,18 +117,6 @@ struct SyncMute : QuestionableModule {
 				clockTimer.reset();
 			}
 		} else clockTime = 0.5f;
-
-		// clock accumulation
-		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
-		for (size_t i = 0; i < 8; i++) {
-			accumulatedTime[i] += args.sampleTime;
-			if (resetClocks) accumulatedTime[i] = 0.f;
-		}
-
-		// button checks
-		for (size_t i = 0; i < 8; i++) {
-			if (params[MUTE+i].getValue() == 1.f) shouldSwap[i] = true;
-		}
 
 		// clock resets and swap checks
 		for (size_t i = 0; i < 8; i++) {
@@ -147,6 +136,17 @@ struct SyncMute : QuestionableModule {
 				muteState[i] = !muteState[i];
 				shouldSwap[i] = false;
 			}
+		}
+
+		// clock accumulation
+		for (size_t i = 0; i < 8; i++) {
+			accumulatedTime[i] += args.sampleTime;
+			if (resetClocks) accumulatedTime[i] = 0.f;
+		}
+
+		// button checks
+		for (size_t i = 0; i < 8; i++) {
+			if (params[MUTE+i].getValue() == 1.f) shouldSwap[i] = true;
 		}
 		
 		// outputs
