@@ -56,11 +56,11 @@
       "tags": ["Utility"]
     },
     {
-      "slug": "syncmute",
-      "name": "Syncmute",
+      "slug": "smute",
+      "name": "smute",
       "description": "Mute buttons synced with the clock",
-      "manualUrl": "https://isivisi.github.io/questionablemodules/syncmute",
-      "tags": ["Utility"]
+      "manualUrl": "https://isivisi.github.io/questionablemodules/smute",
+      "tags": ["Utility", "Switch"]
     }
   ]
 }

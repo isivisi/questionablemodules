@@ -223,7 +223,7 @@ struct SyncMuteWidget : QuestionableWidget {
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("MUTE", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
+		color->addText("SMUTE", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
 		color->addText("OUT", "OpenSans-Bold.ttf", c, 7, Vec(22, 353), "descriptor");
@@ -266,4 +266,4 @@ struct SyncMuteWidget : QuestionableWidget {
 
 };
 
-Model* modelSyncMute = createModel<SyncMute, SyncMuteWidget>("syncmute");
+Model* modelSyncMute = createModel<SyncMute, SyncMuteWidget>("smute");
