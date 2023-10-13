@@ -100,6 +100,7 @@ struct SyncMute : QuestionableModule {
 	}
 
 	float timeSigs[8] = {0.f};
+	dirtyable<bool> buttons[8] = {false,false,false,false,false,false,false,false};
 
 	uint64_t clockTicksSinceReset = 0;
 	float subClockTime = 0.f;
@@ -116,8 +117,8 @@ struct SyncMute : QuestionableModule {
 		for (size_t i = 0; i < 8; i++) {
 			if (float sig = params[TIME_SIG+i].getValue() != timeSigs[i]) {
 				// make sure its still in sync with last reset point
-				if (sig < 0) accumulatedTime[i] = fmod(((float)(clockTicksSinceReset % abs((int)sig))) + subClockTime, abs(sig));
-				else if (sig > 0) accumulatedTime[i] = fmod(subClockTime, sig);
+				if (sig < 0) accumulatedTime[i] = fmod(((float)(clockTicksSinceReset % abs((int)sig))) + subClockTime, fabs(sig));
+				else if (sig > 0) accumulatedTime[i] = fmod(subClockTime, clockTime/sig);
 			}
 			timeSigs[i] = params[TIME_SIG+i].getValue();
 		}
@@ -163,7 +164,8 @@ struct SyncMute : QuestionableModule {
 
 		// button checks
 		for (size_t i = 0; i < 8; i++) {
-			if (params[MUTE+i].getValue() == 1.f) shouldSwap[i] = true;
+			buttons[i] = params[MUTE+i].getValue();
+			if (buttons[i].isDirty() && buttons[i] == true) shouldSwap[i] = !shouldSwap[i];
 		}
 		
 		// outputs
@@ -173,13 +175,13 @@ struct SyncMute : QuestionableModule {
 
 	}
 
-	json_t* toJson() {
+	json_t* dataToJson() { 
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
 		return nodeJ;
 	}
 
-	void fromJson(json_t* rootJ) {
+	void dataFromJson(json_t* rootJ) {
 		QuestionableModule::dataFromJson(rootJ);
 		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
 	}
