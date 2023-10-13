@@ -66,12 +66,12 @@ struct SyncMute : QuestionableModule {
 
 	float accumulatedTime[8] = {0.f};
 
-	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
+	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "Immediate", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(TIME_SIG, -16.f, 16.f, 0.f, "Time Signature 1", sigsStrings);
+		configSwitch(TIME_SIG, -15.f, 15.f, 0.f, "Time Signature 1", sigsStrings);
 		configSwitch(TIME_SIG2, -16.f, 16.f, 0.f, "Time Signature 2", sigsStrings);
 		configSwitch(TIME_SIG3, -16.f, 16.f, 0.f, "Time Signature 3", sigsStrings);
 		configSwitch(TIME_SIG4, -16.f, 16.f, 0.f, "Time Signature 4", sigsStrings);
@@ -106,7 +106,6 @@ struct SyncMute : QuestionableModule {
 	float subClockTime = 0.f;
 
 	void process(const ProcessArgs& args) override {
-		bool clockedThisTick = false;
 		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 
 		if (resetClocks) {
@@ -127,7 +126,12 @@ struct SyncMute : QuestionableModule {
 				clockTicksSinceReset += 1;
 				subClockTime = 0;
 			}
-		} else clockTime = 0.5f;
+		} else { // 0.5f clock
+			if (subClockTime >= 0.5f) {
+				clockTicksSinceReset += 1;
+				subClockTime = 0.f;
+			}
+		}
 		subClockTime += args.sampleTime;
 
 		// clock resets and swap checks
@@ -136,19 +140,15 @@ struct SyncMute : QuestionableModule {
 
 			// on clock
 			if (timeSigs[i] < 0.f) {
-				float currentTime = clockTicksSinceReset % (int)abs(timeSigs[i]);
+				float currentTime = clockTicksSinceReset % (int)abs(timeSigs[i]-1);
 				if (currentTime < accumulatedTime[i]) clockHit = true;
 				accumulatedTime[i] = currentTime;
 			}
 			if (timeSigs[i] > 0.f) {
-				float currentTime = fmod(subClockTime, 1/timeSigs[i]);
+				float currentTime = fmod(subClockTime, 1/(timeSigs[i]+1));
 				if (currentTime < accumulatedTime[i]) clockHit = true;
 				accumulatedTime[i] = currentTime;
 			}
-			
-			// on clock
-			//if (timeSigs[i] < 0.f && accumulatedTime[i] >= clockTime*fabs(timeSigs[i])) clockHit = true; // clock divide
-			//else if (timeSigs[i] > 0.f && accumulatedTime[i] >= clockTime/timeSigs[i]) clockHit = true; // clock multiply
 
 			// edge cases
 			if (resetClocks) clockHit = true; // on reset
@@ -181,15 +181,27 @@ struct SyncMute : QuestionableModule {
 
 	}
 
-	json_t* dataToJson() { 
+	json_t* dataToJson() override { 
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
+
+		json_t* muteArray = json_array();
+		for (size_t i = 0; i < 8; i++) json_array_append_new(muteArray, json_boolean(muteState[i]));
+		json_object_set_new(nodeJ, "muteState", muteArray);
+
 		return nodeJ;
 	}
 
-	void dataFromJson(json_t* rootJ) {
+	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
 		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
+
+		if (json_t* array = json_object_get(rootJ, "muteState")) { // assumes all 8 set
+			for (size_t i = 0; i < 8; i++) { 
+				muteState[i] = json_boolean_value(json_array_get(array, i)); 
+			}
+		}
+
 	}
 
 };
@@ -209,7 +221,7 @@ struct MuteButton : Resizable<CKD6> {
 			nvgFill(args.vg);
 		}
 
-		if (mod->shouldSwap[paramId] && mod->inputs[SyncMute::CLOCK].getVoltage() > 0.f) {
+		if (mod->shouldSwap[paramId] && mod->clockTicksSinceReset%2 == 0) {
 			nvgFillColor(args.vg, nvgRGB(0, 255, 0));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
