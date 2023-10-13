@@ -100,7 +100,7 @@ struct SyncMute : QuestionableModule {
 	}
 
 	float timeSigs[8] = {0.f};
-	dirtyable<bool> buttons[8] = {false,false,false,false,false,false,false,false};
+	dirtyable<bool> buttons[8] = {false};
 
 	uint64_t clockTicksSinceReset = 0;
 	float subClockTime = 0.f;
@@ -158,7 +158,6 @@ struct SyncMute : QuestionableModule {
 		// clock accumulation
 		for (size_t i = 0; i < 8; i++) {
 			accumulatedTime[i] += args.sampleTime;
-			//if (clockedThisTick) accumulatedTime[i] = std::round(accumulatedTime[i]);
 			if (resetClocks) accumulatedTime[i] = 0.f;
 		}
 

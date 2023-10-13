@@ -14,6 +14,8 @@ struct dirtyable {
 	T value;
 	T prev;
 
+	dirtyable() { }
+
 	dirtyable(T value) {
 		this->value = value;
 		this->prev = value;
