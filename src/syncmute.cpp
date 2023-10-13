@@ -261,14 +261,16 @@ struct MuteButton : Resizable<CKD6> {
 		int sig = mod->timeSigs[paramId];
 		
 		if (mod->muteState[paramId]) {
-			nvgFillColor(args.vg, nvgRGBA(255, 0, 25, 75));
+			nvgFillColor(args.vg, nvgRGB(255, 0, 25));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
 		}
 
+		if (mod->clockTime/32 < 0.05 && sig > 0.f) return; // no super fast flashing lights
+
 		if (mod->shouldSwap[paramId] && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f) {
-			nvgFillColor(args.vg, nvgRGBA(0, 255, 25, 75));
+			nvgFillColor(args.vg, nvgRGB(0, 255, 25));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
