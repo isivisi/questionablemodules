@@ -102,15 +102,23 @@ struct SyncMute : QuestionableModule {
 	float timeSigs[8] = {0.f};
 
 	uint64_t clockTicksSinceReset = 0;
+	float subClockTime = 0.f;
 
 	void process(const ProcessArgs& args) override {
 		bool clockedThisTick = false;
 		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 
-		if (resetClocks) clockTicksSinceReset = 0;
+		if (resetClocks) {
+			clockTicksSinceReset = 0;
+			subClockTime = 0.f;
+		}
 
 		for (size_t i = 0; i < 8; i++) {
-			if (params[TIME_SIG+i].getValue() != timeSigs[i])
+			if (float sig = params[TIME_SIG+i].getValue() != timeSigs[i]) {
+				// make sure its still in sync with last reset point
+				if (sig < 0) accumulatedTime[i] = fmod(((float)(clockTicksSinceReset % abs((int)sig))) + subClockTime, abs(sig));
+				else if (sig > 0) accumulatedTime[i] = fmod(subClockTime, sig);
+			}
 			timeSigs[i] = params[TIME_SIG+i].getValue();
 		}
 
@@ -121,8 +129,10 @@ struct SyncMute : QuestionableModule {
 				clockTime = clockTimer.getTime();
 				clockTimer.reset();
 				clockTicksSinceReset += 1;
+				subClockTime = 0;
 			}
 		} else clockTime = 0.5f;
+		subClockTime += args.sampleTime;
 
 		// clock resets and swap checks
 		for (size_t i = 0; i < 8; i++) {
@@ -147,7 +157,7 @@ struct SyncMute : QuestionableModule {
 		// clock accumulation
 		for (size_t i = 0; i < 8; i++) {
 			accumulatedTime[i] += args.sampleTime;
-			if (clockedThisTick) accumulatedTime[i] = std::round(accumulatedTime[i]);
+			//if (clockedThisTick) accumulatedTime[i] = std::round(accumulatedTime[i]);
 			if (resetClocks) accumulatedTime[i] = 0.f;
 		}
 
