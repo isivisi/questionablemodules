@@ -267,14 +267,14 @@ struct MuteButton : Resizable<CKD6> {
 		SyncMute* mod = (SyncMute*)module;
 		
 		if (mod->muteState[paramId]) {
-			nvgFillColor(args.vg, nvgRGB(255, 0, 0));
+			nvgFillColor(args.vg, nvgRGB(255, 0, 25));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
 		}
 
 		if (mod->shouldSwap[paramId] && mod->clockTicksSinceReset%2 == 0) {
-			nvgFillColor(args.vg, nvgRGB(0, 255, 0));
+			nvgFillColor(args.vg, nvgRGB(0, 255, 25));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
