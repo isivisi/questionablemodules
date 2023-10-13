@@ -66,19 +66,19 @@ struct SyncMute : QuestionableModule {
 
 	float accumulatedTime[8] = {0.f};
 
-	std::vector<std::string> sigsStrings = {"/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "Immediate", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16"};
+	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "Immediate", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(TIME_SIG, -15.f, 15.f, 0.f, "Time Signature 1", sigsStrings);
-		configSwitch(TIME_SIG2, -16.f, 16.f, 0.f, "Time Signature 2", sigsStrings);
-		configSwitch(TIME_SIG3, -16.f, 16.f, 0.f, "Time Signature 3", sigsStrings);
-		configSwitch(TIME_SIG4, -16.f, 16.f, 0.f, "Time Signature 4", sigsStrings);
-		configSwitch(TIME_SIG5, -16.f, 16.f, 0.f, "Time Signature 5", sigsStrings);
-		configSwitch(TIME_SIG6, -16.f, 16.f, 0.f, "Time Signature 6", sigsStrings);
-		configSwitch(TIME_SIG7, -16.f, 16.f, 0.f, "Time Signature 7", sigsStrings);
-		configSwitch(TIME_SIG8, -16.f, 16.f, 0.f, "Time Signature 8", sigsStrings);
+		configSwitch(TIME_SIG, -31.f, 31.f, 0.f, "Time Signature 1", sigsStrings);
+		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Time Signature 2", sigsStrings);
+		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Time Signature 3", sigsStrings);
+		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Time Signature 4", sigsStrings);
+		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Time Signature 5", sigsStrings);
+		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Time Signature 6", sigsStrings);
+		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Time Signature 7", sigsStrings);
+		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Time Signature 8", sigsStrings);
 		configInput(IN, "1");
 		configInput(IN2, "2");
 		configInput(IN3, "3");
