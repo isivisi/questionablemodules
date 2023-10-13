@@ -206,12 +206,49 @@ struct SyncMute : QuestionableModule {
 
 };
 
+struct ClockKnob : RoundLargeBlackKnob {
+
+	ClockKnob() {
+
+	}
+
+	void draw(const DrawArgs &args) override {
+		if (!module) return;
+
+		SyncMute* mod = (SyncMute*)module;
+
+		RoundLargeBlackKnob::draw(args);
+
+		float sig = mod->timeSigs[paramId - SyncMute::TIME_SIG];
+
+		nvgSave(args.vg);
+
+		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
+
+		if (sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset%((int)abs(sig-1))*(-90.f/18.28))); // 31/1.75 = 18.28
+		if (sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod(mod->clockTicksSinceReset, 1/sig+1)*(90.f/18.28)));
+
+		nvgStrokeColor(args.vg, nvgRGBA(255, 255, 255, 50));
+		nvgBeginPath(args.vg);
+		nvgMoveTo(args.vg, 0, 0);
+		nvgLineTo(args.vg, 0, -box.size.y/2);
+		nvgStrokeWidth(args.vg, 2);
+		nvgStroke(args.vg);
+
+		nvgRestore(args.vg);
+	
+	}
+
+};
+
 struct MuteButton : Resizable<CKD6> {
 	
 	MuteButton() : Resizable(0.85, true) { }
 
 	void drawLayer(const DrawArgs &args, int layer) override {
 		if (!module) return;
+		if (layer != 1) return;
+
 		SyncMute* mod = (SyncMute*)module;
 		
 		if (mod->muteState[paramId]) {
@@ -267,7 +304,7 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		for (size_t i = 0; i < 8; i++) {
 			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 16 + (13.2* i))), module, SyncMute::IN + i));
-			addParam(createParamCentered<QuestionableParam<RoundLargeBlackKnob>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::TIME_SIG + i));
+			addParam(createParamCentered<QuestionableParam<ClockKnob>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::TIME_SIG + i));
 			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 16 + (13.2 * i))), module, SyncMute::OUT + i));
 		}
