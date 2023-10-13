@@ -215,42 +215,39 @@ struct ClockKnob : RoundLargeBlackKnob {
 	void draw(const DrawArgs &args) override {
 		SyncMute* mod = (SyncMute*)module;
 
+		float anglePerTick = 31 / 1.65;
+
 		float sig = mod ? mod->timeSigs[paramId - SyncMute::TIME_SIG] : 0.f;
+
+		RoundLargeBlackKnob::draw(args);
 
 		nvgSave(args.vg);
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
 
-		nvgFillColor(args.vg, nvgRGB(25, 25, 25));
-		nvgBeginPath(args.vg);
-		nvgCircle(args.vg, 0, 0, 19.5f);
-		nvgFill(args.vg);
-
-		for (int i = -31; i < 32; i++) {
+		for (int i = -15; i < 16; i++) {
 			nvgSave(args.vg);
-			nvgRotate(args.vg, nvgDegToRad(i*(90.f/18.28)));
+			nvgRotate(args.vg, nvgDegToRad(i*(90.f/ (15 / 1.65))));
 			nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 			nvgBeginPath(args.vg);
 			nvgMoveTo(args.vg, 0, 0);
-			nvgLineTo(args.vg, 0, -1-box.size.y/2);
-			nvgStrokeWidth(args.vg, 0.25);
+			nvgLineTo(args.vg, 0, 4.5-box.size.y/2);
+			nvgStrokeWidth(args.vg, 0.5);
 			nvgStroke(args.vg);
 			nvgRestore(args.vg);
 		}
 		
-		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/18.28))); // 31/1.75 = 18.28
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad((fmod(mod->subClockTime, 1/sig+1)*32.f) *(90.f/18.28)));
+		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime*32.f), sig+1)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
 		nvgMoveTo(args.vg, 0, 0);
-		nvgLineTo(args.vg, 0, -1-box.size.y/2);
+		nvgLineTo(args.vg, 0, 4.5-box.size.y/2);
 		nvgStrokeWidth(args.vg, 3);
 		nvgStroke(args.vg);
 
 		nvgRestore(args.vg);
-
-		RoundLargeBlackKnob::draw(args);
 	
 	}
 
