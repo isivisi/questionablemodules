@@ -31,29 +31,29 @@ struct dirtyable {
 	explicit operator T*() { return &value; }
 
 	// operator passthroughs
-	dirtyable<T>& operator=(T value) { this->value = value; return *this; }
-	dirtyable<T>& operator+=(T value) { this->value += value;  return *this; }
-	dirtyable<T>& operator-=(T value) { this->value -= value;  return *this; }
-	dirtyable<T>& operator*=(T value) { this->value *= value;  return *this; }
-	dirtyable<T>& operator/=(T value) { this->value /= value;  return *this; }
-	dirtyable<T>& operator%=(T value) { this->value %= value;  return *this; }
-	dirtyable<T>& operator|=(T value) { this->value |= value;  return *this; }
-	dirtyable<T>& operator&=(T value) { this->value &= value;  return *this; }
-	dirtyable<T>& operator^=(T value) { this->value ^= value;  return *this; }
-	bool operator==(const T& other) { return other == value; }
-	bool operator>(const T& other) { return value > other; }
-	bool operator<(const T& other) { return value < other; }
-	bool operator>=(const T& other) { return value >= other; }
-	bool operator<=(const T& other) { return value <= other; }
-	bool operator!=(const T& other) { return value != other; }
-	T operator+(T other) { return value + other; }
-	T operator-(T other) { return value - other; }
-	T operator*(T other) { return value * other; }
-	T operator/(T other) { return value / other; }
-	T operator%(T other) { return value % other; }
-	T operator|(T other) { return value | other; }
-	T operator&(T other) { return value & other; }
-	T operator^(T other) { return value ^ other; }
+	template <typename O> dirtyable<T>& operator=(O value) { this->value = value; return *this; }
+	template <typename O> dirtyable<T>& operator+=(O value) { this->value += value;  return *this; }
+	template <typename O> dirtyable<T>& operator-=(O value) { this->value -= value;  return *this; }
+	template <typename O> dirtyable<T>& operator*=(O value) { this->value *= value;  return *this; }
+	template <typename O> dirtyable<T>& operator/=(O value) { this->value /= value;  return *this; }
+	template <typename O> dirtyable<T>& operator%=(O value) { this->value %= value;  return *this; }
+	template <typename O> dirtyable<T>& operator|=(O value) { this->value |= value;  return *this; }
+	template <typename O> dirtyable<T>& operator&=(O value) { this->value &= value;  return *this; }
+	template <typename O> dirtyable<T>& operator^=(O value) { this->value ^= value;  return *this; }
+	template <typename O> bool operator==(const O& other) { return other == value; }
+	template <typename O> bool operator>(const O& other) { return value > other; }
+	template <typename O> bool operator<(const O& other) { return value < other; }
+	template <typename O> bool operator>=(const O& other) { return value >= other; }
+	template <typename O> bool operator<=(const O& other) { return value <= other; }
+	template <typename O> bool operator!=(const O& other) { return value != other; }
+	template <typename O> T operator+(O other) { return value + other; }
+	template <typename O> T operator-(O other) { return value - other; }
+	template <typename O> T operator*(O other) { return value * other; }
+	template <typename O> T operator/(O other) { return value / other; }
+	template <typename O> T operator%(O other) { return value % other; }
+	template <typename O> T operator|(O other) { return value | other; }
+	template <typename O> T operator&(O other) { return value & other; }
+	template <typename O> T operator^(O other) { return value ^ other; }
 	T& operator++(int d) { return value++; }
 	T& operator--(int d) { return value--; }
 	T& operator++() { return ++value; }
