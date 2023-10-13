@@ -115,11 +115,11 @@ struct SyncMute : QuestionableModule {
 		}
 
 		for (size_t i = 0; i < 8; i++) {
-			if (float sig = params[TIME_SIG+i].getValue() != timeSigs[i]) {
+			/*if (float sig = params[TIME_SIG+i].getValue() != timeSigs[i]) {
 				// make sure its still in sync with last reset point
 				if (sig < 0) accumulatedTime[i] = fmod(((float)(clockTicksSinceReset % abs((int)sig))) + subClockTime, fabs(sig));
 				else if (sig > 0) accumulatedTime[i] = fmod(subClockTime, clockTime/sig);
-			}
+			}*/
 			timeSigs[i] = params[TIME_SIG+i].getValue();
 		}
 
@@ -138,10 +138,22 @@ struct SyncMute : QuestionableModule {
 		// clock resets and swap checks
 		for (size_t i = 0; i < 8; i++) {
 			bool clockHit = false;
+
+			// on clock
+			if (timeSigs[i] < 0.f) {
+				float currentTime = clockTicksSinceReset % (int)abs(timeSigs[i]);
+				if (currentTime < accumulatedTime[i]) clockHit = true;
+				accumulatedTime[i] = currentTime;
+			}
+			if (timeSigs[i] > 0.f) {
+				float currentTime = fmod(subClockTime, 1/timeSigs[i]);
+				if (currentTime < accumulatedTime[i]) clockHit = true;
+				accumulatedTime[i] = currentTime;
+			}
 			
 			// on clock
-			if (timeSigs[i] < 0.f && accumulatedTime[i] >= clockTime*fabs(timeSigs[i])) clockHit = true; // clock divide
-			else if (timeSigs[i] > 0.f && accumulatedTime[i] >= clockTime/timeSigs[i]) clockHit = true; // clock multiply
+			//if (timeSigs[i] < 0.f && accumulatedTime[i] >= clockTime*fabs(timeSigs[i])) clockHit = true; // clock divide
+			//else if (timeSigs[i] > 0.f && accumulatedTime[i] >= clockTime/timeSigs[i]) clockHit = true; // clock multiply
 
 			// edge cases
 			if (resetClocks) clockHit = true; // on reset
@@ -157,7 +169,7 @@ struct SyncMute : QuestionableModule {
 
 		// clock accumulation
 		for (size_t i = 0; i < 8; i++) {
-			accumulatedTime[i] += args.sampleTime;
+			//accumulatedTime[i] += args.sampleTime;
 			if (resetClocks) accumulatedTime[i] = 0.f;
 		}
 
