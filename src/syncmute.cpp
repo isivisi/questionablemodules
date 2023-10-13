@@ -120,6 +120,7 @@ struct SyncMute : QuestionableModule {
 		// clock stuff from lfo
 		if (inputs[CLOCK].isConnected()) {
 			clockTimer.process(args.sampleTime);
+			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
 			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
 				clockTime = clockTimer.getTime();
 				clockTimer.reset();
@@ -127,6 +128,7 @@ struct SyncMute : QuestionableModule {
 				subClockTime = 0;
 			}
 		} else { // 0.5f clock
+			clockTime = 0.5f;
 			if (subClockTime >= 0.5f) {
 				clockTicksSinceReset += 1;
 				subClockTime = 0.f;
@@ -145,7 +147,7 @@ struct SyncMute : QuestionableModule {
 				accumulatedTime[i] = currentTime;
 			}
 			if (timeSigs[i] > 0.f) {
-				float currentTime = fmod(subClockTime, 1/(timeSigs[i]+1));
+				float currentTime = fmod(subClockTime / (clockTime/timeSigs[i]+1), 2);
 				if (currentTime < accumulatedTime[i]) clockHit = true;
 				accumulatedTime[i] = currentTime;
 			}
@@ -159,12 +161,6 @@ struct SyncMute : QuestionableModule {
 			if (shouldSwap[i] && clockHit) {
 				muteState[i] = !muteState[i];
 				shouldSwap[i] = false;
-			}
-		}
-
-		if (resetClocks) {
-			for (size_t i = 0; i < 8; i++) {
-				if (resetClocks) accumulatedTime[i] = 0.f;
 			}
 		}
 
@@ -235,10 +231,10 @@ struct ClockKnob : RoundLargeBlackKnob {
 			nvgStrokeWidth(args.vg, 0.5);
 			nvgStroke(args.vg);
 			nvgRestore(args.vg);
-		}
+		} // clockTime
 		
 		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime*32.f), sig+1)*(90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/sig+1))*(sig+1), sig+1)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
@@ -262,21 +258,23 @@ struct MuteButton : Resizable<CKD6> {
 		if (layer != 1) return;
 
 		SyncMute* mod = (SyncMute*)module;
+		int sig = mod->timeSigs[paramId];
 		
 		if (mod->muteState[paramId]) {
-			nvgFillColor(args.vg, nvgRGB(255, 0, 25));
+			nvgFillColor(args.vg, nvgRGBA(255, 0, 25, 75));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
 		}
 
-		if (mod->shouldSwap[paramId] && mod->clockTicksSinceReset%2 == 0) {
-			nvgFillColor(args.vg, nvgRGB(0, 255, 25));
+		if (mod->shouldSwap[paramId] && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f) {
+			nvgFillColor(args.vg, nvgRGBA(0, 255, 25, 75));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
 		}
 	}
+
 };
 
 struct SyncMuteWidget : QuestionableWidget {
