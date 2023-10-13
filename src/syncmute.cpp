@@ -173,6 +173,17 @@ struct SyncMute : QuestionableModule {
 
 	}
 
+	json_t* toJson() {
+		json_t* nodeJ = QuestionableModule::dataToJson();
+		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
+		return nodeJ;
+	}
+
+	void fromJson(json_t* rootJ) {
+		QuestionableModule::dataFromJson(rootJ);
+		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
+	}
+
 };
 
 struct MuteButton : Resizable<CKD6> {
