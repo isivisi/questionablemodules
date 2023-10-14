@@ -284,7 +284,7 @@ struct SyncMuteWidget : QuestionableWidget {
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
-		color->addText("SMUTE", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 25));
+		color->addText("SMUTE", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
 		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(23, 337), "descriptor");
