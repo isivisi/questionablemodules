@@ -107,7 +107,7 @@ struct QuatOSC : QuestionableModule {
 	std::vector<bool> quantizedVOCT {true,true,true};
 	bool normalizeSpreadVolume = true;
 
-	dirtyable<float> clockFreq = 2.f;
+	float clockFreq = 2.f;
 	
 	// when manipulating the lfos they will always be sligtly out of phase.
 	// random phase to start for more consistant inconsitency :)
@@ -296,14 +296,13 @@ struct QuatOSC : QuestionableModule {
 		// clock stuff from lfo
 		if (inputs[CLOCK_INPUT].isConnected()) {
 			clockTimer.process(args.sampleTime);
-			if (1.f / clockTimer.getTime() < clockFreq) clockFreq = 1.f / clockTimer.getTime();
+			//if (1.f / clockTimer.getTime() < clockFreq) clockFreq = std::max(0.1f, 1.f / clockTimer.getTime());
 			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 2.f)) {
 				float newFreq = 1.f / clockTimer.getTime();
 				clockTimer.reset();
 
 				if (0.001f <= newFreq && newFreq <= 1000.f) {
 					clockFreq = newFreq;
-					if (clockFreq.isDirty()) resetPhase();
 				}
 			}
 		} else clockFreq = 2.f;
