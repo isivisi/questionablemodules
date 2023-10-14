@@ -280,7 +280,7 @@ struct MuteButton : Resizable<CKD6> {
 };
 
 struct SyncMuteWidget : QuestionableWidget {
-	ColorBGSimple* bgSimple;
+	//ColorBGSimple* bgSimple;
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
 		color->textList.clear();
@@ -293,8 +293,14 @@ struct SyncMuteWidget : QuestionableWidget {
 	SyncMuteWidget(SyncMute* module) {
 		setModule(module);
 
-		bgSimple = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(20,20,20));
-		bgSimple->visible = true;
+		//bgSimple = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(20,20,20));
+		//bgSimple->visible = true;
+
+		backdrop = new ImagePanel();
+		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/smute/smute.jpg");
+		backdrop->scalar = 3.5;
+		backdrop->visible = true;
 
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
@@ -302,7 +308,7 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		backgroundColorLogic(module);
 		
-		setPanel(bgSimple);
+		setPanel(backdrop);
 		addChild(color);
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
