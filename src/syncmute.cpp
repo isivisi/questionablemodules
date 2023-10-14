@@ -202,7 +202,9 @@ struct SyncMute : QuestionableModule {
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
-			outputs[OUT+i].setVoltage(muteState[i] ? 0.f : inputs[IN+i].getVoltage());
+			int channels = std::max(1, inputs[IN+i].getChannels());
+			for (size_t c = 0; c < channels; c++) outputs[OUT+i].setVoltage(muteState[i] ? 0.f : inputs[IN+i].getPolyVoltage(c), c);
+			outputs[OUT+i].setChannels(channels);
 		}
 
 	}
