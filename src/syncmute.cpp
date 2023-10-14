@@ -300,7 +300,7 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		backdrop = new ImagePanel();
 		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
-		backdrop->imagePath = asset::plugin(pluginInstance, "res/smute/smute.jpg");
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/smute/smute.jpg"); 
 		backdrop->scalar = 3.5;
 		backdrop->visible = true;
 
