@@ -97,10 +97,38 @@ struct SyncMute : QuestionableModule {
 		configOutput(OUT8, "8");
 		configInput(CLOCK, "clock");
 		configInput(RESET, "reset");
+
+		for (size_t i = 0; i < 8; i++) mutes[i].paramId = i;
 	}
+
+	struct Mute {
+		int paramId = -1;
+		float timeSignature = 0.f;
+		bool muteState = false;
+		bool shouldSwap = false;
+		dirtyable<bool> button = false;
+		bool autoPress = false;
+
+		void step(Module* mod) {
+			timeSignature = mod->params[paramId].getValue();
+			button = mod->params[paramId].getValue();
+			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
+		}
+
+		json_t* toJson() {
+			return nullptr;
+		}
+
+		void fromJson(json_t* json) {
+
+		}
+	};
+
+	Mute mutes[8];
 
 	float timeSigs[8] = {0.f};
 	dirtyable<bool> buttons[8] = {false};
+	bool autoPress[8] = {false};
 
 	uint64_t clockTicksSinceReset = 0;
 	float subClockTime = 0.f;
@@ -162,6 +190,8 @@ struct SyncMute : QuestionableModule {
 				muteState[i] = !muteState[i];
 				shouldSwap[i] = false;
 			}
+
+			if (autoPress[i] && clockHit) shouldSwap[i] = true; // auto press on clock option
 		}
 
 		// button checks
@@ -185,6 +215,10 @@ struct SyncMute : QuestionableModule {
 		for (size_t i = 0; i < 8; i++) json_array_append_new(muteArray, json_boolean(muteState[i]));
 		json_object_set_new(nodeJ, "muteState", muteArray);
 
+		json_t* autoArray = json_array();
+		for (size_t i = 0; i < 8; i++) json_array_append_new(autoArray, json_boolean(autoPress[i]));
+		json_object_set_new(nodeJ, "autoPress", autoArray);
+
 		return nodeJ;
 	}
 
@@ -195,6 +229,13 @@ struct SyncMute : QuestionableModule {
 		if (json_t* array = json_object_get(rootJ, "muteState")) { // assumes all 8 set
 			for (size_t i = 0; i < 8; i++) { 
 				muteState[i] = json_boolean_value(json_array_get(array, i)); 
+			}
+		}
+
+		if (json_t* array = json_object_get(rootJ, "autoPress")) { // assumes all 8 set
+			for (size_t i = 0; i < 8; i++) { 
+				autoPress[i] = json_boolean_value(json_array_get(array, i));
+				if (autoPress[i]) shouldSwap[i] = true;
 			}
 		}
 
@@ -249,7 +290,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 
 };
 
-struct MuteButton : Resizable<CKD6> {
+struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 	
 	MuteButton() : Resizable(0.85, true) { }
 
@@ -275,6 +316,15 @@ struct MuteButton : Resizable<CKD6> {
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
 		}
+	}
+
+	void appendContextMenu(ui::Menu* menu) override {
+		if (!this->module) return;
+		SyncMute* mod = (SyncMute*)this->module;
+		menu->addChild(createMenuItem("Automatically Press", mod->autoPress[this->paramId] ? "On" : "Off", [=]() {
+			mod->autoPress[this->paramId] = !mod->autoPress[this->paramId];
+		}));
+		Resizable<QuestionableParam<CKD6>>::appendContextMenu(menu);
 	}
 
 };
@@ -322,7 +372,7 @@ struct SyncMuteWidget : QuestionableWidget {
 		for (size_t i = 0; i < 8; i++) {
 			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 16 + (13.2* i))), module, SyncMute::IN + i));
 			addParam(createParamCentered<QuestionableParam<ClockKnob>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::TIME_SIG + i));
-			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
+			addParam(createParamCentered<MuteButton>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 16 + (13.2 * i))), module, SyncMute::OUT + i));
 		}
 
