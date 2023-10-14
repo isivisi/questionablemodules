@@ -175,7 +175,7 @@ struct SyncMute : QuestionableModule {
 				accumulatedTime[i] = currentTime;
 			}
 			if (timeSigs[i] > 0.f) {
-				float currentTime = fmod(subClockTime / (clockTime/timeSigs[i]+1), 2);
+				float currentTime = fmod(subClockTime / (clockTime/(timeSigs[i]+1)), 2);
 				if (currentTime < accumulatedTime[i]) clockHit = true;
 				accumulatedTime[i] = currentTime;
 			}
@@ -275,7 +275,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 		} // clockTime
 		
 		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/sig+1))*(sig+1), sig+1)*(90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(((mod->subClockTime / (mod->clockTime/(sig+1)))*mod->clockTime)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
