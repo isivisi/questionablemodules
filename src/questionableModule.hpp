@@ -14,6 +14,8 @@ struct dirtyable {
 	T value;
 	T prev;
 
+	dirtyable() { }
+
 	dirtyable(T value) {
 		this->value = value;
 		this->prev = value;
@@ -29,29 +31,29 @@ struct dirtyable {
 	explicit operator T*() { return &value; }
 
 	// operator passthroughs
-	dirtyable<T>& operator=(T value) { this->value = value; return *this; }
-	dirtyable<T>& operator+=(T value) { this->value += value;  return *this; }
-	dirtyable<T>& operator-=(T value) { this->value -= value;  return *this; }
-	dirtyable<T>& operator*=(T value) { this->value *= value;  return *this; }
-	dirtyable<T>& operator/=(T value) { this->value /= value;  return *this; }
-	dirtyable<T>& operator%=(T value) { this->value %= value;  return *this; }
-	dirtyable<T>& operator|=(T value) { this->value |= value;  return *this; }
-	dirtyable<T>& operator&=(T value) { this->value &= value;  return *this; }
-	dirtyable<T>& operator^=(T value) { this->value ^= value;  return *this; }
-	bool operator==(const T& other) { return other == value; }
-	bool operator>(const T& other) { return value > other; }
-	bool operator<(const T& other) { return value < other; }
-	bool operator>=(const T& other) { return value >= other; }
-	bool operator<=(const T& other) { return value <= other; }
-	bool operator!=(const T& other) { return value != other; }
-	T operator+(T other) { return value + other; }
-	T operator-(T other) { return value - other; }
-	T operator*(T other) { return value * other; }
-	T operator/(T other) { return value / other; }
-	T operator%(T other) { return value % other; }
-	T operator|(T other) { return value | other; }
-	T operator&(T other) { return value & other; }
-	T operator^(T other) { return value ^ other; }
+	template <typename O> dirtyable<T>& operator=(O value) { this->value = value; return *this; }
+	template <typename O> dirtyable<T>& operator+=(O value) { this->value += value;  return *this; }
+	template <typename O> dirtyable<T>& operator-=(O value) { this->value -= value;  return *this; }
+	template <typename O> dirtyable<T>& operator*=(O value) { this->value *= value;  return *this; }
+	template <typename O> dirtyable<T>& operator/=(O value) { this->value /= value;  return *this; }
+	template <typename O> dirtyable<T>& operator%=(O value) { this->value %= value;  return *this; }
+	template <typename O> dirtyable<T>& operator|=(O value) { this->value |= value;  return *this; }
+	template <typename O> dirtyable<T>& operator&=(O value) { this->value &= value;  return *this; }
+	template <typename O> dirtyable<T>& operator^=(O value) { this->value ^= value;  return *this; }
+	template <typename O> bool operator==(const O& other) { return other == value; }
+	template <typename O> bool operator>(const O& other) { return value > other; }
+	template <typename O> bool operator<(const O& other) { return value < other; }
+	template <typename O> bool operator>=(const O& other) { return value >= other; }
+	template <typename O> bool operator<=(const O& other) { return value <= other; }
+	template <typename O> bool operator!=(const O& other) { return value != other; }
+	template <typename O> T operator+(O other) { return value + other; }
+	template <typename O> T operator-(O other) { return value - other; }
+	template <typename O> T operator*(O other) { return value * other; }
+	template <typename O> T operator/(O other) { return value / other; }
+	template <typename O> T operator%(O other) { return value % other; }
+	template <typename O> T operator|(O other) { return value | other; }
+	template <typename O> T operator&(O other) { return value & other; }
+	template <typename O> T operator^(O other) { return value ^ other; }
 	T& operator++(int d) { return value++; }
 	T& operator--(int d) { return value--; }
 	T& operator++() { return ++value; }
@@ -231,6 +233,39 @@ struct QuestionableWidget : ModuleWidget {
 		free(jsondump);
 		return body;
 	}
+};
+
+template <typename T>
+struct Resizable : T {
+	static_assert(std::is_base_of<Widget, T>::value, "T must inherit from Widget");
+
+	dirtyable<float> scale = 1.f;
+	bool centered = true;
+	
+	bool hasUpdatedBox = false;
+
+	Resizable(float scale, bool centered) {
+		this->scale = scale;
+		this->centered = centered;
+	}
+
+	void step() override {
+		if (scale.isDirty() || !hasUpdatedBox) {
+			if (centered) this->box.pos = this->box.pos.plus(this->box.size.mult(1.f-scale).div(2));
+			this->box.size = this->box.size.mult(scale);
+			hasUpdatedBox = true;
+		}
+
+		T::step();
+	}
+	
+	void draw(const Widget::DrawArgs &args) override {
+		nvgSave(args.vg);
+		nvgScale(args.vg, scale, scale);
+		T::draw(args);
+		nvgRestore(args.vg);
+	}
+
 };
 
 template <typename T>

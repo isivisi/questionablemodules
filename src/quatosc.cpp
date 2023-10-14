@@ -296,6 +296,7 @@ struct QuatOSC : QuestionableModule {
 		// clock stuff from lfo
 		if (inputs[CLOCK_INPUT].isConnected()) {
 			clockTimer.process(args.sampleTime);
+			if (1.f / clockTimer.getTime() < clockFreq) clockFreq = 1.f / clockTimer.getTime();
 			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 2.f)) {
 				float clockFreq = 1.f / clockTimer.getTime();
 				clockTimer.reset();

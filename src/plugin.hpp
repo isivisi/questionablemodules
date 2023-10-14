@@ -15,3 +15,4 @@ extern Model* modelTreequencer;
 extern Model* modelQuatOSC;
 extern Model* modelNightBin;
 extern Model* modelGreenscreen;
+extern Model* modelSyncMute;
