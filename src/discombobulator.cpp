@@ -141,8 +141,8 @@ struct Discombobulator : QuestionableModule {
 
 			// outputs w/ poly support
 			int channels = std::max(1, inputs[outputSwaps[i]].getChannels());
-			for (size_t c = 0; c < channels; c++) outputs[0].setVoltage(inputs[outputSwaps[i]].getPolyVoltage(c) + (cumulatedFading[i] * fadeAmnt), c);
-			outputs[0].setChannels(channels);
+			for (size_t c = 0; c < channels; c++) outputs[i].setVoltage(inputs[outputSwaps[i]].getPolyVoltage(c) + (cumulatedFading[i] * fadeAmnt), c);
+			outputs[i].setChannels(channels);
 
 		}
 
