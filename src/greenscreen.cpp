@@ -205,8 +205,6 @@ struct BackgroundWidget : Widget {
 	NVGcolor color;
 	GreenscreenRack* rackVisuals;
 
-	bool drawRack = true;
-
 	BackgroundWidget(Greenscreen* module = nullptr) {
 		this->module = module;
 		rackVisuals = new GreenscreenRack(module);
@@ -226,7 +224,7 @@ struct BackgroundWidget : Widget {
 		nvgRect(args.vg, min.x, min.y, max.x, max.y);
 		nvgFill(args.vg);
 
-		if (drawRack) rackVisuals->draw(args);
+		if (module->drawRack) rackVisuals->draw(args);
 	}
 };
 
