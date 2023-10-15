@@ -176,7 +176,7 @@ struct GreenscreenRack : Widget {
 
 	void draw(const DrawArgs& args) {
 		if (!module) return;
-		if (!railSVG->svg) return;
+		if (!railSVG->svg || !dotsSVG->svg) return;
 
 		math::Vec tileSize = railSVG->svg->getSize().div(RACK_GRID_SIZE).round().mult(RACK_GRID_SIZE);
 		if (tileSize.area() == 0.f) return;
