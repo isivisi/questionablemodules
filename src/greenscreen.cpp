@@ -31,6 +31,7 @@ struct Greenscreen : QuestionableModule {
 	std::string text = "Green";
 	bool showText = true;
 	bool showInputs = false;
+	bool hasShadow = false;
 
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -56,6 +57,7 @@ struct Greenscreen : QuestionableModule {
 		json_object_set_new(rootJ, "text", json_string(text.c_str()));
 		json_object_set_new(rootJ, "showText", json_boolean(showText));
 		json_object_set_new(rootJ, "showInputs", json_boolean(showInputs));
+		json_object_set_new(rootJ, "hasShadow", json_boolean(hasShadow));
 		return rootJ;
 	}
 
@@ -67,6 +69,7 @@ struct Greenscreen : QuestionableModule {
 		if (r && g && b) color = nvgRGBf(json_real_value(r), json_real_value(g), json_real_value(b));
 		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
 		if (json_t* i = json_object_get(rootJ, "showInputs")) showInputs = json_boolean_value(i);
+		if (json_t* s = json_object_get(rootJ, "hasShadow")) hasShadow = json_boolean_value(s);
 		if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
 	}
 
@@ -346,6 +349,8 @@ struct GreenscreenWidget : QuestionableWidget {
 			} else WARN("Unable to find railWidget");
 			
 			changeColor(Color(module->text, module->color));
+
+			//Widget* container = APP->scene->rack->getModuleContainer();
 		}
 
 		addInput(createInputCentered<QuestionablePort<GreenscreenPort>>(mm2px(Vec(7.8f, 90.f)), module, Greenscreen::INPUT_R));
@@ -356,6 +361,13 @@ struct GreenscreenWidget : QuestionableWidget {
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
 		//addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		//addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+	}
+
+	void drawLayer(const DrawArgs& args, int layer) override {
+		if (!module) drawLayer(args, layer);
+
+		if (layer == -1 && ((Greenscreen*)module)->hasShadow == true) drawLayer(args, layer);
+		else return;
 	}
 
 	dirtyable<bool> cvConnected = false;
@@ -402,13 +414,17 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		Greenscreen* mod = (Greenscreen*)module;
 
-		menu->addChild(createMenuItem("Toggle Text", "",[=]() {
+		menu->addChild(createMenuItem("Toggle Text", mod->showText ? "On" : "Off",[=]() {
 			mod->showText = !mod->showText;
 			color->setTextGroupVisibility("default", mod->showText);
 		}));
 
-		menu->addChild(createMenuItem("Toggle CV Inputs", "",[=]() {
+		menu->addChild(createMenuItem("Toggle CV Inputs", mod->showInputs ? "On" : "Off",[=]() {
 			mod->showInputs = !mod->showInputs;
+		}));
+
+		menu->addChild(createMenuItem("Toggle Shadow", mod->hasShadow ? "On" : "Off",[=]() {
+			mod->hasShadow = !mod->hasShadow;
 		}));
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
