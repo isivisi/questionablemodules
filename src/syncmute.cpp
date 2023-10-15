@@ -71,15 +71,15 @@ struct SyncMute : QuestionableModule {
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(TIME_SIG, -31.f, 31.f, 0.f, "Time Signature 1", sigsStrings);
-		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Time Signature 2", sigsStrings);
-		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Time Signature 3", sigsStrings);
-		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Time Signature 4", sigsStrings);
-		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Time Signature 5", sigsStrings);
-		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Time Signature 6", sigsStrings);
-		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Time Signature 7", sigsStrings);
-		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Time Signature 8", sigsStrings);
-		configInput(IN, "1");
+		configSwitch(TIME_SIG, -31.f, 31.f, 0.f,  "Ratio", sigsStrings);
+		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configInput(IN,  "1");
 		configInput(IN2, "2");
 		configInput(IN3, "3");
 		configInput(IN4, "4");
@@ -87,7 +87,7 @@ struct SyncMute : QuestionableModule {
 		configInput(IN6, "6");
 		configInput(IN7, "7");
 		configInput(IN8, "8");
-		configOutput(OUT, "1");
+		configOutput(OUT,  "1");
 		configOutput(OUT2, "2");
 		configOutput(OUT3, "3");
 		configOutput(OUT4, "4");
@@ -97,10 +97,38 @@ struct SyncMute : QuestionableModule {
 		configOutput(OUT8, "8");
 		configInput(CLOCK, "clock");
 		configInput(RESET, "reset");
+
+		for (size_t i = 0; i < 8; i++) mutes[i].paramId = i;
 	}
+
+	struct Mute {
+		int paramId = -1;
+		float timeSignature = 0.f;
+		bool muteState = false;
+		bool shouldSwap = false;
+		dirtyable<bool> button = false;
+		bool autoPress = false;
+
+		void step(Module* mod) {
+			timeSignature = mod->params[paramId].getValue();
+			button = mod->params[paramId].getValue();
+			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
+		}
+
+		json_t* toJson() {
+			return nullptr;
+		}
+
+		void fromJson(json_t* json) {
+
+		}
+	};
+
+	Mute mutes[8];
 
 	float timeSigs[8] = {0.f};
 	dirtyable<bool> buttons[8] = {false};
+	bool autoPress[8] = {false};
 
 	uint64_t clockTicksSinceReset = 0;
 	float subClockTime = 0.f;
@@ -147,7 +175,7 @@ struct SyncMute : QuestionableModule {
 				accumulatedTime[i] = currentTime;
 			}
 			if (timeSigs[i] > 0.f) {
-				float currentTime = fmod(subClockTime / (clockTime/timeSigs[i]+1), 2);
+				float currentTime = fmod((subClockTime / (clockTime/(timeSigs[i]+1))) * (timeSigs[i]+1), timeSigs[i]+1);
 				if (currentTime < accumulatedTime[i]) clockHit = true;
 				accumulatedTime[i] = currentTime;
 			}
@@ -162,6 +190,8 @@ struct SyncMute : QuestionableModule {
 				muteState[i] = !muteState[i];
 				shouldSwap[i] = false;
 			}
+
+			if (autoPress[i] && clockHit) shouldSwap[i] = true; // auto press on clock option
 		}
 
 		// button checks
@@ -172,7 +202,9 @@ struct SyncMute : QuestionableModule {
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
-			outputs[OUT+i].setVoltage(muteState[i] ? 0.f : inputs[IN+i].getVoltage());
+			int channels = std::max(1, inputs[IN+i].getChannels());
+			for (size_t c = 0; c < channels; c++) outputs[OUT+i].setVoltage(muteState[i] ? 0.f : inputs[IN+i].getPolyVoltage(c), c);
+			outputs[OUT+i].setChannels(channels);
 		}
 
 	}
@@ -185,6 +217,10 @@ struct SyncMute : QuestionableModule {
 		for (size_t i = 0; i < 8; i++) json_array_append_new(muteArray, json_boolean(muteState[i]));
 		json_object_set_new(nodeJ, "muteState", muteArray);
 
+		json_t* autoArray = json_array();
+		for (size_t i = 0; i < 8; i++) json_array_append_new(autoArray, json_boolean(autoPress[i]));
+		json_object_set_new(nodeJ, "autoPress", autoArray);
+
 		return nodeJ;
 	}
 
@@ -195,6 +231,13 @@ struct SyncMute : QuestionableModule {
 		if (json_t* array = json_object_get(rootJ, "muteState")) { // assumes all 8 set
 			for (size_t i = 0; i < 8; i++) { 
 				muteState[i] = json_boolean_value(json_array_get(array, i)); 
+			}
+		}
+
+		if (json_t* array = json_object_get(rootJ, "autoPress")) { // assumes all 8 set
+			for (size_t i = 0; i < 8; i++) { 
+				autoPress[i] = json_boolean_value(json_array_get(array, i));
+				if (autoPress[i]) shouldSwap[i] = true;
 			}
 		}
 
@@ -234,7 +277,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 		} // clockTime
 		
 		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/sig+1))*(sig+1), sig+1)*(90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/(sig+1))) * (sig+1), sig+1)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
@@ -249,7 +292,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 
 };
 
-struct MuteButton : Resizable<CKD6> {
+struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 	
 	MuteButton() : Resizable(0.85, true) { }
 
@@ -275,6 +318,15 @@ struct MuteButton : Resizable<CKD6> {
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
 		}
+	}
+
+	void appendContextMenu(ui::Menu* menu) override {
+		if (!this->module) return;
+		SyncMute* mod = (SyncMute*)this->module;
+		menu->addChild(createMenuItem("Automatically Press", mod->autoPress[this->paramId] ? "On" : "Off", [=]() {
+			mod->autoPress[this->paramId] = !mod->autoPress[this->paramId];
+		}));
+		Resizable<QuestionableParam<CKD6>>::appendContextMenu(menu);
 	}
 
 };
@@ -322,7 +374,7 @@ struct SyncMuteWidget : QuestionableWidget {
 		for (size_t i = 0; i < 8; i++) {
 			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 16 + (13.2* i))), module, SyncMute::IN + i));
 			addParam(createParamCentered<QuestionableParam<ClockKnob>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::TIME_SIG + i));
-			addParam(createParamCentered<QuestionableParam<MuteButton>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
+			addParam(createParamCentered<MuteButton>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 16 + (13.2 * i))), module, SyncMute::OUT + i));
 		}
 

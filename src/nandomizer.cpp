@@ -130,7 +130,10 @@ struct Nandomizer : QuestionableModule {
 			}
 		}
 
-		outputs[0].setVoltage(inputs[activeOutput].getVoltage() + (fadingInputs * fadeAmnt));
+		// outputs w/ poly support
+		int channels = std::max(1, inputs[activeOutput].getChannels());
+		for (size_t c = 0; c < channels; c++) outputs[0].setVoltage(inputs[activeOutput].getPolyVoltage(c) + (fadingInputs * fadeAmnt), c);
+		outputs[0].setChannels(channels);
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
 

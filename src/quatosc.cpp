@@ -296,13 +296,13 @@ struct QuatOSC : QuestionableModule {
 		// clock stuff from lfo
 		if (inputs[CLOCK_INPUT].isConnected()) {
 			clockTimer.process(args.sampleTime);
-			if (1.f / clockTimer.getTime() < clockFreq) clockFreq = 1.f / clockTimer.getTime();
+			//if (1.f / clockTimer.getTime() < clockFreq) clockFreq = std::max(0.1f, 1.f / clockTimer.getTime());
 			if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage(), 0.1f, 2.f)) {
-				float clockFreq = 1.f / clockTimer.getTime();
+				float newFreq = 1.f / clockTimer.getTime();
 				clockTimer.reset();
 
-				if (0.001f <= clockFreq && clockFreq <= 1000.f) {
-					this->clockFreq = clockFreq;
+				if (0.001f <= newFreq && newFreq <= 1000.f) {
+					clockFreq = newFreq;
 				}
 			}
 		} else clockFreq = 2.f;
