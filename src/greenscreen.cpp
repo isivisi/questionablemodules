@@ -485,6 +485,10 @@ struct GreenscreenWidget : QuestionableWidget {
 			mod->hasShadow = !mod->hasShadow;
 		}));
 
+		menu->addChild(createMenuItem("Toggle Rack", mod->drawRack ? "On" : "Off",[=]() {
+			mod->drawRack = !mod->drawRack;
+		}));
+
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 			std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 
