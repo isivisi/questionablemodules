@@ -210,6 +210,13 @@ struct QuestionableWidget : ModuleWidget {
 			}));
 		}
 
+		menu->addChild(rack::createMenuItem("Request Feature", "", [=]() {
+			Model* model = getModel();
+			std::string title = model->name + std::string(" Feature Request");
+			std::string url = "https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title);
+			system::openBrowser(url);
+		}));
+
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
 			std::string title = model->name + std::string(" Bug Report");

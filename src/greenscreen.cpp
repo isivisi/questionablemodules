@@ -364,9 +364,9 @@ struct GreenscreenWidget : QuestionableWidget {
 	}
 
 	void drawLayer(const DrawArgs& args, int layer) override {
-		if (!module) drawLayer(args, layer);
+		if (!module) ModuleWidget::drawLayer(args, layer);
 
-		if (layer == -1 && ((Greenscreen*)module)->hasShadow == true) drawLayer(args, layer);
+		if (layer == -1 && ((Greenscreen*)module)->hasShadow == true) ModuleWidget::drawLayer(args, -1);
 		else return;
 	}
 
