@@ -71,15 +71,15 @@ struct SyncMute : QuestionableModule {
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(TIME_SIG, -31.f, 31.f, 0.f, "Time Signature 1", sigsStrings);
-		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Time Signature 2", sigsStrings);
-		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Time Signature 3", sigsStrings);
-		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Time Signature 4", sigsStrings);
-		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Time Signature 5", sigsStrings);
-		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Time Signature 6", sigsStrings);
-		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Time Signature 7", sigsStrings);
-		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Time Signature 8", sigsStrings);
-		configInput(IN, "1");
+		configSwitch(TIME_SIG, -31.f, 31.f, 0.f,  "Ratio", sigsStrings);
+		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configInput(IN,  "1");
 		configInput(IN2, "2");
 		configInput(IN3, "3");
 		configInput(IN4, "4");
@@ -87,7 +87,7 @@ struct SyncMute : QuestionableModule {
 		configInput(IN6, "6");
 		configInput(IN7, "7");
 		configInput(IN8, "8");
-		configOutput(OUT, "1");
+		configOutput(OUT,  "1");
 		configOutput(OUT2, "2");
 		configOutput(OUT3, "3");
 		configOutput(OUT4, "4");
@@ -175,7 +175,7 @@ struct SyncMute : QuestionableModule {
 				accumulatedTime[i] = currentTime;
 			}
 			if (timeSigs[i] > 0.f) {
-				float currentTime = fmod(subClockTime / (clockTime/(timeSigs[i]+1)), 2);
+				float currentTime = fmod((subClockTime / (clockTime/(timeSigs[i]+1))) * (timeSigs[i]+1), timeSigs[i]+1);
 				if (currentTime < accumulatedTime[i]) clockHit = true;
 				accumulatedTime[i] = currentTime;
 			}
@@ -277,7 +277,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 		} // clockTime
 		
 		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(((mod->subClockTime / (mod->clockTime/(sig+1)))*mod->clockTime)*(90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/(sig+1))) * (sig+1), sig+1)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
