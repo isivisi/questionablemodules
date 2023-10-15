@@ -155,21 +155,27 @@ struct Color : QuestionableJsonable {
 
 // Custom RailWidget
 struct GreenscreenRack : Widget {
+	Greenscreen* module = nullptr;
 	FramebufferWidget* framebuff;
 	SvgWidget* railSVG;
+	SvgWidget* dotsSVG;
 
-	GreenscreenRack() {
+	GreenscreenRack(Greenscreen* module = nullptr) {
+		this->module = module;
 		framebuff = new widget::FramebufferWidget;
 		framebuff->oversample = 1.0;
 		framebuff->dirtyOnSubpixelChange = false;
 		addChild(framebuff);
 
 		railSVG = new widget::SvgWidget;
+		dotsSVG = new widget::SvgWidget;
 		railSVG->setSvg(Svg::load(asset::plugin(pluginInstance, "res/greenscreen/Rail.svg")));
+		dotsSVG->setSvg(Svg::load(asset::plugin(pluginInstance, "res/greenscreen/Dots.svg")));
 		framebuff->addChild(railSVG);
 	}
 
 	void draw(const DrawArgs& args) {
+		if (!module) return;
 		if (!railSVG->svg) return;
 
 		math::Vec tileSize = railSVG->svg->getSize().div(RACK_GRID_SIZE).round().mult(RACK_GRID_SIZE);
@@ -183,20 +189,27 @@ struct GreenscreenRack : Widget {
 			for (p.x = min.x; p.x < max.x; p.x += tileSize.x) {
 				framebuff->box.pos = p;
 				Widget::drawChild(framebuff, args);
+
+				nvgSave(args.vg);
+				nvgTranslate(args.vg, p.x, p.y);
+				nvgTint(args.vg, module->color);
+				dotsSVG->draw(args);
+				nvgRestore(args.vg);
 			}
 		}
 	}
 };
 
 struct BackgroundWidget : Widget {
-	Greenscreen* module;
+	Greenscreen* module = nullptr;
 	NVGcolor color;
 	GreenscreenRack* rackVisuals;
 
 	bool drawRack = true;
 
-	BackgroundWidget() {
-		rackVisuals = new GreenscreenRack();
+	BackgroundWidget(Greenscreen* module = nullptr) {
+		this->module = module;
+		rackVisuals = new GreenscreenRack(module);
 	}
 
 	~BackgroundWidget() {
@@ -204,7 +217,6 @@ struct BackgroundWidget : Widget {
 	}
 
 	void draw(const DrawArgs& args) override {
-		if (!module) return;
 		if (module->isBypassed()) return;
 
 		math::Vec min = args.clipBox.getTopLeft();
@@ -389,9 +401,8 @@ struct GreenscreenWidget : QuestionableWidget {
 				return dynamic_cast<RailWidget*>(widget) != nullptr;
 			});
 			if (railWidget != APP->scene->rack->children.end()) {
-				newBackground = new BackgroundWidget;
+				newBackground = new BackgroundWidget(module);
 				newBackground->color = nvgRGB(0, 175, 26);
-				newBackground->module = module;
 				APP->scene->rack->addChildAbove(newBackground, *railWidget);
 			} else WARN("Unable to find railWidget");
 			
