@@ -28,6 +28,7 @@ struct Greenscreen : QuestionableModule {
 	};
 
 	NVGcolor color = nvgRGB(4, 244, 4);
+	NVGcolor shownColor = color;
 	std::string text = "Green";
 	bool showText = true;
 	bool showInputs = false;
@@ -161,8 +162,6 @@ struct GreenscreenRack : Widget {
 	SvgWidget* railSVG;
 	SvgWidget* dotsSVG;
 
-	NVGcolor color;
-
 	GreenscreenRack(Greenscreen* module = nullptr) {
 		this->module = module;
 		framebuff = new widget::FramebufferWidget;
@@ -173,8 +172,6 @@ struct GreenscreenRack : Widget {
 		dotFrambuff->dirtyOnSubpixelChange = false;
 		addChild(framebuff);
 		addChild(dotFrambuff);
-
-		color = module->color;
 
 		railSVG = new widget::SvgWidget;
 		dotsSVG = new widget::SvgWidget;
@@ -189,7 +186,7 @@ struct GreenscreenRack : Widget {
 		dotFrambuff->setDirty();
 	}
 
-	void draw(const DrawArgs& args) {
+	void draw(const DrawArgs& args) override {
 		if (!module) return;
 		if (!railSVG->svg || !dotsSVG->svg) return;
 
@@ -207,7 +204,7 @@ struct GreenscreenRack : Widget {
 
 				nvgSave(args.vg);
 				//nvgTranslate(args.vg, p.x, p.y);
-				nvgTint(args.vg, color);
+				nvgTint(args.vg, module->shownColor);
 				dotFrambuff->box.pos = p;
 				Widget::drawChild(dotFrambuff, args);
 				nvgRestore(args.vg);
@@ -219,7 +216,6 @@ struct GreenscreenRack : Widget {
 struct BackgroundWidget : Widget {
 	Greenscreen* module = nullptr;
 	NVGcolor color;
-	NVGcolor prev;
 	GreenscreenRack* rackVisuals;
 
 	BackgroundWidget(Greenscreen* module = nullptr) {
@@ -234,11 +230,11 @@ struct BackgroundWidget : Widget {
 	void step() override {
 		Widget::step();
 		if (!module) return;
-		if (color.r != prev.r || color.g != prev.g || color.b != prev.b) {
-			rackVisuals->color = color;
+		NVGcolor modC = module->shownColor;
+		if (color.r != modC.r || color.g != modC.g || color.b != modC.b) {
 			rackVisuals->setDirty();
 		}
-		prev = color;
+		color = modC;
 	}
 
 	void draw(const DrawArgs& args) override {
@@ -319,7 +315,7 @@ struct GreenscreenPort : PJ301MPort {
 		if (!module || (module && !((Greenscreen*)module)->showInputs)) return;
 
 		NVGcolor color = nvgRGB(255, 255, 255);
-		Color moduleColor = Color("", ((Greenscreen*)module)->color);
+		Color moduleColor = Color("", ((Greenscreen*)module)->shownColor);
 		if (moduleColor.getContrastFrom(nvgRGB(0,0,0)) > 0.75) color = nvgRGB(25,25,25);
 
 		nvgFillColor(args.vg, color);
@@ -386,18 +382,21 @@ struct GreenscreenWidget : QuestionableWidget {
 	}
 
 	void changeColor(Color c, bool save = true) {
+		if (!module) return;
 		//NVGcolor c = selectableColors.count(name) ? selectableColors[name] : c;
 		logoText = c.name; 
 
+		Greenscreen* mod = (Greenscreen*)module;
+
 		setText();
 		if (c.getContrastFrom(nvgRGB(0,0,0)) > 0.75) color->setFontColor(nvgRGB(25,25,25));
-		color->setTextGroupVisibility("default", ((Greenscreen*)module)->showText);
+		color->setTextGroupVisibility("default", mod->showText);
 
 		background->color = c.getNVGColor();
 		background->stroke = c.getNVGColor();
-		if (newBackground) newBackground->color = c.getNVGColor();
-		if (save) ((Greenscreen*)module)->color = c.getNVGColor();
-		if (save) ((Greenscreen*)module)->text = c.name;
+		mod->shownColor = c.getNVGColor();
+		if (save) mod->color = c.getNVGColor();
+		if (save) mod->text = c.name;
 
 	}
 
