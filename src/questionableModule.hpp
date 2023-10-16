@@ -6,6 +6,8 @@
 #include <cctype>
 #include <iomanip>
 #include <sstream>
+#include <array>
+#include <vector>
 
 // simple variable that has a dirty state
 // designed for native types
