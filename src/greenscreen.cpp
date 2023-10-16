@@ -157,21 +157,36 @@ struct Color : QuestionableJsonable {
 struct GreenscreenRack : Widget {
 	Greenscreen* module = nullptr;
 	FramebufferWidget* framebuff;
+	FramebufferWidget* dotFrambuff;
 	SvgWidget* railSVG;
 	SvgWidget* dotsSVG;
+
+	NVGcolor color;
 
 	GreenscreenRack(Greenscreen* module = nullptr) {
 		this->module = module;
 		framebuff = new widget::FramebufferWidget;
+		dotFrambuff = new widget::FramebufferWidget;
 		framebuff->oversample = 1.0;
 		framebuff->dirtyOnSubpixelChange = false;
+		dotFrambuff->oversample = 1.0;
+		dotFrambuff->dirtyOnSubpixelChange = false;
 		addChild(framebuff);
+		addChild(dotFrambuff);
+
+		color = module->color;
 
 		railSVG = new widget::SvgWidget;
 		dotsSVG = new widget::SvgWidget;
 		railSVG->setSvg(Svg::load(asset::plugin(pluginInstance, "res/greenscreen/Rail.svg")));
 		dotsSVG->setSvg(Svg::load(asset::plugin(pluginInstance, "res/greenscreen/Dots.svg")));
 		framebuff->addChild(railSVG);
+		dotFrambuff->addChild(dotsSVG);
+	}
+
+	void setDirty() {
+		framebuff->setDirty();
+		dotFrambuff->setDirty();
 	}
 
 	void draw(const DrawArgs& args) {
@@ -191,9 +206,10 @@ struct GreenscreenRack : Widget {
 				Widget::drawChild(framebuff, args);
 
 				nvgSave(args.vg);
-				nvgTranslate(args.vg, p.x, p.y);
-				nvgTint(args.vg, module->color);
-				dotsSVG->draw(args);
+				//nvgTranslate(args.vg, p.x, p.y);
+				nvgTint(args.vg, color);
+				dotFrambuff->box.pos = p;
+				Widget::drawChild(dotFrambuff, args);
 				nvgRestore(args.vg);
 			}
 		}
@@ -203,6 +219,7 @@ struct GreenscreenRack : Widget {
 struct BackgroundWidget : Widget {
 	Greenscreen* module = nullptr;
 	NVGcolor color;
+	NVGcolor prev;
 	GreenscreenRack* rackVisuals;
 
 	BackgroundWidget(Greenscreen* module = nullptr) {
@@ -212,6 +229,16 @@ struct BackgroundWidget : Widget {
 
 	~BackgroundWidget() {
 		delete rackVisuals;
+	}
+
+	void step() override {
+		Widget::step();
+		if (!module) return;
+		if (color.r != prev.r || color.g != prev.g || color.b != prev.b) {
+			rackVisuals->color = color;
+			rackVisuals->setDirty();
+		}
+		prev = color;
 	}
 
 	void draw(const DrawArgs& args) override {
