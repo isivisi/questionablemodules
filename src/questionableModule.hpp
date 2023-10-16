@@ -110,26 +110,15 @@ struct PolyphonicValue {
 	template <typename O> float operator*(O other) { return sum() * other; }
 	template <typename O> float operator/(O other) { return sum() / other; }
 
-	PolyphonicValue operator+(PolyphonicValue other) {
-		PolyphonicValue returnVal = *this;
-		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] += other.values[i];
-		return returnVal; 
-	}
-	PolyphonicValue operator-(PolyphonicValue other) {
-		PolyphonicValue returnVal = *this;
-		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] -= other.values[i];
-		return returnVal; 
-	}
-	PolyphonicValue operator*(PolyphonicValue other) {
-		PolyphonicValue returnVal = *this;
-		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] *= other.values[i];
-		return returnVal; 
-	}
-	PolyphonicValue operator/(PolyphonicValue other) {
-		PolyphonicValue returnVal = *this;
-		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] /= other.values[i];
-		return returnVal; 
-	}
+	PolyphonicValue& operator+=(PolyphonicValue other) { for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) values[i] += other.values[i]; return *this; }
+	PolyphonicValue& operator-=(PolyphonicValue other) { for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) values[i] -= other.values[i]; return *this; }
+	PolyphonicValue& operator*=(PolyphonicValue other) { for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) values[i] *= other.values[i]; return *this; }
+	PolyphonicValue& operator/=(PolyphonicValue other) { for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) values[i] /= other.values[i]; return *this; }
+
+	PolyphonicValue operator+(PolyphonicValue other) { PolyphonicValue ret = *this; ret += other; return ret; }
+	PolyphonicValue operator-(PolyphonicValue other) { PolyphonicValue ret = *this; ret -= other; return ret; }
+	PolyphonicValue operator*(PolyphonicValue other) { PolyphonicValue ret = *this; ret *= other; return ret; }
+	PolyphonicValue operator/(PolyphonicValue other) { PolyphonicValue ret = *this; ret /= other; return ret; }
 
 };
 
