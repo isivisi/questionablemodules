@@ -106,7 +106,7 @@ struct SyncMute : QuestionableModule {
 
 	struct Mute {
 		int paramId = -1;
-		Module* module = nullptr;
+		SyncMute* module = nullptr;
 		float timeSignature = 0.f;
 		bool muteState = false;
 		bool shouldSwap = false;
@@ -121,6 +121,33 @@ struct SyncMute : QuestionableModule {
 			timeSignature = module->params[paramId].getValue();
 			button = module->params[paramId].getValue();
 			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
+
+			bool clockHit = false;
+
+			// on clock
+			if (timeSignature < 0.f) {
+				float currentTime = module->clockTicksSinceReset % (int)abs(timeSignature-1);
+				if (currentTime < accumulatedTime) clockHit = true;
+				accumulatedTime = currentTime;
+			}
+			if (timeSignature > 0.f) {
+				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature+1))) * (timeSignature+1), timeSignature+1);
+				if (currentTime < accumulatedTime) clockHit = true;
+				accumulatedTime = currentTime;
+			}
+
+			// edge cases
+			if (module->resetClocksThisTick) clockHit = true; // on reset
+			if (shouldSwap && timeSignature == 0.f) clockHit = true; // on immediate
+
+			if (clockHit) accumulatedTime = 0.f;
+
+			if (shouldSwap && clockHit) {
+				muteState = !muteState;
+				shouldSwap = false;
+			}
+
+			if (autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
 			volume = math::clamp(volume + (muteState ? -deltaTime : deltaTime));
 		}
@@ -147,10 +174,12 @@ struct SyncMute : QuestionableModule {
 	uint64_t clockTicksSinceReset = 0;
 	float subClockTime = 0.f;
 
-	void process(const ProcessArgs& args) override {
-		bool resetClocks = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
+	bool resetClocksThisTick = false;
 
-		if (resetClocks) {
+	void process(const ProcessArgs& args) override {
+		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
+
+		if (resetClocksThisTick) {
 			clockTicksSinceReset = 0;
 			subClockTime = 0.f;
 		}
@@ -175,37 +204,6 @@ struct SyncMute : QuestionableModule {
 		subClockTime += args.sampleTime;
 
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
-
-		// clock resets and swap checks
-		for (size_t i = 0; i < 8; i++) {
-			Mute& mute = mutes[i];
-			bool clockHit = false;
-
-			// on clock
-			if (timeSigs[i] < 0.f) {
-				float currentTime = clockTicksSinceReset % (int)abs(mute.timeSignature-1);
-				if (currentTime < mute.accumulatedTime) clockHit = true;
-				mute.accumulatedTime = currentTime;
-			}
-			if (mute.timeSignature > 0.f) {
-				float currentTime = fmod((subClockTime / (clockTime/(mute.timeSignature+1))) * (mute.timeSignature+1), mute.timeSignature+1);
-				if (currentTime < mute.accumulatedTime) clockHit = true;
-				mute.accumulatedTime = currentTime;
-			}
-
-			// edge cases
-			if (resetClocks) clockHit = true; // on reset
-			if (mute.shouldSwap && mute.timeSignature == 0.f) clockHit = true; // on immediate
-
-			if (clockHit) mute.accumulatedTime = 0.f;
-
-			if (mute.shouldSwap && clockHit) {
-				mute.muteState = !mute.muteState;
-				mute.shouldSwap = false;
-			}
-
-			if (mute.autoPress && clockHit) mute.shouldSwap = true; // auto press on clock option
-		}
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
