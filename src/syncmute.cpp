@@ -109,6 +109,8 @@ struct SyncMute : QuestionableModule {
 		dirtyable<bool> button = false;
 		bool autoPress = false;
 
+		float volume = 1.f;
+
 		void step(Module* mod) {
 			timeSignature = mod->params[paramId].getValue();
 			button = mod->params[paramId].getValue();
@@ -200,11 +202,12 @@ struct SyncMute : QuestionableModule {
 			if (buttons[i].isDirty() && buttons[i] == true) shouldSwap[i] = !shouldSwap[i];
 		}
 		
+		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
-			int channels = std::max(1, inputs[IN+i].getChannels());
-			for (size_t c = 0; c < channels; c++) outputs[OUT+i].setVoltage(muteState[i] ? 0.f : inputs[IN+i].getPolyVoltage(c), c);
-			outputs[OUT+i].setChannels(channels);
+			PolyphonicValue input(inputs[IN+1]);
+			input *= !muteState[i];
+			input.setOutput(outputs[OUT+i]);
 		}
 
 	}

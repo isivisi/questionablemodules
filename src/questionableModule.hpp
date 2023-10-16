@@ -65,14 +65,18 @@ struct dirtyable {
 struct PolyphonicValue {
 	std::vector<float> values;
 
-	PolyphonicValue(Input in) {
+	PolyphonicValue() {
+		values.reserve(PORT_MAX_CHANNELS);
+	}
+
+	PolyphonicValue(Input& in) : PolyphonicValue() {
 		int c = in.getChannels();
 		for (int i = 0; i < c; i++) values.push_back(in.getPolyVoltage(i));
 	}
 
-	void setOutput(Output out) {
-		for (int i = 0; i < values.size(); i++) out.setVoltage(values[i], i);
-		out.setChannels(values.size());
+	void setOutput(Output& out) {
+		for (size_t i = 0; i < values.size(); i++) out.setVoltage(values[i], i);
+		out.setChannels(std::max<size_t>(1, values.size()));
 	}
 
 	float sum() {
@@ -82,14 +86,22 @@ struct PolyphonicValue {
 	PolyphonicValue& operator=(float value) { 
 		values.clear(); 
 		values.push_back(value);
+		return *this;
 	}
 
-	PolyphonicValue& operator=(std::vector<float> value) { values = value; }
+	PolyphonicValue& operator=(Input in) {
+		int c = in.getChannels();
+		values.clear();
+		for (int i = 0; i < c; i++) values.push_back(in.getPolyVoltage(i));
+		return *this;
+	}
 
-	template <typename O> PolyphonicValue& operator+=(O value) { for (int i = 0; i < values.size(); i++) values[i] += value;  return *this; }
-	template <typename O> PolyphonicValue& operator-=(O value) { for (int i = 0; i < values.size(); i++) values[i] -= value;  return *this; }
-	template <typename O> PolyphonicValue& operator*=(O value) { for (int i = 0; i < values.size(); i++) values[i] *= value;  return *this; }
-	template <typename O> PolyphonicValue& operator/=(O value) { for (int i = 0; i < values.size(); i++) values[i] /= value;  return *this; }
+	PolyphonicValue& operator=(std::vector<float> value) { values = value; return *this; }
+
+	template <typename O> PolyphonicValue& operator+=(O value) { for (size_t i = 0; i < values.size(); i++) values[i] += value;  return *this; }
+	template <typename O> PolyphonicValue& operator-=(O value) { for (size_t i = 0; i < values.size(); i++) values[i] -= value;  return *this; }
+	template <typename O> PolyphonicValue& operator*=(O value) { for (size_t i = 0; i < values.size(); i++) values[i] *= value;  return *this; }
+	template <typename O> PolyphonicValue& operator/=(O value) { for (size_t i = 0; i < values.size(); i++) values[i] /= value;  return *this; }
 
 	template <typename O> bool operator==(const O& other) { return sum() == other; }
 	template <typename O> bool operator!=(const O& other) { return sum() != other; }
@@ -97,6 +109,27 @@ struct PolyphonicValue {
 	template <typename O> float operator-(O other) { return sum() - other; }
 	template <typename O> float operator*(O other) { return sum() * other; }
 	template <typename O> float operator/(O other) { return sum() / other; }
+
+	PolyphonicValue operator+(PolyphonicValue other) {
+		PolyphonicValue returnVal = *this;
+		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] += other.values[i];
+		return returnVal; 
+	}
+	PolyphonicValue operator-(PolyphonicValue other) {
+		PolyphonicValue returnVal = *this;
+		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] -= other.values[i];
+		return returnVal; 
+	}
+	PolyphonicValue operator*(PolyphonicValue other) {
+		PolyphonicValue returnVal = *this;
+		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] *= other.values[i];
+		return returnVal; 
+	}
+	PolyphonicValue operator/(PolyphonicValue other) {
+		PolyphonicValue returnVal = *this;
+		for (size_t i = 0; i < std::min(values.size(), other.values.size()); i++) returnVal.values[i] /= other.values[i];
+		return returnVal; 
+	}
 
 };
 
