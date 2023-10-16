@@ -98,31 +98,43 @@ struct SyncMute : QuestionableModule {
 		configInput(CLOCK, "clock");
 		configInput(RESET, "reset");
 
-		for (size_t i = 0; i < 8; i++) mutes[i].paramId = i;
+		for (size_t i = 0; i < 8; i++) {
+			mutes[i].module = this;
+			mutes[i].paramId = i;
+		}
 	}
 
 	struct Mute {
 		int paramId = -1;
+		Module* module = nullptr;
 		float timeSignature = 0.f;
 		bool muteState = false;
 		bool shouldSwap = false;
 		dirtyable<bool> button = false;
 		bool autoPress = false;
 
+		float accumulatedTime = 0.f;
+
 		float volume = 1.f;
 
-		void step(Module* mod) {
-			timeSignature = mod->params[paramId].getValue();
-			button = mod->params[paramId].getValue();
+		void step(float deltaTime) {
+			timeSignature = module->params[paramId].getValue();
+			button = module->params[paramId].getValue();
 			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
+
+			volume = math::clamp(volume + (muteState ? -deltaTime : deltaTime));
 		}
 
 		json_t* toJson() {
-			return nullptr;
+			json_t* rootJ = json_object();
+			json_object_set_new(rootJ, "muteState", json_boolean(muteState));
+			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
+			return rootJ;
 		}
 
 		void fromJson(json_t* json) {
-
+			if (json_t* v = json_object_get(json, "muteState")) muteState = json_boolean_value(v);
+			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
 		}
 	};
 
@@ -141,10 +153,6 @@ struct SyncMute : QuestionableModule {
 		if (resetClocks) {
 			clockTicksSinceReset = 0;
 			subClockTime = 0.f;
-		}
-
-		for (size_t i = 0; i < 8; i++) {
-			timeSigs[i] = params[TIME_SIG+i].getValue();
 		}
 
 		// clock stuff from lfo
@@ -166,47 +174,43 @@ struct SyncMute : QuestionableModule {
 		}
 		subClockTime += args.sampleTime;
 
+		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
+
 		// clock resets and swap checks
 		for (size_t i = 0; i < 8; i++) {
+			Mute& mute = mutes[i];
 			bool clockHit = false;
 
 			// on clock
 			if (timeSigs[i] < 0.f) {
-				float currentTime = clockTicksSinceReset % (int)abs(timeSigs[i]-1);
-				if (currentTime < accumulatedTime[i]) clockHit = true;
-				accumulatedTime[i] = currentTime;
+				float currentTime = clockTicksSinceReset % (int)abs(mute.timeSignature-1);
+				if (currentTime < mute.accumulatedTime) clockHit = true;
+				mute.accumulatedTime = currentTime;
 			}
-			if (timeSigs[i] > 0.f) {
-				float currentTime = fmod((subClockTime / (clockTime/(timeSigs[i]+1))) * (timeSigs[i]+1), timeSigs[i]+1);
-				if (currentTime < accumulatedTime[i]) clockHit = true;
-				accumulatedTime[i] = currentTime;
+			if (mute.timeSignature > 0.f) {
+				float currentTime = fmod((subClockTime / (clockTime/(mute.timeSignature+1))) * (mute.timeSignature+1), mute.timeSignature+1);
+				if (currentTime < mute.accumulatedTime) clockHit = true;
+				mute.accumulatedTime = currentTime;
 			}
 
 			// edge cases
 			if (resetClocks) clockHit = true; // on reset
-			if (shouldSwap[i] && timeSigs[i] == 0.f) clockHit = true; // on immediate
+			if (mute.shouldSwap && mute.timeSignature == 0.f) clockHit = true; // on immediate
 
-			if (clockHit) accumulatedTime[i] = 0.f;
+			if (clockHit) mute.accumulatedTime = 0.f;
 
-			if (shouldSwap[i] && clockHit) {
-				muteState[i] = !muteState[i];
-				shouldSwap[i] = false;
+			if (mute.shouldSwap && clockHit) {
+				mute.muteState = !mute.muteState;
+				mute.shouldSwap = false;
 			}
 
-			if (autoPress[i] && clockHit) shouldSwap[i] = true; // auto press on clock option
+			if (mute.autoPress && clockHit) mute.shouldSwap = true; // auto press on clock option
 		}
-
-		// button checks
-		for (size_t i = 0; i < 8; i++) {
-			buttons[i] = params[MUTE+i].getValue();
-			if (buttons[i].isDirty() && buttons[i] == true) shouldSwap[i] = !shouldSwap[i];
-		}
-		
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
 			PolyphonicValue input(inputs[IN+i]);
-			input *= !muteState[i];
+			input *= mutes[i].volume;
 			input.setOutput(outputs[OUT+i]);
 		}
 
@@ -216,13 +220,9 @@ struct SyncMute : QuestionableModule {
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
 
-		json_t* muteArray = json_array();
-		for (size_t i = 0; i < 8; i++) json_array_append_new(muteArray, json_boolean(muteState[i]));
-		json_object_set_new(nodeJ, "muteState", muteArray);
-
-		json_t* autoArray = json_array();
-		for (size_t i = 0; i < 8; i++) json_array_append_new(autoArray, json_boolean(autoPress[i]));
-		json_object_set_new(nodeJ, "autoPress", autoArray);
+		json_t* array = json_array();
+		for (size_t i = 0; i < 8; i++) json_array_append_new(array, mutes[i].toJson());
+		json_object_set_new(nodeJ, "mutes", array);
 
 		return nodeJ;
 	}
@@ -231,16 +231,9 @@ struct SyncMute : QuestionableModule {
 		QuestionableModule::dataFromJson(rootJ);
 		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
 
-		if (json_t* array = json_object_get(rootJ, "muteState")) { // assumes all 8 set
+		if (json_t* array = json_object_get(rootJ, "mutes")) { // assumes all 8 set
 			for (size_t i = 0; i < 8; i++) { 
-				muteState[i] = json_boolean_value(json_array_get(array, i)); 
-			}
-		}
-
-		if (json_t* array = json_object_get(rootJ, "autoPress")) { // assumes all 8 set
-			for (size_t i = 0; i < 8; i++) { 
-				autoPress[i] = json_boolean_value(json_array_get(array, i));
-				if (autoPress[i]) shouldSwap[i] = true;
+				mutes[i].fromJson(json_array_get(array, i)); 
 			}
 		}
 
@@ -304,9 +297,9 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 		if (layer != 1) return;
 
 		SyncMute* mod = (SyncMute*)module;
-		int sig = mod->timeSigs[paramId];
+		int sig = mod->mutes[paramId].timeSignature;
 		
-		if (mod->muteState[paramId]) {
+		if (mod->mutes[paramId].muteState) {
 			nvgFillColor(args.vg, nvgRGB(255, 0, 25));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
@@ -315,7 +308,7 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 
 		if (mod->clockTime/32 < 0.05 && sig > 0.f) return; // no super fast flashing lights
 
-		if (mod->shouldSwap[paramId] && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f) {
+		if (mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f) {
 			nvgFillColor(args.vg, nvgRGB(0, 255, 25));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
@@ -326,8 +319,8 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 	void appendContextMenu(ui::Menu* menu) override {
 		if (!this->module) return;
 		SyncMute* mod = (SyncMute*)this->module;
-		menu->addChild(createMenuItem("Automatically Press", mod->autoPress[this->paramId] ? "On" : "Off", [=]() {
-			mod->autoPress[this->paramId] = !mod->autoPress[this->paramId];
+		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
+			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
 		Resizable<QuestionableParam<CKD6>>::appendContextMenu(menu);
 	}
