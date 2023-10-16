@@ -133,7 +133,7 @@ struct Nandomizer : QuestionableModule {
 		fadingInputs *= fadeAmnt;
 
 		PolyphonicValue input(inputs[activeOutput]);
-		input += fadingInputs;
+		input = input + fadingInputs;
 		input.setOutput(outputs[0]);
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
