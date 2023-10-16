@@ -432,12 +432,19 @@ struct NightBinWidget : QuestionableWidget {
 
 		background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(150, 173, 233));
 
+		backdrop = new ImagePanel();
+		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/nightbin/dirt.png"); 
+		backdrop->scalar = 3.5;
+		backdrop->visible = true;
+
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
 		setText();
 
 		backgroundColorLogic(module);
 		setPanel(background);
+		//addChild(backdrop);
 		addChild(color);
 		
 		if (module) setupMenuBar();
@@ -476,6 +483,8 @@ struct NightBinWidget : QuestionableWidget {
 			nvgStroke(args.vg);
 		}
 		nvgRestore(args.vg);
+
+		Widget::drawChild(backdrop, args);
 	}
 
 	Widget* getRackLayout() {
