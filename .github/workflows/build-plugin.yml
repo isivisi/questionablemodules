@@ -8,6 +8,7 @@ on:
       - 'v**'
     paths:
       - 'src/**'
+      - 'res/**'
 
 env:
   rack-sdk-version: 2.4.0
