@@ -120,20 +120,22 @@ struct Nandomizer : QuestionableModule {
 
 		if (shouldRandomize) activeOutput = usableInputs[randomInt<int>(0, usableInputs.size()-1)];
 
-		float fadingInputs = 0.f;
+		PolyphonicValue fadingInputs;
 		for (int i = 0; i < MAX_INPUTS; i++) {
+			PolyphonicValue input(inputs[i]);
 			if (i != activeOutput) {
 				inputFades[i] = std::max(0.f, inputFades[i] - ((inputFades[i] * args.sampleTime)));
-				fadingInputs += inputs[i].getVoltage() * inputFades[i];
+				input *= inputFades[i];
+				fadingInputs += input;
 			} else {
 				inputFades[i] = 1.f;
 			}
 		}
+		fadingInputs *= fadeAmnt;
 
-		// outputs w/ poly support
-		int channels = std::max(1, inputs[activeOutput].getChannels());
-		for (size_t c = 0; c < channels; c++) outputs[0].setVoltage(inputs[activeOutput].getPolyVoltage(c) + (fadingInputs * fadeAmnt), c);
-		outputs[0].setChannels(channels);
+		PolyphonicValue input(inputs[activeOutput]);
+		input += fadingInputs;
+		input.setOutput(outputs[0]);
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
 
