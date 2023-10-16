@@ -60,6 +60,46 @@ struct dirtyable {
 	T& operator--() { return --value; }
 };
 
+// simple polyphony value handler
+// "mimics" a float but internally handles all polyphonic values
+struct PolyphonicValue {
+	std::vector<float> values;
+
+	PolyphonicValue(Input in) {
+		int c = in.getChannels();
+		for (int i = 0; i < c; i++) values.push_back(in.getPolyVoltage(i));
+	}
+
+	void setOutput(Output out) {
+		for (int i = 0; i < values.size(); i++) out.setVoltage(values[i], i);
+		out.setChannels(values.size());
+	}
+
+	float sum() {
+		return std::accumulate(values.begin(), values.end(), 0);
+	}
+
+	PolyphonicValue& operator=(float value) { 
+		values.clear(); 
+		values.push_back(value);
+	}
+
+	PolyphonicValue& operator=(std::vector<float> value) { values = value; }
+
+	template <typename O> PolyphonicValue& operator+=(O value) { for (int i = 0; i < values.size(); i++) values[i] += value;  return *this; }
+	template <typename O> PolyphonicValue& operator-=(O value) { for (int i = 0; i < values.size(); i++) values[i] -= value;  return *this; }
+	template <typename O> PolyphonicValue& operator*=(O value) { for (int i = 0; i < values.size(); i++) values[i] *= value;  return *this; }
+	template <typename O> PolyphonicValue& operator/=(O value) { for (int i = 0; i < values.size(); i++) values[i] /= value;  return *this; }
+
+	template <typename O> bool operator==(const O& other) { return sum() == other; }
+	template <typename O> bool operator!=(const O& other) { return sum() != other; }
+	template <typename O> float operator+(O other) { return sum() + other; }
+	template <typename O> float operator-(O other) { return sum() - other; }
+	template <typename O> float operator*(O other) { return sum() * other; }
+	template <typename O> float operator/(O other) { return sum() / other; }
+
+};
+
 struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
 	bool supportsThemes = true;
