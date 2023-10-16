@@ -118,8 +118,8 @@ struct SyncMute : QuestionableModule {
 		float volume = 1.f;
 
 		void step(float deltaTime) {
-			timeSignature = module->params[paramId].getValue();
-			button = module->params[paramId].getValue();
+			timeSignature = module->params[TIME_SIG+paramId].getValue();
+			button = module->params[MUTE+paramId].getValue();
 			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
 
 			bool clockHit = false;
@@ -149,7 +149,7 @@ struct SyncMute : QuestionableModule {
 
 			if (autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			volume = math::clamp(volume + (muteState ? -deltaTime : deltaTime));
+			volume = math::clamp(volume + (muteState ? -(deltaTime*5) : deltaTime*5));
 		}
 
 		json_t* toJson() {
@@ -250,7 +250,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 
 		float anglePerTick = 31 / 1.65;
 
-		float sig = mod ? mod->timeSigs[paramId - SyncMute::TIME_SIG] : 0.f;
+		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
 
 		RoundLargeBlackKnob::draw(args);
 
