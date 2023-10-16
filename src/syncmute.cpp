@@ -205,7 +205,7 @@ struct SyncMute : QuestionableModule {
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
-			PolyphonicValue input(inputs[IN+1]);
+			PolyphonicValue input(inputs[IN+i]);
 			input *= !muteState[i];
 			input.setOutput(outputs[OUT+i]);
 		}

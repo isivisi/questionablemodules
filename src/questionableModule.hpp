@@ -76,7 +76,7 @@ struct PolyphonicValue {
 
 	void setOutput(Output& out) {
 		for (size_t i = 0; i < values.size(); i++) out.setVoltage(values[i], i);
-		out.setChannels(std::max<size_t>(1, values.size()));
+		out.setChannels(values.size());
 	}
 
 	float sum() {
