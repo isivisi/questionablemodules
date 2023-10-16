@@ -125,7 +125,8 @@ struct Nandomizer : QuestionableModule {
 			PolyphonicValue input(inputs[i]);
 			if (i != activeOutput) {
 				inputFades[i] = std::max(0.f, inputFades[i] - ((inputFades[i] * args.sampleTime)));
-				fadingInputs += input * inputFades[i];
+				input *= inputFades[i];
+				fadingInputs += input;
 			} else {
 				inputFades[i] = 1.f;
 			}
