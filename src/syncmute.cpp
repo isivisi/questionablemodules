@@ -66,19 +66,19 @@ struct SyncMute : QuestionableModule {
 
 	float accumulatedTime[8] = {0.f};
 
-	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "Immediate", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
+	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(TIME_SIG, -31.f, 31.f, 0.f,  "Ratio", sigsStrings);
-		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG, -32.f, 32.f, 0.f,  "Ratio", sigsStrings);
+		configSwitch(TIME_SIG2, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG3, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG4, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG5, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG6, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG7, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG8, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
 		configInput(IN,  "1");
 		configInput(IN2, "2");
 		configInput(IN3, "3");
@@ -126,12 +126,12 @@ struct SyncMute : QuestionableModule {
 
 			// on clock
 			if (timeSignature < 0.f) {
-				float currentTime = module->clockTicksSinceReset % (int)abs(timeSignature-1);
+				float currentTime = module->clockTicksSinceReset % (int)abs(timeSignature);
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
 			if (timeSignature > 0.f) {
-				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature+1))) * (timeSignature+1), timeSignature+1);
+				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature))) * timeSignature, timeSignature);
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
@@ -270,8 +270,8 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 			nvgRestore(args.vg);
 		} // clockTime
 		
-		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/(sig+1))) * (sig+1), sig+1)*(90.f/anglePerTick)));
+		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig))*(-90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/sig)) * sig, sig)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
