@@ -26,11 +26,11 @@
      inkscape:document-units="px"
      inkscape:zoom="30.266666"
      inkscape:cx="6.3270927"
-     inkscape:cy="7.0209253"
+     inkscape:cy="6.9713658"
      inkscape:window-width="2560"
-     inkscape:window-height="1377"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-height="1363"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -64,10 +64,9 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       d="M 4.1095143,9.1935579 V 8.6518751 H 5.8486456 V 9.1935579 Z M 7.5261184,11.3865 V 10.696291 L 10.155901,8.9227165 V 8.8877692 L 7.5261184,7.1141947 V 6.4239859 L 10.784952,8.6344015 V 9.1760843 Z M 12.576004,9.1935579 V 8.6518751 h 1.739132 v 0.5416828 z"
+       d="M 4.0734613,9.4746823 V 8.9282052 h 1.7238738 v 0.5464771 z m 3.38663,2.2123517 V 10.990716 L 10.066803,9.2014438 V 9.1661872 L 7.4600913,7.3769153 V 6.6805976 L 10.690335,8.910577 V 9.457054 Z M 12.465674,9.4746823 V 8.9282052 h 1.723874 v 0.5464771 z"
        id="text2"
        style="font-size:8.73682px;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro';fill:none;stroke:#d8d8d8;stroke-width:0.728"
-       transform="scale(0.99122694,1.0088507)"
        aria-label="-&gt;-"
        sodipodi:nodetypes="ccccccccccccccccccc" />
   </g>

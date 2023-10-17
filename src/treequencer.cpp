@@ -1310,7 +1310,7 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
 
-		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(135, 285), "descriptor");
+		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(108, 285), "descriptor");
 		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(160, 285), "descriptor");
 		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(185, 285), "descriptor");
 		
@@ -1363,7 +1363,7 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(display);
 		addChild(dirt);
 
-		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(135, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(108, 266), module)));
 		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(160, 266), module)));
 		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(false, Vec(185, 266), module)));
 
