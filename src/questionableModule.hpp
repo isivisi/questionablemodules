@@ -347,22 +347,34 @@ struct Resizable : T {
 };
 
 struct QuestionableThemedKnob : RoundKnob, QuestionableThemed {
-	std::unordered_map<std::string, NVGcolor> themeTints;
-	NVGcolor tint = nvgRGB(255,255,255);
+
+	struct KnobTheme {
+		NVGcolor back = nvgRGB(255,255,255);
+		NVGcolor front = nvgRGB(255,255,255);
+	};
+
+	std::unordered_map<std::string, KnobTheme> themes;
+	KnobTheme knobTheme;
 
 	QuestionableThemedKnob() {
 
 	}
 
+	void setupThemes(std::unordered_map<std::string, KnobTheme> themes) {
+		themes = themes;
+		onThemeChange(theme);
+	}
+
 	void draw(const DrawArgs &args) override {
+		nvgTint(args.vg, knobTheme.back);
 		Widget::drawChild(fb, args);
-		nvgTint(args.vg, tint);
+		nvgTint(args.vg, knobTheme.front);
 		Widget::drawChild(tw, args);
 	}
 
 	void onThemeChange(std::string theme) override {
-		if (themeTints.find(theme) != themeTints.end()) tint = themeTints[theme];
-		else tint = nvgRGB(255,255,255);
+		if (themes.find(theme) != themes.end()) knobTheme = themes[theme];
+		else knobTheme = KnobTheme();
 	}
 
 };
