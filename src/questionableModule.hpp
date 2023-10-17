@@ -342,6 +342,25 @@ struct Resizable : T {
 
 };
 
+struct QuestionableLargeKnob : RoundKnob {
+
+	QuestionableLargeKnob() {
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
+
+	}
+
+};
+
+struct QuestionableSmallKnob : Resizable<QuestionableLargeKnob> {
+
+	QuestionableSmallKnob() : Resizable(0.68, true) {
+
+	}
+
+};
+
 template <typename T>
 struct QuestionableParam : T {
 	static_assert(std::is_base_of<ParamWidget, T>::value, "T must inherit from ParamWidget");

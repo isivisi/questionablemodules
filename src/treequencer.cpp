@@ -1392,10 +1392,10 @@ struct TreequencerWidget : QuestionableWidget {
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
 		}
 
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
+		addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
 
-		//addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
+		//addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
 		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
 		
 		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
