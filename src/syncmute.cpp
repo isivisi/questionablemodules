@@ -239,9 +239,12 @@ struct SyncMute : QuestionableModule {
 
 };
 
-struct ClockKnob : RoundLargeBlackKnob {
+struct ClockKnob : RoundKnob {
 
 	ClockKnob() {
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
 
 	}
 
@@ -252,7 +255,7 @@ struct ClockKnob : RoundLargeBlackKnob {
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
 
-		RoundLargeBlackKnob::draw(args);
+		RoundKnob::draw(args);
 
 		nvgSave(args.vg);
 
