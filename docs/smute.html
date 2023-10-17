@@ -33,7 +33,7 @@
             </a>
 
             <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
-              <a href="https://library.vcvrack.com/questionablemodules/greenscreen"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
+              <a href="https://library.vcvrack.com/questionablemodules/smute"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
               <a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>
             </div>
             
@@ -45,7 +45,7 @@
           <div class="p-2 mb-4 bg-light text-center">
             <div class="container-fluid py-5">
               <h1 class="display-1 fw-bold">Smute</h1>
-              <p class="fs-4">Mute on the clock.</p>
+              <p class="fs-4">Synchronized mute.</p>
 
             </div>
           </div>
@@ -58,14 +58,37 @@
           <div class="container-fluid py-5">
             <div class="feature">
               <p class="">
-                blah blah
+                Mute buttons that sync with the clock.
               </p>
+              
+              <h3></h3>
+              <p id="Input"><span class="fw-bold">Input</span> Input voltage for the row.</p>
+              <p id="Output"><span class="fw-bold">Output</span> The output voltage if the mute is inactive for the row.</p>
+              <p id="Mute"><span class="fw-bold">Mute</span> When this button is pressed it indicates that you want this row muted. The voltage will be muted when the deisred ratio is met with the clock or immediatly based on the <a href="#Ratio"><span class="fw-bold">Ratio</span></a> knob.</p>
+              <p id="Ratio"><span class="fw-bold">Ratio</span> Specify the clock ratio you want to syncronize the mute with. From /32 to X32. By default it is set to immediatly.</p>
+    
+              <p id="Clock"><span class="fw-bold">Clock</span> The clock cv input, by default the clock ticks every 2 seconds.</p>
+              <p id="Reset"><span class="fw-bold">Reset</span> Resets the internal clock values and triggers any waiting mutes when this is triggered.</p>
 
-              <div style="min-height: 150px"></div> <!-- Spacer -->
+              <img src="./images/smute.svg" width="100%"/>
+
+              <div style="min-height: 200px"></div> <!-- Spacer -->
             </div>
            </div> 
+
+           <div class="container-fluid py-5">
+            <div>
+              <h2>Themes</h2>
+              <p>The modules context menu has a theme submenu where you can change the background to a solid white or black color if you are having trouble with the default background design. </p>
+
+              <h2>Labels</h2>
+              <p>Knob and plug labels can be toggled via the <span class="fw-bold">toggle labels</span> option in the context menu. </p>
+            </div>
+          </div>
  
-        </div>   
+        </div> 
+
+        
 
         <script> importHTML("footer.html") </script>
 

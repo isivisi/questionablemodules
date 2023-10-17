@@ -58,7 +58,7 @@
     {
       "slug": "smute",
       "name": "Smute",
-      "description": "Mute buttons synced with the clock",
+      "description": "Mute buttons synced to the clock",
       "manualUrl": "https://isivisi.github.io/questionablemodules/smute",
       "tags": ["Utility", "Switch"]
     }
