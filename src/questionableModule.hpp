@@ -177,6 +177,7 @@ struct QuestionableModule : Module {
 };
 
 struct QuestionableThemed {
+	std::string theme;
 	virtual void onThemeChange(std::string theme) = 0;
 };
 
@@ -229,7 +230,10 @@ struct QuestionableWidget : ModuleWidget {
 
 	void propigateThemeToChildren(std::string theme) {
 		for (auto it = children.begin(); it != children.end(); it++) {
-			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) themedWidget->onThemeChange(theme);
+			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) {
+				themedWidget->theme = theme;
+				themedWidget->onThemeChange(theme);
+			}
 		}
 	}
 
@@ -342,13 +346,26 @@ struct Resizable : T {
 
 };
 
-struct QuestionableLargeKnob : RoundKnob {
+struct QuestionableLargeKnob : RoundKnob, QuestionableThemed {
+	std::unordered_map<std::string, NVGcolor> themeTints;
+	NVGcolor tint = nvgRGB(255,255,255);
 
 	QuestionableLargeKnob() {
 
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
 		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
 
+	}
+
+	void draw(const DrawArgs &args) override {
+		Widget::drawChild(fb, args);
+		nvgTint(args.vg, tint);
+		Widget::drawChild(tw, args);
+	}
+
+	void onThemeChange(std::string theme) override {
+		if (themeTints.find(theme) != themeTints.end()) tint = themeTints[theme];
+		else tint = nvgRGB(255,255,255);
 	}
 
 };
