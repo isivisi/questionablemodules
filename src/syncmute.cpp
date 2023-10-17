@@ -10,7 +10,6 @@ const int MODULE_SIZE = 8;
 struct SyncMute : QuestionableModule {
 	enum ParamId {
 		MUTE,
-		MUTE1,
 		MUTE2,
 		MUTE3,
 		MUTE4,
@@ -296,7 +295,9 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 };
 
-struct MuteButton : Resizable<QuestionableParam<CKD6>> {
+struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
+	dirtyable<bool> lightState = false;
+	float lightAlpha = 0.f;
 	
 	MuteButton() : Resizable(0.85, true) { }
 
@@ -316,12 +317,16 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 
 		if (mod->clockTime/32 < 0.05 && sig > 0.f) return; // no super fast flashing lights
 
-		if (mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f) {
-			nvgFillColor(args.vg, nvgRGB(0, 255, 25));
-			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
-			nvgFill(args.vg);
-		}
+		lightState = mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f;
+
+		if (lightState.isDirty()) lightAlpha = 1.f;
+
+		nvgFillColor(args.vg, nvgRGBA(0, 255, 25, lightAlpha*255));
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
+		nvgFill(args.vg);
+
+		lightAlpha = std::max<float>(0.f, lightAlpha-(deltaTime*0.05));
 	}
 
 	void appendContextMenu(ui::Menu* menu) override {
@@ -330,7 +335,7 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
-		Resizable<QuestionableParam<CKD6>>::appendContextMenu(menu);
+		Resizable<QuestionableTimed<QuestionableParam<CKD6>>>::appendContextMenu(menu);
 	}
 
 };

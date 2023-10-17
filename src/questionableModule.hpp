@@ -181,9 +181,23 @@ struct QuestionableThemed {
 	virtual void onThemeChange(std::string theme) = 0;
 };
 
-struct QuestionableWidget : ModuleWidget {
+template<typename T>
+struct QuestionableTimed : T {
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 	double deltaTime = 0.016;
+	unsigned int fps = 60;
+
+	void step() override {
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsedTime = currentTime - startTime;
+		deltaTime = elapsedTime.count();
+		fps = 1 / elapsedTime.count();
+
+		T::step();
+	}
+};
+
+struct QuestionableWidget : QuestionableTimed<ModuleWidget> {
 
 	ImagePanel *backdrop = nullptr;
 	ColorBG* color = nullptr;
@@ -203,12 +217,7 @@ struct QuestionableWidget : ModuleWidget {
 			if (!module) setWidgetTheme(settings::preferDarkPanels ? "Dark" : "");
 		}
 
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsedTime = currentTime - startTime;
-		deltaTime = elapsedTime.count();
-		//fps = 1 / elapsedTime.count();
-
-		ModuleWidget::step();
+		QuestionableTimed<ModuleWidget>::step();
 	}
 
 	void backgroundColorLogic(QuestionableModule* module) {
