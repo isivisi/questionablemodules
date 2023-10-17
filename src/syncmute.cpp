@@ -70,7 +70,14 @@ struct SyncMute : QuestionableModule {
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(MUTE, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE2, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE3, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE4, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE5, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE6, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE7, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE8, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
 		configSwitch(TIME_SIG, -32.f, 32.f, 0.f,  "Ratio", sigsStrings);
 		configSwitch(TIME_SIG2, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
 		configSwitch(TIME_SIG3, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
@@ -95,8 +102,8 @@ struct SyncMute : QuestionableModule {
 		configOutput(OUT6, "6");
 		configOutput(OUT7, "7");
 		configOutput(OUT8, "8");
-		configInput(CLOCK, "clock");
-		configInput(RESET, "reset");
+		configInput(CLOCK, "Clock");
+		configInput(RESET, "Reset");
 
 		for (size_t i = 0; i < 8; i++) {
 			mutes[i].module = this;
@@ -244,7 +251,7 @@ struct SyncMute : QuestionableModule {
 
 struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
-	ClockKnob() : Resizable(1.1, true) {
+	ClockKnob() : Resizable(1.085, true) {
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
 	}
 
@@ -271,7 +278,7 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 			nvgStrokeWidth(args.vg, 0.5);
 			nvgStroke(args.vg);
 			nvgRestore(args.vg);
-		} // clockTime
+		}
 		
 		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig))*(-90.f/anglePerTick)));
 		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/sig)) * sig, sig)*(90.f/anglePerTick)));

@@ -400,7 +400,7 @@ struct QuestionableLargeKnob : QuestionableThemedKnob {
 		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/WhiteKnobSimple.svg")));
 
 		setFallbackTheme({
-			nvgRGB(35,34,35), 
+			nvgRGB(35,35,35),
 			nvgRGB(255,255,255)
 		});
 
