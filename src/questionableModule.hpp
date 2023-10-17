@@ -355,26 +355,39 @@ struct QuestionableThemedKnob : RoundKnob, QuestionableThemed {
 
 	std::unordered_map<std::string, KnobTheme> themes;
 	KnobTheme knobTheme;
+	KnobTheme fallbackTheme;
 
 	QuestionableThemedKnob() {
 
 	}
 
 	void setupThemes(std::unordered_map<std::string, KnobTheme> themes) {
-		themes = themes;
+		this->themes = themes;
+		onThemeChange(theme);
+	}
+
+	void setFallbackTheme(KnobTheme fallback) {
+		fallbackTheme = fallback;
 		onThemeChange(theme);
 	}
 
 	void draw(const DrawArgs &args) override {
+
+		nvgSave(args.vg);
 		nvgTint(args.vg, knobTheme.back);
 		Widget::drawChild(fb, args);
+		nvgRestore(args.vg);
+
+		nvgSave(args.vg);
 		nvgTint(args.vg, knobTheme.front);
 		Widget::drawChild(tw, args);
+		nvgRestore(args.vg);
+
 	}
 
 	void onThemeChange(std::string theme) override {
 		if (themes.find(theme) != themes.end()) knobTheme = themes[theme];
-		else knobTheme = KnobTheme();
+		else knobTheme = fallbackTheme;
 	}
 
 };
@@ -384,7 +397,12 @@ struct QuestionableLargeKnob : QuestionableThemedKnob {
 	QuestionableLargeKnob() {
 
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
-		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/WhiteKnobSimple.svg")));
+
+		setFallbackTheme({
+			nvgRGB(35,34,35), 
+			nvgRGB(255,255,255)
+		});
 
 	}
 
