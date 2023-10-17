@@ -145,13 +145,6 @@ struct Nandomizer : QuestionableModule {
 
 };
 
-struct NandomizerKnob : QuestionableSmallKnob {
-	NandomizerKnob() {
-		themeTints[""] = nvgRGB(77,255,77);
-		onThemeChange(theme);
-	}
-};
-
 struct NandomizerWidget : QuestionableWidget {
 
 	void setText() {
@@ -192,7 +185,7 @@ struct NandomizerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<QuestionableParam<NandomizerKnob>>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
+		addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(8.24, 100)), module, Nandomizer::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {

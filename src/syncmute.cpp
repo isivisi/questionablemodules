@@ -150,7 +150,9 @@ struct SyncMute : QuestionableModule {
 
 			if (autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			volume = math::clamp(volume + (muteState ? -(deltaTime*10) : deltaTime*10));
+			float timeMultiply = 10;
+			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
+			volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
 		}
 
 		json_t* toJson() {
