@@ -72,7 +72,7 @@ struct PolyphonicValue {
 
 	PolyphonicValue(Input& in) {
 		channels = in.getChannels();
-		for (int i = 0; i < channels; i++) values[i] = in.getPolyVoltage(i);
+		for (size_t i = 0; i < channels; i++) values[i] = in.getPolyVoltage(i);
 	}
 
 	void setOutput(Output& out) {

@@ -743,25 +743,34 @@ struct TreequencerButton : SvgButton {
 
 	bool latchState = false;
 
+	float buttonScale = 0.75;
+
 	TreequencerButton(std::string icon, Vec pos, Treequencer* module) {
 		this->module = module;
 		box.pos = pos;
 		this->icon = icon;
 		shadow->opacity = 0;
 
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg-clicked.svg")));
+		//addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg.svg")));
+		//addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg-clicked.svg")));
+
+		addFrame(Svg::load(asset::system("res/ComponentLibrary/CKD6_0.svg")));
+		addFrame(Svg::load(asset::system("res/ComponentLibrary/CKD6_1.svg")));
+
+		box.pos = this->box.pos.plus(this->box.size.mult(1.f-buttonScale).div(2));
 
 		iconWidget = new SvgWidget();
 		iconWidget->setSvg(Svg::load(asset::plugin(pluginInstance, icon)));
-		addChild(iconWidget);
+		//addChild(iconWidget);
 
 	}
 
 	void draw(const DrawArgs &args) override {
 		nvgSave(args.vg);
 		if (disabled) nvgTint(args.vg, nvgRGB(180,180,180));
+		nvgScale(args.vg, buttonScale, buttonScale);
 		SvgButton::draw(args);
+		nvgScale(args.vg, 1.5, 1.5);
 		iconWidget->draw(args);
 		nvgRestore(args.vg);
 	}
@@ -1302,7 +1311,7 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
 
 		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(135, 285), "descriptor");
-		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(165, 285), "descriptor");
+		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(160, 285), "descriptor");
 		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(185, 285), "descriptor");
 		
 		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
@@ -1355,7 +1364,7 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(dirt);
 
 		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(135, 266), module)));
-		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(165, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(160, 266), module)));
 		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(false, Vec(185, 266), module)));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
