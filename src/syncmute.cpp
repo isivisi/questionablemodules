@@ -239,13 +239,10 @@ struct SyncMute : QuestionableModule {
 
 };
 
-struct ClockKnob : RoundKnob {
+struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
-	ClockKnob() {
-
+	ClockKnob() : Resizable(1.1, true) {
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
-		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
-
 	}
 
 	void draw(const DrawArgs &args) override {
@@ -254,8 +251,8 @@ struct ClockKnob : RoundKnob {
 		float anglePerTick = 31 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
-
-		RoundKnob::draw(args);
+		
+		Resizable<QuestionableLargeKnob>::draw(args);
 
 		nvgSave(args.vg);
 
@@ -267,7 +264,7 @@ struct ClockKnob : RoundKnob {
 			nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 			nvgBeginPath(args.vg);
 			nvgMoveTo(args.vg, 0, 0);
-			nvgLineTo(args.vg, 0, 4.5-box.size.y/2);
+			nvgLineTo(args.vg, 0, 6-box.size.y/2);
 			nvgStrokeWidth(args.vg, 0.5);
 			nvgStroke(args.vg);
 			nvgRestore(args.vg);
