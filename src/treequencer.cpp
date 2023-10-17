@@ -159,14 +159,31 @@ struct Scale {
 };
 
 // All starting at C
+// https://en.wikipedia.org/wiki/List_of_musical_scales_and_modes
 std::vector<Scale> scales = {
 	Scale{"Chromatic", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}, // C(0), C#(1), D(2), D#(3), E(4), F(5), F#(6), G(7), G#(8), A(9), A#(10), B(11)
 	Scale{"Major", {0, 2, 4, 5, 7, 9, 11}}, // C, D, E, F, G, A, B
-	Scale{"Minor", {0, 2, 3, 5, 7, 8, 10}}, // C, D, D#, F, G, G#, A#
-	Scale{"Pentatonic", {0, 2, 5, 7, 10}}, // C, D, F, G, A#
+	Scale{"Natural Minor", {0, 2, 3, 5, 7, 8, 10}}, // C, D, D#, F, G, G#, A#
+	Scale{"Harmonic Minor", {0, 2, 3, 5, 7, 8, 11}},
+	Scale{"Melodic Minor", {0,2,3,5,7,9,11}},
+	Scale{"Major Pentatonic", {0, 2, 4, 7, 9}},
+	Scale{"Minor Pentatonic", {0, 3, 5, 7, 10}},
 	Scale{"Blues", {0, 3, 5, 6, 7, 10}}, // C, D#, F, F#, G, A#
 	Scale{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
-	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
+	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}}, // C, D, E, F, G, A, A#
+	Scale{"Double Harmonic", {0,1,4,5,7,8,11}},
+	Scale{"Enigmatic", {0,1,4,6,8,10,11}},
+	Scale{"Half Diminished", {0,2,3,5,6,8,10}},
+	Scale{"Hungarian Major", {0,3,4,6,7,9,10}},
+	Scale{"Lydian", {0,2,4,6,7,9,11}},
+	Scale{"Neapolitan Major", {0,1,3,5,7,9,11}},
+	Scale{"Neapolitan Minor", {0,1,3,5,7,8,11}},
+	Scale{"Persian", {0,1,4,5,6,8,11}},
+	Scale{"Acoustic", {0,2,4,6,7,9,10}},
+	Scale{"Istrian", {0,1,3,4,6,7}},
+	Scale{"Iwato", {0,1,5,6,10}},
+	Scale{"Locrian", {0,1,3,5,6,8,10}},
+	Scale{"Major Locrian", {0,2,4,5,6,8,10}},
 };
 
 static Scale getScale(std::string scaleName) {
@@ -400,7 +417,7 @@ struct Treequencer : QuestionableModule {
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
 	bool followNodes = false;
-	std::string defaultScale = "Pentatonic"; // scale for new node gen
+	std::string defaultScale = "Minor Pentatonic"; // scale for new node gen
 
 	bool isDirty = true;
 	bool bouncing = false;
