@@ -192,7 +192,7 @@ struct QuestionableTimed : T {
 		std::chrono::duration<double> elapsedTime = currentTime - startTime;
 		deltaTime = elapsedTime.count();
 		fps = 1 / elapsedTime.count();
-
+		startTime = currentTime;
 		T::step();
 	}
 };

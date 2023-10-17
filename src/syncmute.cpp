@@ -326,7 +326,7 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 		nvgFill(args.vg);
 
-		lightAlpha = std::max<float>(0.f, lightAlpha-(deltaTime*0.05));
+		lightAlpha = std::max<float>(0.f, lightAlpha-(deltaTime*5));
 	}
 
 	void appendContextMenu(ui::Menu* menu) override {
