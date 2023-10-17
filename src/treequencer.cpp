@@ -186,6 +186,12 @@ std::vector<Scale> scales = {
 	Scale{"Major Locrian", {0,2,4,5,6,8,10}},
 };
 
+static std::vector<Scale> getScalesSorted() {
+	std::vector<Scale> sorted = scales;
+	std::sort(sorted.begin(), sorted.end(), [](const Scale a, const Scale b) { return a.name < b.name; });
+	return sorted;
+}
+
 static Scale getScale(std::string scaleName) {
 	auto found = std::find(scales.begin(), scales.end(), scaleName);
 	if (found != scales.end()) return *found;
@@ -982,6 +988,7 @@ struct NodeDisplay : Widget {
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Generate Sequence", "", [=](ui::Menu* menu) {
+			std::vector<Scale> scales = getScalesSorted();
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
@@ -1435,7 +1442,8 @@ struct TreequencerWidget : QuestionableWidget {
 			mod->followNodes = !mod->followNodes;
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Default Scale", "", [=](ui::Menu* menu) {
+		menu->addChild(rack::createSubmenuItem("Default Scale", mod->defaultScale, [=](ui::Menu* menu) {
+			std::vector<Scale> scales = getScalesSorted();
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, scales[i].name == mod->defaultScale ? "•" : "",[=]() {
 						mod->defaultScale = scales[i].name;
