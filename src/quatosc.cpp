@@ -2,9 +2,14 @@
 #include "imagepanel.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
+
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #include <gmtl/gmtl.h>
 #include <gmtl/Vec.h>
 #include <gmtl/Quat.h>
+#pragma GCC diagnostic pop
+
 #include <vector>
 #include <cmath>
 #include <queue>
@@ -519,7 +524,7 @@ struct QuatDisplay : Widget {
 
 		if (layer == 1) {
 			reading = true;
-			for (size_t i = 0; i < module->getSpread(); i++) {
+			for (int i = 0; i < module->getSpread(); i++) {
 				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), history[i].x);
 				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), history[i].y);
 				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), history[i].z);

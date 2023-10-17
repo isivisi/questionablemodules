@@ -346,14 +346,11 @@ struct Resizable : T {
 
 };
 
-struct QuestionableLargeKnob : RoundKnob, QuestionableThemed {
+struct QuestionableThemedKnob : RoundKnob, QuestionableThemed {
 	std::unordered_map<std::string, NVGcolor> themeTints;
 	NVGcolor tint = nvgRGB(255,255,255);
 
-	QuestionableLargeKnob() {
-
-		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
-		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
+	QuestionableThemedKnob() {
 
 	}
 
@@ -366,6 +363,17 @@ struct QuestionableLargeKnob : RoundKnob, QuestionableThemed {
 	void onThemeChange(std::string theme) override {
 		if (themeTints.find(theme) != themeTints.end()) tint = themeTints[theme];
 		else tint = nvgRGB(255,255,255);
+	}
+
+};
+
+struct QuestionableLargeKnob : QuestionableThemedKnob {
+
+	QuestionableLargeKnob() {
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobSimple.svg")));
+
 	}
 
 };
