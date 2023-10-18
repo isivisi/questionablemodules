@@ -137,7 +137,7 @@ struct SyncMute : QuestionableModule {
 				accumulatedTime = currentTime;
 			}
 			if (timeSignature > 0.f) {
-				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature))) * timeSignature, timeSignature);
+				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature))), 1);
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
@@ -209,9 +209,10 @@ struct SyncMute : QuestionableModule {
 				subClockTime = 0.f;
 			}
 		}
-		subClockTime += args.sampleTime;
 
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
+
+		subClockTime += args.sampleTime; // this must be after step to fix clock never getting hit with multiply ratio
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
