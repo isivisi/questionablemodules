@@ -347,9 +347,12 @@ struct SyncMuteWidget : QuestionableWidget {
 		color->addText("SMUTE", "OpenSans-ExtraBold.ttf", c, 24, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 21));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
-		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(23, 337), "descriptor");
-		color->addText("MUTES", "OpenSans-Bold.ttf", c, 7, Vec(60, 345), "descriptor");
-		color->addText("OUTS", "OpenSans-Bold.ttf", c, 7, Vec(98, 337), "descriptor");
+		color->addText("INS", "OpenSans-Bold.ttf", c, 7, Vec(23, 333), "descriptor");
+		color->addText("MUTES", "OpenSans-Bold.ttf", c, 7, Vec(60, 342), "descriptor");
+		color->addText("OUTS", "OpenSans-Bold.ttf", c, 7, Vec(97.3, 333), "descriptor");
+
+		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(23, 363), "descriptor");
+		color->addText("RESET", "OpenSans-Bold.ttf", c, 7, Vec(97.3, 363), "descriptor");
 	}
 
 	SyncMuteWidget(SyncMute* module) {
@@ -378,16 +381,17 @@ struct SyncMuteWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-
+		float initalOffset = 14.2;
+		float yoffset = 13.2;
 		for (size_t i = 0; i < 8; i++) {
-			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 16 + (13.2* i))), module, SyncMute::IN + i));
-			addParam(createParamCentered<QuestionableParam<ClockKnob>>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::TIME_SIG + i));
-			addParam(createParamCentered<MuteButton>(mm2px(Vec(20.2, 16 + (13.2* i))), module, SyncMute::MUTE + i));
-			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 16 + (13.2 * i))), module, SyncMute::OUT + i));
+			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, initalOffset + (yoffset* i))), module, SyncMute::IN + i));
+			addParam(createParamCentered<QuestionableParam<ClockKnob>>(mm2px(Vec(20.2, initalOffset + (yoffset* i))), module, SyncMute::TIME_SIG + i));
+			addParam(createParamCentered<MuteButton>(mm2px(Vec(20.2, initalOffset + (13.2* i))), module, SyncMute::MUTE + i));
+			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, initalOffset + (yoffset * i))), module, SyncMute::OUT + i));
 		}
 
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 119)), module, SyncMute::CLOCK));
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 119)), module, SyncMute::RESET));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 117)), module, SyncMute::CLOCK));
+		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 117)), module, SyncMute::RESET));
 	}
 
 };
