@@ -132,7 +132,7 @@ struct SyncMute : QuestionableModule {
 
 			// on clock
 			if (timeSignature < 0.f) {
-				float currentTime = fmod(module->clockTicksSinceReset + module->subClockTime, abs(timeSignature));
+				float currentTime = fmod(module->clockTicksSinceReset + ((timeSignature == -1) ? module->subClockTime : 0), abs(timeSignature));
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
@@ -153,7 +153,7 @@ struct SyncMute : QuestionableModule {
 				shouldSwap = false;
 			}
 
-			if (autoPress && clockHit) shouldSwap = true; // auto press on clock option
+			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
 			float timeMultiply = 10;
 			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
