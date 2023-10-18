@@ -132,8 +132,7 @@ struct SyncMute : QuestionableModule {
 
 			// on clock
 			if (timeSignature < 0.f) {
-				float currentTime = module->clockTicksSinceReset % (int)std::max(2.f, abs(timeSignature));
-				if (timeSignature == -1 && currentTime != accumulatedTime) clockHit = true; // edge case for /1 ratio
+				float currentTime = fmod(module->clockTicksSinceReset + module->subClockTime, abs(timeSignature));
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
