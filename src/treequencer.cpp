@@ -458,23 +458,17 @@ struct Treequencer : QuestionableModule {
 	void clearHistory() {
 		history.clear();
 		historyPos = 0;
-		historyDirty = false;
 	}
 
 	void pushHistory(json_t* state = nullptr) {
-		if (historyPos != history.size()) history.erase(history.begin() + historyPos-1, history.end());
+		if (historyPos != history.size()) history.erase(history.begin() + historyPos, history.end());
 		history.push_back(state ? state : rootNode.toJson());
 		historyPos = history.size();
-		historyDirty = true; // assume new data not saved after this function is called
 	}
 
 	void historyGoBack() {
 		if (history.empty()) return;
 		if (historyPos == 1) return;
-		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
-			pushHistory();
-			historyDirty = false;
-		}
 		historyPos = clamp(historyPos-1, 1, history.size());
 		setRootNodeFromJson(history[historyPos-1]);
 	}
@@ -938,10 +932,9 @@ struct NodeDisplay : Widget {
 
 		int oldNodeOutput = node->output;
 		float oldNodeChance = node->chance;
-		json_t* prevState = mod->rootNode.toJson();
 		menu->onDestruct = [=](){
-			if (oldNodeOutput != node->output) mod->pushHistory(prevState);
-			if (oldNodeChance != node->chance) mod->pushHistory(prevState);
+			if (oldNodeOutput != node->output) mod->pushHistory();
+			if (oldNodeChance != node->chance) mod->pushHistory();
 		};
 
 		menu->addChild(rack::createMenuLabel("Node Output:"));
@@ -972,17 +965,17 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
-				mod->pushHistory();
 				node->addChild(getScale(mod->defaultScale).getNextInSequence(node->getHistory())); 
+				mod->pushHistory();
 				renderStateDirty();
 			});
 		}));
 
 		if (node != &module->rootNode) menu->addChild(createMenuItem("Remove", "", [=]() {
 			mod->onAudioThread([=](){
-				mod->pushHistory();
 				mod->resetActiveNode();
 				node->remove();
+				mod->pushHistory();
 				renderStateDirty();
 			});
 		}));
@@ -992,8 +985,8 @@ struct NodeDisplay : Widget {
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
-						mod->pushHistory();
 						node->generateSequencesToDepth(scales[i], 8);
+						mod->pushHistory();
 						renderStateDirty();
 					});
 				}));
