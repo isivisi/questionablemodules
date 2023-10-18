@@ -10,7 +10,6 @@ const int MODULE_SIZE = 8;
 struct SyncMute : QuestionableModule {
 	enum ParamId {
 		MUTE,
-		MUTE1,
 		MUTE2,
 		MUTE3,
 		MUTE4,
@@ -66,19 +65,26 @@ struct SyncMute : QuestionableModule {
 
 	float accumulatedTime[8] = {0.f};
 
-	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "Immediate", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
+	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		//configSwitch(RANGE_PARAM, 1.f, 8.f, 1.f, "Range", {"1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(TIME_SIG, -31.f, 31.f, 0.f,  "Ratio", sigsStrings);
-		configSwitch(TIME_SIG2, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG3, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG4, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG5, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG6, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG7, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
-		configSwitch(TIME_SIG8, -31.f, 31.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(MUTE, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE2, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE3, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE4, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE5, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE6, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE7, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE8, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(TIME_SIG, -32.f, 32.f, 0.f,  "Ratio", sigsStrings);
+		configSwitch(TIME_SIG2, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG3, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG4, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG5, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG6, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG7, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
+		configSwitch(TIME_SIG8, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
 		configInput(IN,  "1");
 		configInput(IN2, "2");
 		configInput(IN3, "3");
@@ -95,8 +101,8 @@ struct SyncMute : QuestionableModule {
 		configOutput(OUT6, "6");
 		configOutput(OUT7, "7");
 		configOutput(OUT8, "8");
-		configInput(CLOCK, "clock");
-		configInput(RESET, "reset");
+		configInput(CLOCK, "Clock");
+		configInput(RESET, "Reset");
 
 		for (size_t i = 0; i < 8; i++) {
 			mutes[i].module = this;
@@ -126,12 +132,12 @@ struct SyncMute : QuestionableModule {
 
 			// on clock
 			if (timeSignature < 0.f) {
-				float currentTime = module->clockTicksSinceReset % (int)abs(timeSignature-1);
+				float currentTime = fmod(module->clockTicksSinceReset + module->subClockTime, abs(timeSignature));
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
 			if (timeSignature > 0.f) {
-				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature+1))) * (timeSignature+1), timeSignature+1);
+				float currentTime = fmod((module->subClockTime / (module->clockTime/(timeSignature))) * timeSignature, timeSignature);
 				if (currentTime < accumulatedTime) clockHit = true;
 				accumulatedTime = currentTime;
 			}
@@ -149,7 +155,9 @@ struct SyncMute : QuestionableModule {
 
 			if (autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			volume = math::clamp(volume + (muteState ? -(deltaTime*10) : deltaTime*10));
+			float timeMultiply = 10;
+			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
+			volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
 		}
 
 		json_t* toJson() {
@@ -239,10 +247,10 @@ struct SyncMute : QuestionableModule {
 
 };
 
-struct ClockKnob : RoundLargeBlackKnob {
+struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
-	ClockKnob() {
-
+	ClockKnob() : Resizable(1.085, true) {
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
 	}
 
 	void draw(const DrawArgs &args) override {
@@ -251,8 +259,8 @@ struct ClockKnob : RoundLargeBlackKnob {
 		float anglePerTick = 31 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
-
-		RoundLargeBlackKnob::draw(args);
+		
+		Resizable<QuestionableLargeKnob>::draw(args);
 
 		nvgSave(args.vg);
 
@@ -264,14 +272,14 @@ struct ClockKnob : RoundLargeBlackKnob {
 			nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 			nvgBeginPath(args.vg);
 			nvgMoveTo(args.vg, 0, 0);
-			nvgLineTo(args.vg, 0, 4.5-box.size.y/2);
+			nvgLineTo(args.vg, 0, 6-box.size.y/2);
 			nvgStrokeWidth(args.vg, 0.5);
 			nvgStroke(args.vg);
 			nvgRestore(args.vg);
-		} // clockTime
+		}
 		
-		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig-1))*(-90.f/anglePerTick)));
-		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/(sig+1))) * (sig+1), sig+1)*(90.f/anglePerTick)));
+		if (mod && sig < 0.f) nvgRotate(args.vg, nvgDegToRad(mod->clockTicksSinceReset %((int)abs(sig))*(-90.f/anglePerTick)));
+		if (mod && sig > 0.f) nvgRotate(args.vg, nvgDegToRad(fmod((mod->subClockTime / (mod->clockTime/sig)) * sig, sig)*(90.f/anglePerTick)));
 		
 		nvgStrokeColor(args.vg, nvgRGB(255, 255, 255));
 		nvgBeginPath(args.vg);
@@ -286,7 +294,9 @@ struct ClockKnob : RoundLargeBlackKnob {
 
 };
 
-struct MuteButton : Resizable<QuestionableParam<CKD6>> {
+struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
+	dirtyable<bool> lightState = false;
+	float lightAlpha = 0.f;
 	
 	MuteButton() : Resizable(0.85, true) { }
 
@@ -306,12 +316,16 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 
 		if (mod->clockTime/32 < 0.05 && sig > 0.f) return; // no super fast flashing lights
 
-		if (mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f) {
-			nvgFillColor(args.vg, nvgRGB(0, 255, 25));
-			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
-			nvgFill(args.vg);
-		}
+		lightState = mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f;
+
+		if (lightState.isDirty()) lightAlpha = 1.f;
+
+		nvgFillColor(args.vg, nvgRGBA(0, 255, 25, lightAlpha*255));
+		nvgBeginPath(args.vg);
+		nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
+		nvgFill(args.vg);
+
+		lightAlpha = std::max<float>(0.f, lightAlpha-(deltaTime*5));
 	}
 
 	void appendContextMenu(ui::Menu* menu) override {
@@ -320,7 +334,7 @@ struct MuteButton : Resizable<QuestionableParam<CKD6>> {
 		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
-		Resizable<QuestionableParam<CKD6>>::appendContextMenu(menu);
+		Resizable<QuestionableTimed<QuestionableParam<CKD6>>>::appendContextMenu(menu);
 	}
 
 };

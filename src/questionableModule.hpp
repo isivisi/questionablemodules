@@ -72,7 +72,7 @@ struct PolyphonicValue {
 
 	PolyphonicValue(Input& in) {
 		channels = in.getChannels();
-		for (int i = 0; i < channels; i++) values[i] = in.getPolyVoltage(i);
+		for (size_t i = 0; i < channels; i++) values[i] = in.getPolyVoltage(i);
 	}
 
 	void setOutput(Output& out) {
@@ -177,12 +177,27 @@ struct QuestionableModule : Module {
 };
 
 struct QuestionableThemed {
+	std::string theme;
 	virtual void onThemeChange(std::string theme) = 0;
 };
 
-struct QuestionableWidget : ModuleWidget {
+template<typename T>
+struct QuestionableTimed : T {
 	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
 	double deltaTime = 0.016;
+	unsigned int fps = 60;
+
+	void step() override {
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsedTime = currentTime - startTime;
+		deltaTime = elapsedTime.count();
+		fps = 1 / elapsedTime.count();
+		startTime = currentTime;
+		T::step();
+	}
+};
+
+struct QuestionableWidget : QuestionableTimed<ModuleWidget> {
 
 	ImagePanel *backdrop = nullptr;
 	ColorBG* color = nullptr;
@@ -202,12 +217,7 @@ struct QuestionableWidget : ModuleWidget {
 			if (!module) setWidgetTheme(settings::preferDarkPanels ? "Dark" : "");
 		}
 
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsedTime = currentTime - startTime;
-		deltaTime = elapsedTime.count();
-		//fps = 1 / elapsedTime.count();
-
-		ModuleWidget::step();
+		QuestionableTimed<ModuleWidget>::step();
 	}
 
 	void backgroundColorLogic(QuestionableModule* module) {
@@ -229,7 +239,10 @@ struct QuestionableWidget : ModuleWidget {
 
 	void propigateThemeToChildren(std::string theme) {
 		for (auto it = children.begin(); it != children.end(); it++) {
-			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) themedWidget->onThemeChange(theme);
+			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) {
+				themedWidget->theme = theme;
+				themedWidget->onThemeChange(theme);
+			}
 		}
 	}
 
@@ -338,6 +351,76 @@ struct Resizable : T {
 		nvgScale(args.vg, scale, scale);
 		T::draw(args);
 		nvgRestore(args.vg);
+	}
+
+};
+
+struct QuestionableThemedKnob : RoundKnob, QuestionableThemed {
+
+	struct KnobTheme {
+		NVGcolor back = nvgRGB(255,255,255);
+		NVGcolor front = nvgRGB(255,255,255);
+	};
+
+	std::unordered_map<std::string, KnobTheme> themes;
+	KnobTheme knobTheme;
+	KnobTheme fallbackTheme;
+
+	QuestionableThemedKnob() {
+
+	}
+
+	void setupThemes(std::unordered_map<std::string, KnobTheme> themes) {
+		this->themes = themes;
+		onThemeChange(theme);
+	}
+
+	void setFallbackTheme(KnobTheme fallback) {
+		fallbackTheme = fallback;
+		onThemeChange(theme);
+	}
+
+	void draw(const DrawArgs &args) override {
+
+		nvgSave(args.vg);
+		nvgTint(args.vg, knobTheme.back);
+		Widget::drawChild(fb, args);
+		nvgRestore(args.vg);
+
+		nvgSave(args.vg);
+		nvgTint(args.vg, knobTheme.front);
+		Widget::drawChild(tw, args);
+		nvgRestore(args.vg);
+
+	}
+
+	void onThemeChange(std::string theme) override {
+		if (themes.find(theme) != themes.end()) knobTheme = themes[theme];
+		else knobTheme = fallbackTheme;
+	}
+
+};
+
+struct QuestionableLargeKnob : QuestionableThemedKnob {
+
+	QuestionableLargeKnob() {
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/WhiteKnobSimple.svg")));
+
+		setFallbackTheme({
+			nvgRGB(35,35,35),
+			nvgRGB(255,255,255)
+		});
+
+	}
+
+};
+
+struct QuestionableSmallKnob : Resizable<QuestionableLargeKnob> {
+
+	QuestionableSmallKnob() : Resizable(0.68, true) {
+
 	}
 
 };

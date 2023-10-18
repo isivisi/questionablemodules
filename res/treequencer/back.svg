@@ -25,11 +25,11 @@
      inkscape:document-units="px"
      inkscape:zoom="30.266666"
      inkscape:cx="6.6574891"
-     inkscape:cy="10.093613"
+     inkscape:cy="10.077093"
      inkscape:window-width="2560"
-     inkscape:window-height="1377"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-height="1363"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1">
     <sodipodi:guide
@@ -81,7 +81,7 @@
      id="layer1">
     <path
        style="font-weight:900;font-size:16.9021px;font-family:'Source Code Pro';-inkscape-font-specification:'Source Code Pro Heavy';fill:#e3e3e3;stroke-width:0.249597;stroke-opacity:0.369295"
-       d="M 11.396058,12.501369 6.6620243,9.5300309 V 8.1513287 L 11.396058,5.1799886 V 7.010334 L 8.3527507,8.8169089 v 0.047541 l 3.0433073,1.8065741 z"
+       d="M 10.896034,13.10138 6.162,10.130042 V 8.7513401 L 10.896034,5.78 V 7.6103454 L 7.8527264,9.4169203 v 0.047541 l 3.0433076,1.8065737 z"
        id="text1"
        aria-label="&lt;" />
   </g>

@@ -462,16 +462,16 @@ struct GreenscreenWidget : QuestionableWidget {
 		bool gConnected = module->inputs[Greenscreen::INPUT_G].isConnected();
 		bool bConnected = module->inputs[Greenscreen::INPUT_B].isConnected();
 
-		float rVal = abs(fmod(mod->color.r + (module->inputs[Greenscreen::INPUT_R].getVoltage()/10.f), deltaTime));
-		float gVal = abs(fmod(mod->color.g + (module->inputs[Greenscreen::INPUT_G].getVoltage()/10.f), deltaTime));
-		float bVal = abs(fmod(mod->color.b + (module->inputs[Greenscreen::INPUT_B].getVoltage()/10.f), deltaTime));
+		float rVal = abs(fmod(mod->color.r + (module->inputs[Greenscreen::INPUT_R].getVoltage()/10.f), 1));
+		float gVal = abs(fmod(mod->color.g + (module->inputs[Greenscreen::INPUT_G].getVoltage()/10.f), 1));
+		float bVal = abs(fmod(mod->color.b + (module->inputs[Greenscreen::INPUT_B].getVoltage()/10.f), 1));
 		
 		cvConnected = rConnected || gConnected || bConnected;
 
 		if (cvConnected) {
-			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, 0.1f) : mod->color.r;
-			float g = gConnected ? lerp<float>(newBackground->color.g, gVal, 0.1f) : mod->color.g;
-			float b = bConnected ? lerp<float>(newBackground->color.b, bVal, 0.1f) : mod->color.b;
+			float r = rConnected ? lerp<float>(newBackground->color.r, rVal, deltaTime*5) : mod->color.r;
+			float g = gConnected ? lerp<float>(newBackground->color.g, gVal, deltaTime*5) : mod->color.g;
+			float b = bConnected ? lerp<float>(newBackground->color.b, bVal, deltaTime*5) : mod->color.b;
 			Color c = Color(logoText, nvgRGBf(r,g,b));
 			c.name = std::string("RGB(") + to_string(rVal) + ", " + to_string(gVal) + ", " + to_string(bVal) + ")";
 			changeColor(c, false);
