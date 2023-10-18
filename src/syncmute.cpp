@@ -69,14 +69,14 @@ struct SyncMute : QuestionableModule {
 
 	SyncMute() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configSwitch(MUTE, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE2, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE3, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE4, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE5, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE6, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE7, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
-		configSwitch(MUTE8, 0.f, 1.f, 0.f, "Mute", {"", "Pressed"});
+		configSwitch(MUTE, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE2, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE3, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE4, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE5, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE6, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE7, 0.f, 1.f, 0.f, "Mute Toggle");
+		configSwitch(MUTE8, 0.f, 1.f, 0.f, "Mute Toggle");
 		configSwitch(TIME_SIG, -32.f, 32.f, 0.f,  "Ratio", sigsStrings);
 		configSwitch(TIME_SIG2, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
 		configSwitch(TIME_SIG3, -32.f, 32.f, 0.f, "Ratio", sigsStrings);
