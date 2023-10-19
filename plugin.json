@@ -60,7 +60,7 @@
       "name": "Smute",
       "description": "Mute buttons synced to the clock",
       "manualUrl": "https://isivisi.github.io/questionablemodules/smute",
-      "tags": ["Utility", "Switch", "Polyphonic"]
+      "tags": ["Utility", "Switch", "Polyphonic", "Expander"]
     }
   ]
 }
