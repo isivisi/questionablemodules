@@ -55,8 +55,8 @@ struct SyncMute : QuestionableModule {
 		LIGHTS_LEN
 	};
 
-	bool shouldSwap[8] = {false};
-	bool muteState[8] = {false};
+	bool expanderRight = false;
+	bool expanderLeft = false;
 
 	dsp::SchmittTrigger resetTrigger;
 	dsp::SchmittTrigger clockTrigger;
@@ -183,9 +183,11 @@ struct SyncMute : QuestionableModule {
 	float subClockTime = 0.f;
 
 	bool resetClocksThisTick = false;
+	dirtyable<bool> isClockInputConnected = true;
 
 	void process(const ProcessArgs& args) override {
 		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
+		isClockInputConnected = inputs[CLOCK].isConnected();
 
 		if (resetClocksThisTick) {
 			clockTicksSinceReset = 0;
@@ -193,7 +195,7 @@ struct SyncMute : QuestionableModule {
 		}
 
 		// clock stuff from lfo
-		if (inputs[CLOCK].isConnected()) {
+		if (isClockInputConnected) {
 			clockTimer.process(args.sampleTime);
 			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
 			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
@@ -203,8 +205,8 @@ struct SyncMute : QuestionableModule {
 				subClockTime = 0;
 			}
 		} else { // 0.5f clock
-			clockTime = 0.5f;
-			if (subClockTime >= 0.5f) {
+			if (isClockInputConnected.isDirty()) clockTime = 0.5f;
+			if (subClockTime >= clockTime) {
 				clockTicksSinceReset += 1;
 				subClockTime = 0.f;
 			}
@@ -213,6 +215,45 @@ struct SyncMute : QuestionableModule {
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
 
 		subClockTime += args.sampleTime; // this must be after step to fix clock never getting hit with multiply ratio
+		
+		// expander logic
+		if (expanderRight) {
+			Module* rightModule = getRightExpander().module;
+			if (rightModule && rightModule->model == this->model) {
+				SyncMute* other = (SyncMute*)rightModule;
+				if (!other->expanderLeft) {
+					other->clockTime = clockTime;
+					other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
+					if (!other->inputs[CLOCK].isConnected()) {
+						other->clockTicksSinceReset = clockTicksSinceReset;
+						other->subClockTime = subClockTime;
+					}
+					for (size_t i = 0; i < 8; i++) {
+						other->mutes[i].autoPress = mutes[i].autoPress;
+						if (params[MUTE+i].getValue() != other->params[MUTE+i].getValue()) other->params[MUTE+i].setValue(params[MUTE+i].getValue());
+					}
+				}
+			}
+		}
+
+		if (expanderLeft) {
+			Module* leftModule = getLeftExpander().module;
+			if (leftModule && leftModule->model == this->model) {
+				SyncMute* other = (SyncMute*)leftModule;
+				if (!other->expanderRight) {
+					other->clockTime = clockTime;
+					other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
+					if (!other->inputs[CLOCK].isConnected()) {
+						other->clockTicksSinceReset = clockTicksSinceReset;
+						other->subClockTime = subClockTime;
+					}
+					for (size_t i = 0; i < 8; i++) {
+						other->mutes[i].autoPress = mutes[i].autoPress;
+						if (params[MUTE+i].getValue() != other->params[MUTE+i].getValue()) other->params[MUTE+i].setValue(params[MUTE+i].getValue());
+					}
+				}
+			}
+		}
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
@@ -226,6 +267,8 @@ struct SyncMute : QuestionableModule {
 	json_t* dataToJson() override { 
 		json_t* nodeJ = QuestionableModule::dataToJson();
 		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
+		json_object_set_new(nodeJ, "expanderRight", json_boolean(expanderRight)); 
+		json_object_set_new(nodeJ, "expanderLeft", json_boolean(expanderLeft)); 
 
 		json_t* array = json_array();
 		for (size_t i = 0; i < 8; i++) json_array_append_new(array, mutes[i].toJson());
@@ -237,6 +280,8 @@ struct SyncMute : QuestionableModule {
 	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
 		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
+		if (json_t* er = json_object_get(rootJ, "expanderRight")) expanderRight = json_boolean_value(er);
+		if (json_t* el = json_object_get(rootJ, "expanderLeft")) expanderLeft = json_boolean_value(el);
 
 		if (json_t* array = json_object_get(rootJ, "mutes")) { // assumes all 8 set
 			for (size_t i = 0; i < 8; i++) { 
@@ -393,6 +438,24 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, 117)), module, SyncMute::CLOCK));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, 117)), module, SyncMute::RESET));
+	}
+
+	void appendContextMenu(Menu *menu) override
+  	{
+		if (!module) return;
+
+		SyncMute* mod = (SyncMute*)module;
+
+		menu->addChild(createMenuItem("Toggle Left Expander", mod->expanderLeft ? "On" : "Off",[=]() {
+			mod->expanderLeft = !mod->expanderLeft;
+		}));
+
+		menu->addChild(createMenuItem("Toggle Right Expander", mod->expanderRight ? "On" : "Off",[=]() {
+			mod->expanderRight = !mod->expanderRight;
+		}));
+
+		QuestionableWidget::appendContextMenu(menu);
+
 	}
 
 };
