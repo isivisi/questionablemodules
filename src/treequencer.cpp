@@ -195,7 +195,7 @@ static std::vector<Scale> getScalesSorted() {
 static Scale getScale(std::string scaleName) {
 	auto found = std::find(scales.begin(), scales.end(), scaleName);
 	if (found != scales.end()) return *found;
-	return Scale{"None", {}};
+	return getScale("Minor Pentatonic");
 }
 
 // A node in the tree
