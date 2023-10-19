@@ -155,7 +155,7 @@ struct SyncMute : QuestionableModule {
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			float timeMultiply = 10;
+			float timeMultiply = 25;
 			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
 			volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
 		}
