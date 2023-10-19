@@ -108,6 +108,8 @@ struct SyncMute : QuestionableModule {
 			mutes[i].module = this;
 			mutes[i].paramId = i;
 		}
+
+		onReset();
 	}
 
 	struct Mute {
@@ -175,24 +177,22 @@ struct SyncMute : QuestionableModule {
 
 	Mute mutes[8];
 
-	float timeSigs[8] = {0.f};
-	dirtyable<bool> buttons[8] = {false};
-	bool autoPress[8] = {false};
-
 	uint64_t clockTicksSinceReset = 0;
 	float subClockTime = 0.f;
 
 	bool resetClocksThisTick = false;
 	dirtyable<bool> isClockInputConnected = true;
 
+	void onReset() override {
+		clockTicksSinceReset = 0;
+		subClockTime = 0.f;
+	}
+
 	void process(const ProcessArgs& args) override {
 		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		isClockInputConnected = inputs[CLOCK].isConnected();
 
-		if (resetClocksThisTick) {
-			clockTicksSinceReset = 0;
-			subClockTime = 0.f;
-		}
+		if (resetClocksThisTick) onReset();
 
 		// clock stuff from lfo
 		if (isClockInputConnected) {
