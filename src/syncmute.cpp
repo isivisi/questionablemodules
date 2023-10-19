@@ -222,9 +222,9 @@ struct SyncMute : QuestionableModule {
 			if (rightModule && rightModule->model == this->model) {
 				SyncMute* other = (SyncMute*)rightModule;
 				if (!other->expanderLeft) {
-					other->clockTime = clockTime;
-					other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
+					if (!other->inputs[RESET].isConnected()) other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
 					if (!other->inputs[CLOCK].isConnected()) {
+						other->clockTime = clockTime;
 						other->clockTicksSinceReset = clockTicksSinceReset;
 						other->subClockTime = subClockTime;
 					}
@@ -241,9 +241,9 @@ struct SyncMute : QuestionableModule {
 			if (leftModule && leftModule->model == this->model) {
 				SyncMute* other = (SyncMute*)leftModule;
 				if (!other->expanderRight) {
-					other->clockTime = clockTime;
-					other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
+					if (!other->inputs[RESET].isConnected()) other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
 					if (!other->inputs[CLOCK].isConnected()) {
+						other->clockTime = clockTime;
 						other->clockTicksSinceReset = clockTicksSinceReset;
 						other->subClockTime = subClockTime;
 					}
