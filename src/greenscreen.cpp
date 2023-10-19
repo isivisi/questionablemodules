@@ -34,6 +34,7 @@ struct Greenscreen : QuestionableModule {
 	bool showInputs = false;
 	bool hasShadow = false;
 	bool drawRack = false;
+	Vec boxShadow = Vec(0,0);
 
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -61,6 +62,8 @@ struct Greenscreen : QuestionableModule {
 		json_object_set_new(rootJ, "showInputs", json_boolean(showInputs));
 		json_object_set_new(rootJ, "hasShadow", json_boolean(hasShadow));
 		json_object_set_new(rootJ, "drawRack", json_boolean(drawRack));
+		json_object_set_new(rootJ, "boxShadowX", json_real(boxShadow.x));
+		json_object_set_new(rootJ, "boxShadowY", json_real(boxShadow.y));
 		return rootJ;
 	}
 
@@ -75,6 +78,8 @@ struct Greenscreen : QuestionableModule {
 		if (json_t* s = json_object_get(rootJ, "hasShadow")) hasShadow = json_boolean_value(s);
 		if (json_t* r = json_object_get(rootJ, "drawRack")) drawRack = json_boolean_value(r);
 		if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
+		if (json_t* x = json_object_get(rootJ, "boxShadowX")) boxShadow.x = json_real_value(x);
+		if (json_t* y = json_object_get(rootJ, "boxShadowY")) boxShadow.y = json_real_value(y);
 	}
 
 };
@@ -85,7 +90,7 @@ struct Color : QuestionableJsonable {
 	float g;
 	float b;
 
-		Color() {
+	Color() {
 		r = 1.f;
 		g = 1.f;
 		b = 1.f;
@@ -151,6 +156,62 @@ struct Color : QuestionableJsonable {
 
 	bool operator==(Color other) {
 		return name == other.name;
+	}
+};
+
+struct ShadowSliderQuantity : QuestionableQuantity {
+
+	ShadowSliderQuantity(quantityGetFunc g, quantitySetFunc s) : QuestionableQuantity(g, s) { }
+
+	float getDefaultValue() override {
+		return 0.f;
+	}
+
+	float getDisplayValue() override {
+		return getValue();
+	}
+
+	void setDisplayValue(float displayValue) override {
+		setValue(displayValue);
+	}
+
+	std::string getUnit() override {
+		return "px";
+	}
+
+	std::string getLabel() override {
+		return "";
+	}
+
+	int getDisplayPrecision() override {
+		return 3;
+	}
+
+	virtual float getMinValue() override {
+		return 0;
+	}
+
+	/** Returns the maximum recommended value. */
+	virtual float getMaxValue() override {
+		return 50.f;
+	}
+
+	std::string getDisplayValueString() override {
+		float v = getDisplayValue();
+		if (std::isnan(v))
+			return "NaN";
+		return std::to_string(getDisplayValue());
+	}
+
+};
+
+struct ShadowSlider : ui::Slider {
+	ShadowSlider(quantityGetFunc valueGet, quantitySetFunc valueSet) {
+		quantity = new ShadowSliderQuantity(valueGet, valueSet);
+		box.size.x = 150.0;
+	}
+	~ShadowSlider() {
+		delete quantity;
 	}
 };
 
@@ -237,6 +298,12 @@ struct BackgroundWidget : Widget {
 		color = modC;
 	}
 
+	/*void getModuleBounds() {
+		std::vector<ModuleWidget*> modules = APP->scene->rack->getModules();
+		Vec minima;
+		Vec maxima;
+	}*/
+
 	void draw(const DrawArgs& args) override {
 		if (module->isBypassed()) return;
 
@@ -248,6 +315,26 @@ struct BackgroundWidget : Widget {
 		nvgFill(args.vg);
 
 		if (module->drawRack) rackVisuals->draw(args);
+
+		// backdrop
+		if (module->boxShadow.x != 0.f || module->boxShadow.y != 0.f) {
+			std::vector<ModuleWidget*> modules = APP->scene->rack->getModules();
+			for (size_t i = 0; i < modules.size(); i++) {
+
+				nvgSave(args.vg);
+				nvgTranslate(args.vg, modules[i]->box.pos.x + modules[i]->box.size.x, modules[i]->box.pos.y);
+				nvgFillColor(args.vg, nvgRGB(25,25,25));
+				nvgBeginPath(args.vg);
+				nvgMoveTo(args.vg, 0, 0);
+				nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
+				nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+				nvgLineTo(args.vg, -modules[i]->box.size.x + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+				nvgLineTo(args.vg, -modules[i]->box.size.x, modules[i]->box.size.y);
+				nvgFill(args.vg);
+				nvgRestore(args.vg);
+				
+			}
+		}
 	}
 };
 
@@ -511,6 +598,19 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		menu->addChild(createMenuItem("Toggle Rack", mod->drawRack ? "On" : "Off",[=]() {
 			mod->drawRack = !mod->drawRack;
+		}));
+
+		menu->addChild(createSubmenuItem("Box Shadow", "", [=](Menu* menu) {
+			ShadowSlider* param = new ShadowSlider(
+				[=]() { return mod->boxShadow.x; }, 
+				[=](float value) { mod->boxShadow.x = std::max(0.f, value); }
+			);
+			menu->addChild(param);
+			ShadowSlider* param2 = new ShadowSlider(
+				[=]() { return mod->boxShadow.y; }, 
+				[=](float value) { mod->boxShadow.y = std::max(0.f, value); }
+			);
+			menu->addChild(param2);
 		}));
 
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
