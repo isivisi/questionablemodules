@@ -188,7 +188,7 @@ struct ShadowSliderQuantity : QuestionableQuantity {
 	}
 
 	virtual float getMinValue() override {
-		return 0;
+		return -50.f;
 	}
 
 	/** Returns the maximum recommended value. */
@@ -319,20 +319,38 @@ struct BackgroundWidget : Widget {
 		// backdrop
 		if (module->boxShadow.x != 0.f || module->boxShadow.y != 0.f) {
 			std::vector<ModuleWidget*> modules = APP->scene->rack->getModules();
-			for (size_t i = 0; i < modules.size(); i++) {
+			if (module->boxShadow.x > 0) {
+				for (size_t i = 0; i < modules.size(); i++) {
 
-				nvgSave(args.vg);
-				nvgTranslate(args.vg, modules[i]->box.pos.x + modules[i]->box.size.x, modules[i]->box.pos.y);
-				nvgFillColor(args.vg, nvgRGB(25,25,25));
-				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, 0, 0);
-				nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
-				nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
-				nvgLineTo(args.vg, -modules[i]->box.size.x + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
-				nvgLineTo(args.vg, -modules[i]->box.size.x, modules[i]->box.size.y);
-				nvgFill(args.vg);
-				nvgRestore(args.vg);
-				
+					nvgSave(args.vg);
+					nvgTranslate(args.vg, modules[i]->box.pos.x + modules[i]->box.size.x, modules[i]->box.pos.y);
+					nvgFillColor(args.vg, nvgRGB(25,25,25));
+					nvgBeginPath(args.vg);
+					nvgMoveTo(args.vg, 0, 0);
+					nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
+					nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+					nvgLineTo(args.vg, -modules[i]->box.size.x + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+					nvgLineTo(args.vg, -modules[i]->box.size.x, modules[i]->box.size.y);
+					nvgFill(args.vg);
+					nvgRestore(args.vg);
+					
+				}
+			} else {
+				for (size_t i = 0; i < modules.size(); i++) {
+
+					nvgSave(args.vg);
+					nvgTranslate(args.vg, modules[i]->box.pos.x, modules[i]->box.pos.y);
+					nvgFillColor(args.vg, nvgRGB(25,25,25));
+					nvgBeginPath(args.vg);
+					nvgMoveTo(args.vg, 0, 0);
+					nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
+					nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+					nvgLineTo(args.vg, modules[i]->box.size.x + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+					nvgLineTo(args.vg, modules[i]->box.size.x, modules[i]->box.size.y);
+					nvgFill(args.vg);
+					nvgRestore(args.vg);
+					
+				}
 			}
 		}
 	}
@@ -583,36 +601,6 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		Greenscreen* mod = (Greenscreen*)module;
 
-		menu->addChild(createMenuItem("Toggle Text", mod->showText ? "On" : "Off",[=]() {
-			mod->showText = !mod->showText;
-			color->setTextGroupVisibility("default", mod->showText);
-		}));
-
-		menu->addChild(createMenuItem("Toggle CV Inputs", mod->showInputs ? "On" : "Off",[=]() {
-			mod->showInputs = !mod->showInputs;
-		}));
-
-		menu->addChild(createMenuItem("Toggle Shadow", mod->hasShadow ? "On" : "Off",[=]() {
-			mod->hasShadow = !mod->hasShadow;
-		}));
-
-		menu->addChild(createMenuItem("Toggle Rack", mod->drawRack ? "On" : "Off",[=]() {
-			mod->drawRack = !mod->drawRack;
-		}));
-
-		menu->addChild(createSubmenuItem("Box Shadow", "", [=](Menu* menu) {
-			ShadowSlider* param = new ShadowSlider(
-				[=]() { return mod->boxShadow.x; }, 
-				[=](float value) { mod->boxShadow.x = std::max(0.f, value); }
-			);
-			menu->addChild(param);
-			ShadowSlider* param2 = new ShadowSlider(
-				[=]() { return mod->boxShadow.y; }, 
-				[=](float value) { mod->boxShadow.y = std::max(0.f, value); }
-			);
-			menu->addChild(param2);
-		}));
-
 		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 			std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 
@@ -703,6 +691,36 @@ struct GreenscreenWidget : QuestionableWidget {
 					changeColor(selectableColor);
 				}));
 			}
+		}));
+
+		menu->addChild(createMenuItem("Toggle Text", mod->showText ? "On" : "Off",[=]() {
+			mod->showText = !mod->showText;
+			color->setTextGroupVisibility("default", mod->showText);
+		}));
+
+		menu->addChild(createMenuItem("Toggle CV Inputs", mod->showInputs ? "On" : "Off",[=]() {
+			mod->showInputs = !mod->showInputs;
+		}));
+
+		menu->addChild(createMenuItem("Toggle Shadow", mod->hasShadow ? "On" : "Off",[=]() {
+			mod->hasShadow = !mod->hasShadow;
+		}));
+
+		menu->addChild(createMenuItem("Toggle Rack", mod->drawRack ? "On" : "Off",[=]() {
+			mod->drawRack = !mod->drawRack;
+		}));
+
+		menu->addChild(createSubmenuItem("Box Shadow", "", [=](Menu* menu) {
+			ShadowSlider* param = new ShadowSlider(
+				[=]() { return mod->boxShadow.x; }, 
+				[=](float value) { mod->boxShadow.x = value; }
+			);
+			menu->addChild(param);
+			ShadowSlider* param2 = new ShadowSlider(
+				[=]() { return mod->boxShadow.y; }, 
+				[=](float value) { mod->boxShadow.y = std::max(0.f, value); }
+			);
+			menu->addChild(param2);
 		}));
 
 		/*ui::TextField* param = new QuestionableTextField([=](std::string text) {
