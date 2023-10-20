@@ -192,8 +192,6 @@ struct SyncMute : QuestionableModule {
 		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		isClockInputConnected = inputs[CLOCK].isConnected();
 
-		if (resetClocksThisTick) onReset();
-
 		// clock stuff from lfo
 		if (isClockInputConnected) {
 			clockTimer.process(args.sampleTime);
@@ -211,6 +209,8 @@ struct SyncMute : QuestionableModule {
 				subClockTime = 0.f;
 			}
 		}
+
+		if (resetClocksThisTick) onReset();
 
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
 
