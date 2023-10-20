@@ -127,18 +127,26 @@ struct Discombobulator : QuestionableModule {
 			}
 		}
 		
-		float cumulatedFading[MAX_INPUTS] = {0.f};
+		PolyphonicValue cumulatedFading[MAX_INPUTS];
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			for (int x = 0; x < MAX_INPUTS; x++) {
+				PolyphonicValue input(inputs[x]);
 				if (x != i) { // skip own audio
 					fadingInputs[i][x] = std::max(0.f, fadingInputs[i][x] - (fadingInputs[i][x] * args.sampleTime));
-					cumulatedFading[i] += inputs[x].getVoltage() * fadingInputs[i][x];
+					input *= fadingInputs[i][x];
+					cumulatedFading[i] += input;
 				}
 			}
+			cumulatedFading[i] *= fadeAmnt;
 		}
 
 		for (int i = 0; i < MAX_INPUTS; i++) {
-			outputs[i].setVoltage(inputs[outputSwaps[i]].getVoltage() + (cumulatedFading[i] * fadeAmnt));
+
+			PolyphonicValue input(inputs[outputSwaps[i]]);
+			
+			input += cumulatedFading[i];
+			input.setOutput(outputs[i]);
+
 		}
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
@@ -204,7 +212,7 @@ struct DiscombobulatorWidget : QuestionableWidget {
 
 		//addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(15.24, 46.063)), module, Nrandomizer::PITCH_PARAM));
 
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
+		addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(35.24, 103)), module, Discombobulator::FADE_PARAM));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Discombobulator::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {

@@ -159,20 +159,43 @@ struct Scale {
 };
 
 // All starting at C
+// https://en.wikipedia.org/wiki/List_of_musical_scales_and_modes
 std::vector<Scale> scales = {
 	Scale{"Chromatic", {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}, // C(0), C#(1), D(2), D#(3), E(4), F(5), F#(6), G(7), G#(8), A(9), A#(10), B(11)
 	Scale{"Major", {0, 2, 4, 5, 7, 9, 11}}, // C, D, E, F, G, A, B
-	Scale{"Minor", {0, 2, 3, 5, 7, 8, 10}}, // C, D, D#, F, G, G#, A#
-	Scale{"Pentatonic", {0, 2, 5, 7, 10}}, // C, D, F, G, A#
+	Scale{"Natural Minor", {0, 2, 3, 5, 7, 8, 10}}, // C, D, D#, F, G, G#, A#
+	Scale{"Harmonic Minor", {0, 2, 3, 5, 7, 8, 11}},
+	Scale{"Melodic Minor", {0,2,3,5,7,9,11}},
+	Scale{"Major Pentatonic", {0, 2, 4, 7, 9}},
+	Scale{"Minor Pentatonic", {0, 3, 5, 7, 10}},
 	Scale{"Blues", {0, 3, 5, 6, 7, 10}}, // C, D#, F, F#, G, A#
 	Scale{"Dorian", {0, 2, 3, 5, 7, 9, 10}}, // C, D, D#, F, G, A, A#
-	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}} // C, D, E, F, G, A, A#
+	Scale{"Mixolydian", {0, 2, 4, 5, 7, 9, 10}}, // C, D, E, F, G, A, A#
+	Scale{"Double Harmonic", {0,1,4,5,7,8,11}},
+	Scale{"Enigmatic", {0,1,4,6,8,10,11}},
+	Scale{"Half Diminished", {0,2,3,5,6,8,10}},
+	Scale{"Hungarian Major", {0,3,4,6,7,9,10}},
+	Scale{"Lydian", {0,2,4,6,7,9,11}},
+	Scale{"Neapolitan Major", {0,1,3,5,7,9,11}},
+	Scale{"Neapolitan Minor", {0,1,3,5,7,8,11}},
+	Scale{"Persian", {0,1,4,5,6,8,11}},
+	Scale{"Acoustic", {0,2,4,6,7,9,10}},
+	Scale{"Istrian", {0,1,3,4,6,7}},
+	Scale{"Iwato", {0,1,5,6,10}},
+	Scale{"Locrian", {0,1,3,5,6,8,10}},
+	Scale{"Major Locrian", {0,2,4,5,6,8,10}},
 };
+
+static std::vector<Scale> getScalesSorted() {
+	std::vector<Scale> sorted = scales;
+	std::sort(sorted.begin(), sorted.end(), [](const Scale a, const Scale b) { return a.name < b.name; });
+	return sorted;
+}
 
 static Scale getScale(std::string scaleName) {
 	auto found = std::find(scales.begin(), scales.end(), scaleName);
 	if (found != scales.end()) return *found;
-	return Scale{"None", {}};
+	return getScale("Minor Pentatonic");
 }
 
 // A node in the tree
@@ -400,8 +423,8 @@ struct Treequencer : QuestionableModule {
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
 	bool followNodes = false;
-	std::string defaultScale = "Pentatonic"; // scale for new node gen
 	bool clockInPhasorMode = false;
+	std::string defaultScale = "Minor Pentatonic"; // scale for new node gen
 
 	bool isDirty = true;
 	bool bouncing = false;
@@ -436,23 +459,17 @@ struct Treequencer : QuestionableModule {
 	void clearHistory() {
 		history.clear();
 		historyPos = 0;
-		historyDirty = false;
 	}
 
 	void pushHistory(json_t* state = nullptr) {
-		if (historyPos != history.size()) history.erase(history.begin() + historyPos-1, history.end());
+		if (historyPos != history.size()) history.erase(history.begin() + historyPos, history.end());
 		history.push_back(state ? state : rootNode.toJson());
 		historyPos = history.size();
-		historyDirty = true; // assume new data not saved after this function is called
 	}
 
 	void historyGoBack() {
 		if (history.empty()) return;
 		if (historyPos == 1) return;
-		if (historyPos == history.size() && historyDirty) { // save latest changes before going back
-			pushHistory();
-			historyDirty = false;
-		}
 		historyPos = clamp(historyPos-1, 1, history.size());
 		setRootNodeFromJson(history[historyPos-1]);
 	}
@@ -654,6 +671,7 @@ struct Treequencer : QuestionableModule {
 			resetActiveNode();
 			sequencePos = 0;
 			isGateTriggered = false;
+			isClockTriggered = false;
 		}
 
 		if (!seqTrigger && activeSequence.size()) activeSequence.clear();
@@ -788,25 +806,34 @@ struct TreequencerButton : SvgButton {
 
 	bool latchState = false;
 
+	float buttonScale = 0.75;
+
 	TreequencerButton(std::string icon, Vec pos, Treequencer* module) {
 		this->module = module;
 		box.pos = pos;
 		this->icon = icon;
 		shadow->opacity = 0;
 
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg.svg")));
-		addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg-clicked.svg")));
+		//addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg.svg")));
+		//addFrame(Svg::load(asset::plugin(pluginInstance, "res/treequencer/button-bg-clicked.svg")));
+
+		addFrame(Svg::load(asset::system("res/ComponentLibrary/CKD6_0.svg")));
+		addFrame(Svg::load(asset::system("res/ComponentLibrary/CKD6_1.svg")));
+
+		box.pos = this->box.pos.plus(this->box.size.mult(1.f-buttonScale).div(2));
 
 		iconWidget = new SvgWidget();
 		iconWidget->setSvg(Svg::load(asset::plugin(pluginInstance, icon)));
-		addChild(iconWidget);
+		//addChild(iconWidget);
 
 	}
 
 	void draw(const DrawArgs &args) override {
 		nvgSave(args.vg);
 		if (disabled) nvgTint(args.vg, nvgRGB(180,180,180));
+		nvgScale(args.vg, buttonScale, buttonScale);
 		SvgButton::draw(args);
+		nvgScale(args.vg, 1.5, 1.5);
 		iconWidget->draw(args);
 		nvgRestore(args.vg);
 	}
@@ -968,10 +995,9 @@ struct NodeDisplay : Widget {
 
 		int oldNodeOutput = node->output;
 		float oldNodeChance = node->chance;
-		json_t* prevState = mod->rootNode.toJson();
 		menu->onDestruct = [=](){
-			if (oldNodeOutput != node->output) mod->pushHistory(prevState);
-			if (oldNodeChance != node->chance) mod->pushHistory(prevState);
+			if (oldNodeOutput != node->output) mod->pushHistory();
+			if (oldNodeChance != node->chance) mod->pushHistory();
 		};
 
 		menu->addChild(rack::createMenuLabel("Node Output:"));
@@ -1002,27 +1028,28 @@ struct NodeDisplay : Widget {
 
 		if (node->children.size() < 2 && node->depth < 21) menu->addChild(createMenuItem("Add Child", "", [=]() { 
 			mod->onAudioThread([=](){
-				mod->pushHistory();
 				node->addChild(getScale(mod->defaultScale).getNextInSequence(node->getHistory())); 
+				mod->pushHistory();
 				renderStateDirty();
 			});
 		}));
 
 		if (node != &module->rootNode) menu->addChild(createMenuItem("Remove", "", [=]() {
 			mod->onAudioThread([=](){
-				mod->pushHistory();
 				mod->resetActiveNode();
 				node->remove();
+				mod->pushHistory();
 				renderStateDirty();
 			});
 		}));
 
 		menu->addChild(rack::createSubmenuItem("Generate Sequence", "", [=](ui::Menu* menu) {
+			std::vector<Scale> scales = getScalesSorted();
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, "",[=]() {
 					mod->onAudioThread([=]() { 
-						mod->pushHistory();
 						node->generateSequencesToDepth(scales[i], 8);
+						mod->pushHistory();
 						renderStateDirty();
 					});
 				}));
@@ -1364,9 +1391,9 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("BOUNCE", "OpenSans-Bold.ttf", c, 7, Vec(261.35, 314), "descriptor");
 		color->addText("TRIG TYPE", "OpenSans-Bold.ttf", c, 7, Vec(299.35, 314), "descriptor");
 
-		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(135, 285), "descriptor");
-		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(165, 285), "descriptor");
-		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(185, 285), "descriptor");
+		color->addText("FOLLOW", "OpenSans-Bold.ttf", c, 7, Vec(107.5, 285), "descriptor");
+		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(159.5, 285), "descriptor");
+		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(184.5, 285), "descriptor");
 		
 		bool isNumber = mod ? mod->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
 		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
@@ -1417,9 +1444,9 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(display);
 		addChild(dirt);
 
-		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(135, 266), module)));
-		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(165, 266), module)));
-		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(false, Vec(185, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerFollowButton(Vec(107.5, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(true, Vec(159.5, 266), module)));
+		addChild(createQuestionableWidgetCentered(new TreequencerHistoryButton(false, Vec(184.5, 266), module)));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -1447,10 +1474,10 @@ struct TreequencerWidget : QuestionableWidget {
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f + ((13.0)*float(i)), 113.f)), module, i));
 		}
 
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
+		addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(10.319f, 100.f)), module, Treequencer::CHANCE_MOD));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 90.f)), module, Treequencer::CHANCE_MOD_INPUT));
 
-		//addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
+		//addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(35.24, 103)), module, Treequencer::FADE_PARAM));
 		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(35.24, 113)), module, Treequencer::FADE_INPUT));
 		
 		//addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10, 10.478  + (10.0*float(i)))), module, i));
@@ -1473,7 +1500,8 @@ struct TreequencerWidget : QuestionableWidget {
 			mod->followNodes = !mod->followNodes;
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Default Scale", "", [=](ui::Menu* menu) {
+		menu->addChild(rack::createSubmenuItem("Default Scale", mod->defaultScale, [=](ui::Menu* menu) {
+			std::vector<Scale> scales = getScalesSorted();
 			for (size_t i = 0; i < scales.size(); i++) {
 				menu->addChild(createMenuItem(scales[i].name, scales[i].name == mod->defaultScale ? "•" : "",[=]() {
 						mod->defaultScale = scales[i].name;

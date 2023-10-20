@@ -6,6 +6,126 @@
 #include <cctype>
 #include <iomanip>
 #include <sstream>
+#include <array>
+#include <vector>
+
+// simple variable that has a dirty state
+// designed for native types
+template <typename T>
+struct dirtyable {
+	T value;
+	T prev;
+
+	dirtyable() { }
+
+	dirtyable(T value) {
+		this->value = value;
+		this->prev = value;
+	}
+
+	bool isDirty() {
+		bool dirty = value != prev;
+		prev = value;
+		return dirty;
+	}
+	
+	operator T() { return value; }
+	explicit operator T*() { return &value; }
+
+	// operator passthroughs
+	template <typename O> dirtyable<T>& operator=(O value) { this->value = value; return *this; }
+	template <typename O> dirtyable<T>& operator+=(O value) { this->value += value;  return *this; }
+	template <typename O> dirtyable<T>& operator-=(O value) { this->value -= value;  return *this; }
+	template <typename O> dirtyable<T>& operator*=(O value) { this->value *= value;  return *this; }
+	template <typename O> dirtyable<T>& operator/=(O value) { this->value /= value;  return *this; }
+	template <typename O> dirtyable<T>& operator%=(O value) { this->value %= value;  return *this; }
+	template <typename O> dirtyable<T>& operator|=(O value) { this->value |= value;  return *this; }
+	template <typename O> dirtyable<T>& operator&=(O value) { this->value &= value;  return *this; }
+	template <typename O> dirtyable<T>& operator^=(O value) { this->value ^= value;  return *this; }
+	template <typename O> bool operator==(const O& other) { return other == value; }
+	template <typename O> bool operator>(const O& other) { return value > other; }
+	template <typename O> bool operator<(const O& other) { return value < other; }
+	template <typename O> bool operator>=(const O& other) { return value >= other; }
+	template <typename O> bool operator<=(const O& other) { return value <= other; }
+	template <typename O> bool operator!=(const O& other) { return value != other; }
+	template <typename O> T operator+(O other) { return value + other; }
+	template <typename O> T operator-(O other) { return value - other; }
+	template <typename O> T operator*(O other) { return value * other; }
+	template <typename O> T operator/(O other) { return value / other; }
+	template <typename O> T operator%(O other) { return value % other; }
+	template <typename O> T operator|(O other) { return value | other; }
+	template <typename O> T operator&(O other) { return value & other; }
+	template <typename O> T operator^(O other) { return value ^ other; }
+	T& operator++(int d) { return value++; }
+	T& operator--(int d) { return value--; }
+	T& operator++() { return ++value; }
+	T& operator--() { return --value; }
+};
+
+// simple polyphony value handler
+// "mimics" a float but internally handles all polyphonic values
+struct PolyphonicValue {
+	std::array<float, PORT_MAX_CHANNELS> values = {0.f};
+	size_t channels = 0;
+
+	PolyphonicValue() { }
+
+	PolyphonicValue(Input& in) {
+		channels = in.getChannels();
+		in.readVoltages(values.begin());
+	}
+
+	void setOutput(Output& out) {
+		out.setChannels(channels);
+		out.writeVoltages(values.begin());
+	}
+
+	float sum() {
+		return std::accumulate(values.begin(), values.end(), 0);
+	}
+
+	void clear() {
+		for (size_t i = 0; i < PORT_MAX_CHANNELS; i++) values[i] = 0.f;
+		channels = 0;
+	}
+
+	PolyphonicValue& operator=(float value) { 
+		clear(); 
+		values[0] = value;
+		channels = 1;
+		return *this;
+	}
+
+	PolyphonicValue& operator=(Input in) {
+		clear();
+		channels = in.getChannels();
+		for (size_t i = 0; i < channels; i++) values[i] = in.getPolyVoltage(i);
+		return *this;
+	}
+
+	template <typename O> PolyphonicValue& operator+=(O value) { for (size_t i = 0; i < channels; i++) values[i] += value;  return *this; }
+	template <typename O> PolyphonicValue& operator-=(O value) { for (size_t i = 0; i < channels; i++) values[i] -= value;  return *this; }
+	template <typename O> PolyphonicValue& operator*=(O value) { for (size_t i = 0; i < channels; i++) values[i] *= value;  return *this; }
+	template <typename O> PolyphonicValue& operator/=(O value) { for (size_t i = 0; i < channels; i++) values[i] /= value;  return *this; }
+
+	template <typename O> bool operator==(const O& other) { return sum() == other; }
+	template <typename O> bool operator!=(const O& other) { return sum() != other; }
+	template <typename O> float operator+(O other) { return sum() + other; }
+	template <typename O> float operator-(O other) { return sum() - other; }
+	template <typename O> float operator*(O other) { return sum() * other; }
+	template <typename O> float operator/(O other) { return sum() / other; }
+
+	PolyphonicValue& operator+=(PolyphonicValue other) { channels = std::max(channels, other.channels); for (size_t i = 0; i < std::min(channels, other.channels); i++) values[i] += other.values[i]; return *this; }
+	PolyphonicValue& operator-=(PolyphonicValue other) { channels = std::max(channels, other.channels); for (size_t i = 0; i < std::min(channels, other.channels); i++) values[i] -= other.values[i]; return *this; }
+	PolyphonicValue& operator*=(PolyphonicValue other) { channels = std::max(channels, other.channels); for (size_t i = 0; i < std::min(channels, other.channels); i++) values[i] *= other.values[i]; return *this; }
+	PolyphonicValue& operator/=(PolyphonicValue other) { channels = std::max(channels, other.channels); for (size_t i = 0; i < std::min(channels, other.channels); i++) values[i] /= other.values[i]; return *this; }
+
+	PolyphonicValue operator+(PolyphonicValue other) { PolyphonicValue ret = *this; ret += other; return ret; }
+	PolyphonicValue operator-(PolyphonicValue other) { PolyphonicValue ret = *this; ret -= other; return ret; }
+	PolyphonicValue operator*(PolyphonicValue other) { PolyphonicValue ret = *this; ret *= other; return ret; }
+	PolyphonicValue operator/(PolyphonicValue other) { PolyphonicValue ret = *this; ret /= other; return ret; }
+
+};
 
 struct QuestionableModule : Module {
 	bool supportsSampleRateOverride = false; 
@@ -57,16 +177,35 @@ struct QuestionableModule : Module {
 };
 
 struct QuestionableThemed {
+	std::string theme;
 	virtual void onThemeChange(std::string theme) = 0;
 };
 
-struct QuestionableWidget : ModuleWidget {
+template<typename T>
+struct QuestionableTimed : T {
+	std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+	double deltaTime = 0.016;
+	unsigned int fps = 60;
+
+	void step() override {
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsedTime = currentTime - startTime;
+		deltaTime = elapsedTime.count();
+		fps = 1 / elapsedTime.count();
+		startTime = currentTime;
+		T::step();
+	}
+};
+
+struct QuestionableWidget : QuestionableTimed<ModuleWidget> {
+
 	ImagePanel *backdrop = nullptr;
 	ColorBG* color = nullptr;
 	bool lastPreferDark = false;
 
 	bool supportsThemes = true;
 	bool toggleableDescriptors = true;
+	
 
 	QuestionableWidget() {
 
@@ -77,7 +216,8 @@ struct QuestionableWidget : ModuleWidget {
 			lastPreferDark = settings::preferDarkPanels;
 			if (!module) setWidgetTheme(settings::preferDarkPanels ? "Dark" : "");
 		}
-		ModuleWidget::step();
+
+		QuestionableTimed<ModuleWidget>::step();
 	}
 
 	void backgroundColorLogic(QuestionableModule* module) {
@@ -99,7 +239,10 @@ struct QuestionableWidget : ModuleWidget {
 
 	void propigateThemeToChildren(std::string theme) {
 		for (auto it = children.begin(); it != children.end(); it++) {
-			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) themedWidget->onThemeChange(theme);
+			if (QuestionableThemed* themedWidget = dynamic_cast<QuestionableThemed*>(*it)) {
+				themedWidget->theme = theme;
+				themedWidget->onThemeChange(theme);
+			}
 		}
 	}
 
@@ -147,6 +290,13 @@ struct QuestionableWidget : ModuleWidget {
 			}));
 		}
 
+		menu->addChild(rack::createMenuItem("Request Feature", "", [=]() {
+			Model* model = getModel();
+			std::string title = model->name + std::string(" Feature Request");
+			std::string url = "https://github.com/isivisi/questionablemodules/issues/new?title=" + network::encodeUrl(title);
+			system::openBrowser(url);
+		}));
+
 		menu->addChild(rack::createMenuItem("Report Bug", "", [=]() {
 			Model* model = getModel();
 			std::string title = model->name + std::string(" Bug Report");
@@ -170,6 +320,109 @@ struct QuestionableWidget : ModuleWidget {
 		free(jsondump);
 		return body;
 	}
+};
+
+template <typename T>
+struct Resizable : T {
+	static_assert(std::is_base_of<Widget, T>::value, "T must inherit from Widget");
+
+	dirtyable<float> scale = 1.f;
+	bool centered = true;
+	
+	bool hasUpdatedBox = false;
+
+	Resizable(float scale, bool centered) {
+		this->scale = scale;
+		this->centered = centered;
+	}
+
+	void step() override {
+		if (scale.isDirty() || !hasUpdatedBox) {
+			if (centered) this->box.pos = this->box.pos.plus(this->box.size.mult(1.f-scale).div(2));
+			this->box.size = this->box.size.mult(scale);
+			hasUpdatedBox = true;
+		}
+
+		T::step();
+	}
+	
+	void draw(const Widget::DrawArgs &args) override {
+		nvgSave(args.vg);
+		nvgScale(args.vg, scale, scale);
+		T::draw(args);
+		nvgRestore(args.vg);
+	}
+
+};
+
+struct QuestionableThemedKnob : RoundKnob, QuestionableThemed {
+
+	struct KnobTheme {
+		NVGcolor back = nvgRGB(255,255,255);
+		NVGcolor front = nvgRGB(255,255,255);
+	};
+
+	std::unordered_map<std::string, KnobTheme> themes;
+	KnobTheme knobTheme;
+	KnobTheme fallbackTheme;
+
+	QuestionableThemedKnob() {
+
+	}
+
+	void setupThemes(std::unordered_map<std::string, KnobTheme> themes) {
+		this->themes = themes;
+		onThemeChange(theme);
+	}
+
+	void setFallbackTheme(KnobTheme fallback) {
+		fallbackTheme = fallback;
+		onThemeChange(theme);
+	}
+
+	void draw(const DrawArgs &args) override {
+
+		nvgSave(args.vg);
+		nvgTint(args.vg, knobTheme.back);
+		Widget::drawChild(fb, args);
+		nvgRestore(args.vg);
+
+		nvgSave(args.vg);
+		nvgTint(args.vg, knobTheme.front);
+		Widget::drawChild(tw, args);
+		nvgRestore(args.vg);
+
+	}
+
+	void onThemeChange(std::string theme) override {
+		if (themes.find(theme) != themes.end()) knobTheme = themes[theme];
+		else knobTheme = fallbackTheme;
+	}
+
+};
+
+struct QuestionableLargeKnob : QuestionableThemedKnob {
+
+	QuestionableLargeKnob() {
+
+		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG-alt.svg")));
+		bg->setSvg(Svg::load(asset::plugin(pluginInstance, "res/WhiteKnobSimple.svg")));
+
+		setFallbackTheme({
+			nvgRGB(35,35,35),
+			nvgRGB(255,255,255)
+		});
+
+	}
+
+};
+
+struct QuestionableSmallKnob : Resizable<QuestionableLargeKnob> {
+
+	QuestionableSmallKnob() : Resizable(0.68, true) {
+
+	}
+
 };
 
 template <typename T>
@@ -284,6 +537,10 @@ T dtor(T deg) {
 template <typename T>
 T normalizeRange(T min, T max, T value) {
 	return (max-min)/(max-min)*(value-max)+max;
+}
+
+inline std::string to_string(float val, unsigned int precision=1) {
+	return std::to_string(val).substr(0, std::to_string(val).find(".") + precision + 1);
 }
 
 inline static bool isNumber(std::string s)

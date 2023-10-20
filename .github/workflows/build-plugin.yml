@@ -8,6 +8,7 @@ on:
       - 'v**'
     paths:
       - 'src/**'
+      - 'res/**'
 
 env:
   rack-sdk-version: 2.4.0
@@ -170,7 +171,7 @@ jobs:
           tag: Nightly
           file_glob: true
       - name: Tag Repo
-        uses: richardsimko/update-tag@v1
+        uses: richardsimko/update-tag@v1.0.7 # 1.0.8 has dependency issue
         with:
           tag_name: Nightly
         env:

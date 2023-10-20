@@ -432,39 +432,22 @@ struct NightBinWidget : QuestionableWidget {
 
 		background = new ColorBGSimple(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT), nvgRGB(150, 173, 233));
 
+		backdrop = new ImagePanel();
+		backdrop->box.size = Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT);
+		backdrop->imagePath = asset::plugin(pluginInstance, "res/nightbin/dirt.png"); 
+		backdrop->scalar = 3.5;
+		backdrop->visible = true;
+
 		color = new ColorBG(Vec(MODULE_SIZE * RACK_GRID_WIDTH, RACK_GRID_HEIGHT));
 		color->drawBackground = false;
 		setText();
 
 		backgroundColorLogic(module);
 		setPanel(background);
+		//addChild(backdrop);
 		addChild(color);
 		
 		if (module) setupMenuBar();
-
-		addChild(new QuestionableDrawWidget(Vec((MODULE_SIZE * RACK_GRID_WIDTH)/2, RACK_GRID_HEIGHT/2), [module](const DrawArgs &args) {
-			std::string theme = module ? module->theme : "";
-			NVGcolor color;
-			if (theme == "") color = nvgRGB(250, 250, 250);
-			else if (theme == "Dark") color = nvgRGB(150, 150, 150);
-			else if (theme == "Light") color = nvgRGB(55, 55, 55);
-			for (int i = -3; i <= 3; i++) {
-				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, -150);
-				nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 150);
-				nvgStrokeColor(args.vg, color);
-				nvgStrokeWidth(args.vg, 2);
-				nvgStroke(args.vg);
-			}
-			for (int i = -9; i <= 9; i++) {
-				nvgBeginPath(args.vg);
-				nvgMoveTo(args.vg, -55, (RACK_GRID_HEIGHT/25) * i);
-				nvgLineTo(args.vg, 55, (RACK_GRID_HEIGHT/25) * i);
-				nvgStrokeColor(args.vg, color);
-				nvgStrokeWidth(args.vg, 2);
-				nvgStroke(args.vg);
-			}
-		}));
 
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
@@ -472,6 +455,36 @@ struct NightBinWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		//startQueryThread();
+	}
+
+	void draw(const DrawArgs &args) override {
+		QuestionableWidget::draw(args);
+		nvgSave(args.vg);
+		nvgTranslate(args.vg, (MODULE_SIZE * RACK_GRID_WIDTH)/2, RACK_GRID_HEIGHT/2);
+		std::string theme = module ? ((NightBin*)module)->theme : "";
+		NVGcolor color;
+		if (theme == "") color = nvgRGB(250, 250, 250);
+		else if (theme == "Dark") color = nvgRGB(150, 150, 150);
+		else if (theme == "Light") color = nvgRGB(55, 55, 55);
+		for (int i = -3; i <= 3; i++) {
+			nvgBeginPath(args.vg);
+			nvgMoveTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, -150);
+			nvgLineTo(args.vg, ((MODULE_SIZE * RACK_GRID_WIDTH)/8) * i, 150);
+			nvgStrokeColor(args.vg, color);
+			nvgStrokeWidth(args.vg, 2);
+			nvgStroke(args.vg);
+		}
+		for (int i = -9; i <= 9; i++) {
+			nvgBeginPath(args.vg);
+			nvgMoveTo(args.vg, -55, (RACK_GRID_HEIGHT/25) * i);
+			nvgLineTo(args.vg, 55, (RACK_GRID_HEIGHT/25) * i);
+			nvgStrokeColor(args.vg, color);
+			nvgStrokeWidth(args.vg, 2);
+			nvgStroke(args.vg);
+		}
+		nvgRestore(args.vg);
+
+		Widget::drawChild(backdrop, args);
 	}
 
 	Widget* getRackLayout() {

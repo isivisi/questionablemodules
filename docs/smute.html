@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <link href="./style.css" rel="stylesheet">
+  <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
+  <script src="./bootstrap/bootstrap.min.js"></script>
+  <script src="./script.js"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FZ9FD6YW4S"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+  
+      gtag('config', 'G-FZ9FD6YW4S');
+    </script>
+
+</head>
+
+    <style>
+
+    </style>
+
+    <body class="bg-secondary">
+
+        <header class="site-header bg-dark">
+          <nav class="container d-flex flex-column flex-md-row justify-content-between">
+            <a href="./index.html">
+              <span class="display-6 fw-bold text-light text-bg">Questionable Modules</span>
+            </a>
+
+            <div class="container py-4 d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="https://library.vcvrack.com/questionablemodules/smute"><button class="btn btn-light btn-lg" type="button">View in Library</button></a>
+              <a href="https://github.com/isivisi/questionablemodules"><button class="btn btn-light btn-lg" type="button">View Source</button></a>
+            </div>
+            
+          </nav>
+        </header>
+
+        <div class="container mt-2 nosidepad bg-light">
+          <span id="vbutton"></span><script> importHTML("versionbtn.html", document.getElementById("vbutton")) </script>
+          <div class="p-2 mb-4 bg-light text-center">
+            <div class="container-fluid py-5">
+              <h1 class="display-1 fw-bold">Smute</h1>
+              <p class="fs-4">Synchronized mute.</p>
+
+            </div>
+          </div>
+
+          <img src="./images/smuteview.jpg" style="object-fit: cover; width: 100%;"/>
+        </div>
+
+        <div class="container bg-light">
+          
+          <div class="container-fluid py-5">
+            <div class="feature">
+              <p class="">
+                Mute buttons that sync with the clock.
+              </p>
+              
+              <h2>Parameters</h2>
+              <p id="Input"><span class="fw-bold">Input</span> Input voltage for the row.</p>
+              <p id="Output"><span class="fw-bold">Output</span> The output voltage if the mute is inactive for the row.</p>
+              <p id="Mute"><span class="fw-bold">Mute</span> When this button is pressed it indicates that you want this row muted. The voltage will be muted when the deisred ratio is met with the clock or immediatly based on the <a href="#Ratio"><span class="fw-bold">Ratio</span></a> knob.</p>
+              <p id="Ratio"><span class="fw-bold">Ratio</span> Specify the clock ratio you want to synchronize the mute with. From /32 to X32. By default it is set to immediatly.</p>
+    
+              <p id="Clock"><span class="fw-bold">Clock</span> Smute will synchronize to this clock value. </p>
+              <p id="Reset"><span class="fw-bold">Reset</span> Resets the internal clock values and triggers any waiting mutes when this is triggered. </p>
+              
+              <div style="min-height: 150px"></div> <!-- Spacer -->
+
+              <img src="./images/smute.svg" width="100%"/>
+
+              <h3>Auto pressing</h3>
+              <p id="Auto Pressing"> You can set a button to automatically press by using the <span class="fw-bold">Automatically Press</span> option in the buttons context menu. The automatic pressing will begin when the clock ratio is hit. The row will then cycle on and off until the end of time... or until you disable it.</p>
+              
+              <h3>Expanders</h3>
+              <p id="Expanders"> Smute can expand another Smute module beside it, this sends the button presses, clock, and reset values to the other smute module. This can be enabled via the <span class="fw-bold">Toggle {Left,Right} Expander</span> option in the modules context menu. This is useful for syncing <span class="fw-bold">stereo</span> signals.</p>
+              <p> A connected clock and reset signal will be prioritized over one from a connected Smute. If you want all the clocks to be the same only connect a clock signal to the first Smute in the chain.</p>
+              <p> Smutes cannot control another Smute that is already controlling it. Trying to do so will just disable the functionality. (for now)</p>
+
+              <div style="min-height: 0px"></div> <!-- Spacer -->
+            </div>
+           </div>
+
+           <div class="container-fluid py-5">
+            <div>
+              <h2>Themes</h2>
+              <p>The modules context menu has a theme submenu where you can change the background to a solid white or black color if you are having trouble with the default background design. </p>
+
+              <h2>Labels</h2>
+              <p>Knob and plug labels can be toggled via the <span class="fw-bold">toggle labels</span> option in the context menu. </p>
+            </div>
+          </div>
+ 
+        </div> 
+
+        <script> importHTML("footer.html") </script>
+
+    </body>
+
+</html>

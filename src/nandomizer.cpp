@@ -120,17 +120,22 @@ struct Nandomizer : QuestionableModule {
 
 		if (shouldRandomize) activeOutput = usableInputs[randomInt<int>(0, usableInputs.size()-1)];
 
-		float fadingInputs = 0.f;
+		PolyphonicValue fadingInputs;
 		for (int i = 0; i < MAX_INPUTS; i++) {
+			PolyphonicValue input(inputs[i]);
 			if (i != activeOutput) {
 				inputFades[i] = std::max(0.f, inputFades[i] - ((inputFades[i] * args.sampleTime)));
-				fadingInputs += inputs[i].getVoltage() * inputFades[i];
+				input *= inputFades[i];
+				fadingInputs += input;
 			} else {
 				inputFades[i] = 1.f;
 			}
 		}
+		fadingInputs *= fadeAmnt;
 
-		outputs[0].setVoltage(inputs[activeOutput].getVoltage() + (fadingInputs * fadeAmnt));
+		PolyphonicValue input(inputs[activeOutput]);
+		input += fadingInputs;
+		input.setOutput(outputs[0]);
 
 		if (shouldRandomize) lights[BLINK_LIGHT].setBrightness(1.f);
 
@@ -180,7 +185,7 @@ struct NandomizerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addParam(createParamCentered<QuestionableParam<RoundSmallBlackKnob>>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
+		addParam(createParamCentered<QuestionableParam<QuestionableSmallKnob>>(mm2px(Vec(8.24, 90)), module, Nandomizer::FADE_PARAM));
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(8.24, 100)), module, Nandomizer::FADE_INPUT));
 		
 		for (int i = 0; i < MAX_INPUTS; i++) {
