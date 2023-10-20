@@ -319,38 +319,20 @@ struct BackgroundWidget : Widget {
 		// backdrop
 		if (module->boxShadow.x != 0.f || module->boxShadow.y != 0.f) {
 			std::vector<ModuleWidget*> modules = APP->scene->rack->getModules();
-			if (module->boxShadow.x > 0) {
-				for (size_t i = 0; i < modules.size(); i++) {
+			for (size_t i = 0; i < modules.size(); i++) {
 
-					nvgSave(args.vg);
-					nvgTranslate(args.vg, modules[i]->box.pos.x + modules[i]->box.size.x, modules[i]->box.pos.y);
-					nvgFillColor(args.vg, nvgRGB(25,25,25));
-					nvgBeginPath(args.vg);
-					nvgMoveTo(args.vg, 0, 0);
-					nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
-					nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
-					nvgLineTo(args.vg, -modules[i]->box.size.x + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
-					nvgLineTo(args.vg, -modules[i]->box.size.x, modules[i]->box.size.y);
-					nvgFill(args.vg);
-					nvgRestore(args.vg);
+				nvgSave(args.vg);
+				nvgTranslate(args.vg, modules[i]->box.pos.x + ((module->boxShadow.x > 0) ? modules[i]->box.size.x : 0), modules[i]->box.pos.y);
+				nvgFillColor(args.vg, nvgRGB(25,25,25));
+				nvgBeginPath(args.vg);
+				nvgMoveTo(args.vg, 0, 0);
+				nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
+				nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+				nvgLineTo(args.vg, (((module->boxShadow.x > 0) ? -1 : 1) * modules[i]->box.size.x) + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
+				nvgLineTo(args.vg, ((module->boxShadow.x > 0) ? -1 : 1) * modules[i]->box.size.x, modules[i]->box.size.y);
+				nvgFill(args.vg);
+				nvgRestore(args.vg);
 					
-				}
-			} else {
-				for (size_t i = 0; i < modules.size(); i++) {
-
-					nvgSave(args.vg);
-					nvgTranslate(args.vg, modules[i]->box.pos.x, modules[i]->box.pos.y);
-					nvgFillColor(args.vg, nvgRGB(25,25,25));
-					nvgBeginPath(args.vg);
-					nvgMoveTo(args.vg, 0, 0);
-					nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
-					nvgLineTo(args.vg, module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
-					nvgLineTo(args.vg, modules[i]->box.size.x + module->boxShadow.x, modules[i]->box.size.y + module->boxShadow.y);
-					nvgLineTo(args.vg, modules[i]->box.size.x, modules[i]->box.size.y);
-					nvgFill(args.vg);
-					nvgRestore(args.vg);
-					
-				}
 			}
 		}
 	}
