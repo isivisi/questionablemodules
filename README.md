@@ -11,7 +11,7 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png" style="object-fit:scale-down" height="300">
 <img src="https://library.vcvrack.com/screenshots/400/questionablemodules/nightbin.png" style="object-fit:scale-down" height="300">
 <img src="https://library.vcvrack.com/screenshots/400/questionablemodules/greenscreen.png" style="object-fit:scale-down" height="300">
-<!--<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/smute.png" style="object-fit:scale-down" height="300">-->
+<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/smute.png" style="object-fit:scale-down" height="300">
 
 ## Download
 - Subscribe on the [VCV Library](https://library.vcvrack.com/questionablemodules)
