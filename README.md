@@ -6,12 +6,12 @@
 
 Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 
-<img src="https://library.vcvrack.com/screenshots/200/questionablemodules/nandomizer.png" style="object-fit:scale-down" height="300"> <img src="https://library.vcvrack.com/screenshots/200/questionablemodules/discombobulator.png" style="object-fit:scale-down" height="300">
-<img src="https://github.com/isivisi/questionablemodules/blob/master/images/Treequencer.gif?raw=true?raw=true" style="object-fit:scale-down" height="300">
-<img src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png" style="object-fit:scale-down" height="300">
-<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/nightbin.png" style="object-fit:scale-down" height="300">
-<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/greenscreen.png" style="object-fit:scale-down" height="300">
-<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/smute.png" style="object-fit:scale-down" height="300">
+[<img src="https://library.vcvrack.com/screenshots/200/questionablemodules/nandomizer.png" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/nandomizer) [<img src="https://library.vcvrack.com/screenshots/200/questionablemodules/discombobulator.png" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/discombobulator)
+[<img src="https://github.com/isivisi/questionablemodules/blob/master/images/Treequencer.gif?raw=true?raw=true" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/treequencer)
+[<img src="https://library.vcvrack.com/screenshots/200/questionablemodules/quatosc.png" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/slurp)
+[<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/nightbin.png" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/nightbin)
+[<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/greenscreen.png" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/greenscreen)
+[<img src="https://library.vcvrack.com/screenshots/400/questionablemodules/smute.png" style="object-fit:scale-down" height="270">](https://isivisi.github.io/questionablemodules/smute)
 
 ## Download
 - Subscribe on the [VCV Library](https://library.vcvrack.com/questionablemodules)
