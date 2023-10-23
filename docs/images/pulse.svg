@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1064"
+   height="278"
+   viewBox="0 0 1064 278"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="pulse.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="1.0648148"
+     inkscape:cx="359.2174"
+     inkscape:cy="-116.45218"
+     inkscape:window-width="2560"
+     inkscape:window-height="1363"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;stroke:#2e2e2e;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       d="m 65.337819,242.38137 200.812371,0.14007 0.3035,-197.97795 41.38477,0.16861 1.83396,197.12452 158.57936,0.94681 293.38465,-0.15304 232.45406,-0.57068"
+       id="path1"
+       sodipodi:nodetypes="cccccccc" />
+    <text
+       xml:space="preserve"
+       style="text-align:center;text-anchor:middle;fill:none;stroke:#2e2e2e;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       x="71.96032"
+       y="791.854"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         x="71.96032"
+         y="791.854" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:42.6667px;text-align:center;text-anchor:middle;fill:#474747;fill-opacity:1;stroke:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5, 10;stroke-dashoffset:0;stroke-opacity:1"
+       x="51.640541"
+       y="51.383072"
+       id="text2-6"><tspan
+         sodipodi:role="line"
+         id="tspan2-1"
+         x="51.640541"
+         y="51.383072">10 V</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:42.6667px;text-align:center;text-anchor:middle;fill:#474747;fill-opacity:1;stroke:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5, 10;stroke-dashoffset:0;stroke-opacity:1"
+       x="467.20972"
+       y="34.05751"
+       id="text2-6-5"><tspan
+         sodipodi:role="line"
+         id="tspan2-1-3"
+         x="467.20972"
+         y="34.05751">0.001 Seconds</tspan></text>
+    <path
+       style="fill:#ff9f5f;stroke:#ff6262;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       d="M 262.67942,30.628724 262.33701,5.7976032 v 0"
+       id="path2" />
+    <path
+       style="fill:#ff9f5f;stroke:#ff6262;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       d="M 312.0979,30.572203 311.75549,5.7410818 v 0"
+       id="path2-9" />
+    <path
+       style="fill:#ff9f5f;stroke:#ff6262;stroke-width:2.00399;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       d="m 263.95596,18.192459 46.80819,0.01676 v 0"
+       id="path3" />
+  </g>
+</svg>

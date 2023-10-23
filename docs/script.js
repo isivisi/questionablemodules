@@ -53,6 +53,21 @@ function runEmbeddedScripts(text) {
     }
 }
 
+async function loadTemplates() {
+    await importHTML("templates.html");
+    // load templates
+    var templates = document.getElementsByTagName("template");
+    for (var i = 0; i < templates.length; i++) {
+        var templateDef = templates[i];
+        var foundTags = document.getElementsByTagName(templateDef.id);
+        for (var x = 0; x < foundTags.length; x++) {
+            //var newClone = templateDef.content.cloneNode(true);
+            //foundTags[x].parentNode.replaceChild(newClone, foundTags[x]);
+            foundTags[x].innerHTML = templateDef.innerHTML;
+        }
+    }
+}
+
 // highlight logic for ids
 window.addEventListener('load', function () {
     var hash = decodeURIComponent(window.location.hash.slice(1));
@@ -66,5 +81,8 @@ window.addEventListener('load', function () {
                 paragraphsWithIds[i].classList.add("hashSelected");
             }
         }
-    } 
+    }
+
 });
+
+loadTemplates();
