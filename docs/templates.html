@@ -1,0 +1,59 @@
+<template id="inputbadge">
+    <span class="badge bg-info rounded-pill tooltipped">
+        <img src="./images/badges/input.svg" width="17px"/>
+        <span class="tooltiptext text-dark fw-normal">
+            <h4>Monophonic Input</h4>
+            <p>Takes voltage in</p>
+        </span>
+    </span>
+</template>
+
+<template id="triggerbadge">
+    <span class="badge bg-info rounded-pill tooltipped">
+        <img src="./images/badges/trigger.svg" width="17px"/>
+        <span class="tooltiptext text-dark fw-normal">
+            <h4>Trigger Input</h4>
+            <p>Takes a trigger value as an input. This works as a <span class="fw-bold">Schmitt Trigger</span>. </p>
+        </span>
+    </span>
+</template>
+
+<template id="outputbadge">
+    <span class="badge bg-info rounded-pill tooltipped" title="Monophonic Output Port">
+        <img src="./images/badges/output.svg" width="17px"/>
+        <span class="tooltiptext text-dark fw-normal">
+            <h4>Monophonic Output</h4>
+            <p>Outputs monophonic voltage</p>
+        </span>
+    </span>
+</template>
+
+<template id="polyinputbadge">
+    <span class="badge bg-info rounded-pill position-relative tooltipped">
+        <div style="position:relative;">
+            <img src="./images/badges/input.svg" width="17px"/>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">+</span>
+        </div>
+
+        <span class="tooltiptext text-dark fw-normal">
+            <h4>Polyphonic Input Port</h4>
+            <p>Can accept monophonic and polyphonic voltages.</p>
+        </span>
+
+    </span>
+</template>
+
+<template id="polyoutputbadge">
+    <span class="badge bg-info rounded-pill position-relative tooltipped">
+        <div style="position:relative;">
+            <img src="./images/badges/output.svg" width="17px"/>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">+</span>
+        </div>
+
+        <span class="tooltiptext text-dark fw-normal">
+            <h4>Polyphonic Output</h4>
+            <p>Can output monophonic and polyphonic voltages.</p>
+        </span>
+
+    </span>
+</template>
