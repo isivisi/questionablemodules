@@ -1,26 +1,39 @@
 <template id="inputbadge">
-    <span class="badge bg-info rounded-pill tooltipped">
-        <img src="./images/badges/input.svg" width="17px"/>
+    <span class="badge rounded-pill tooltipped" style="padding:0">
+        <img src="./images/badges/input.svg" width="22px"/>
         <span class="tooltiptext text-dark fw-normal">
             <h4>Monophonic Input</h4>
-            <p>Takes voltage in</p>
+            <p>Accepts a single voltage.</p>
+        </span>
+    </span>
+</template>
+
+<template id="controlbadge">
+    <span class="badge rounded-pill tooltipped" style="padding:0">
+        <img src="./images/badges/input.svg" width="22px"/>
+        <span class="tooltiptext text-dark fw-normal">
+            <h4>CV Input</h4>
+            <p>Accepts a single voltage.</p>
         </span>
     </span>
 </template>
 
 <template id="triggerbadge">
-    <span class="badge bg-info rounded-pill tooltipped">
-        <img src="./images/badges/trigger.svg" width="17px"/>
-        <span class="tooltiptext text-dark fw-normal">
+    <span class="badge rounded-pill tooltipped" style="padding:0">
+        <img src="./images/badges/trigger.svg" width="22px"/>
+        <span class="tooltiptext text-dark fw-normal text-wrap">
             <h4>Trigger Input</h4>
             <p>Takes a trigger value as an input. This works as a <span class="fw-bold">Schmitt Trigger</span>. </p>
+            
+            <img src="./images/schmitttrigger.svg" width="400px"/>
+            <p>When voltage moves from a low voltage threshold (0.2V) through a high voltage threshhold (2V) the trigger will activate. The trigger wont activate again until it moves back below the low voltage threshold</p>
         </span>
     </span>
 </template>
 
 <template id="outputbadge">
-    <span class="badge bg-info rounded-pill tooltipped" title="Monophonic Output Port">
-        <img src="./images/badges/output.svg" width="17px"/>
+    <span class="badge rounded-pill tooltipped" title="Monophonic Output Port" style="padding:0">
+        <img src="./images/badges/output.svg" width="22px"/>
         <span class="tooltiptext text-dark fw-normal">
             <h4>Monophonic Output</h4>
             <p>Outputs monophonic voltage</p>
@@ -29,10 +42,10 @@
 </template>
 
 <template id="polyinputbadge">
-    <span class="badge bg-info rounded-pill position-relative tooltipped">
+    <span class="badge rounded-pill position-relative tooltipped" style="padding:0">
         <div style="position:relative;">
-            <img src="./images/badges/input.svg" width="17px"/>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">+</span>
+            <img src="./images/badges/input.svg" width="22px"/>
+            <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">P</span>
         </div>
 
         <span class="tooltiptext text-dark fw-normal">
@@ -44,10 +57,10 @@
 </template>
 
 <template id="polyoutputbadge">
-    <span class="badge bg-info rounded-pill position-relative tooltipped">
+    <span class="badge rounded-pill position-relative tooltipped" style="padding:0">
         <div style="position:relative;">
-            <img src="./images/badges/output.svg" width="17px"/>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">+</span>
+            <img src="./images/badges/output.svg" width="22px"/>
+            <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger">P</span>
         </div>
 
         <span class="tooltiptext text-dark fw-normal">

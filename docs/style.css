@@ -70,6 +70,7 @@ footer a {
 .tooltipped .tooltiptext {
     visibility: hidden;
     background-color: #ffffff;
+    max-width: 500px;
     text-align: left;
     padding: 10px;
     border-radius: 3px;
