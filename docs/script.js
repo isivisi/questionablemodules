@@ -61,9 +61,9 @@ async function loadTemplates() {
         var templateDef = templates[i];
         var foundTags = document.getElementsByTagName(templateDef.id);
         for (var x = 0; x < foundTags.length; x++) {
-            var newClone = templateDef.content.cloneNode(true);
-            foundTags[x].parentNode.replaceChild(newClone, foundTags[x]);
-            //foundTags[x].outerHTML = templateDef.innerHTML;
+            //var newClone = templateDef.content.cloneNode(true);
+            //foundTags[x].parentNode.replaceChild(newClone, foundTags[x]);
+            foundTags[x].innerHTML = templateDef.innerHTML;
         }
     }
 }
