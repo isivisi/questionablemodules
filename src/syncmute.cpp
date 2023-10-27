@@ -186,6 +186,8 @@ struct SyncMute : QuestionableModule {
 	void onReset() override {
 		clockTicksSinceReset = 0;
 		subClockTime = 0.f;
+		//clockTimer.reset();
+		clockTrigger.reset();
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -194,6 +196,7 @@ struct SyncMute : QuestionableModule {
 
 		// clock stuff from lfo
 		if (isClockInputConnected) {
+			if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
 			clockTimer.process(args.sampleTime);
 			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
 			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
@@ -279,7 +282,10 @@ struct SyncMute : QuestionableModule {
 
 	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
-		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
+		if (json_t* ct = json_object_get(rootJ, "clockTime")) {
+			onReset();
+			clockTime = json_real_value(ct);
+		}
 		if (json_t* er = json_object_get(rootJ, "expanderRight")) expanderRight = json_boolean_value(er);
 		if (json_t* el = json_object_get(rootJ, "expanderLeft")) expanderLeft = json_boolean_value(el);
 
