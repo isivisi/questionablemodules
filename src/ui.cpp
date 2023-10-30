@@ -43,6 +43,17 @@ struct QuestionableQuantity : Quantity {
 
 };
 
+template <typename T = QuestionableQuantity>
+struct QuestionableSlider : ui::Slider {
+	QuestionableSlider(quantityGetFunc valueGet, quantitySetFunc valueSet) {
+		quantity = new T(valueGet, valueSet);
+		box.size.x = 150.0;
+	}
+	~QuestionableSlider() {
+		delete quantity;
+	}
+};
+
 struct QuestionableMenu : Menu {
 	std::function<void()> onDestruct = nullptr;
 

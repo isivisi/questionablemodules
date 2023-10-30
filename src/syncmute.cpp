@@ -2,6 +2,7 @@
 #include "imagepanel.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
+#include "ui.cpp"
 #include <vector>
 #include <algorithm>
 
@@ -57,6 +58,8 @@ struct SyncMute : QuestionableModule {
 
 	bool expanderRight = false;
 	bool expanderLeft = false;
+
+	float lightOpacity = 1.f;
 
 	dsp::SchmittTrigger resetTrigger;
 	dsp::SchmittTrigger clockTrigger;
@@ -272,6 +275,7 @@ struct SyncMute : QuestionableModule {
 		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
 		json_object_set_new(nodeJ, "expanderRight", json_boolean(expanderRight)); 
 		json_object_set_new(nodeJ, "expanderLeft", json_boolean(expanderLeft)); 
+		json_object_set_new(nodeJ, "lightOpacity", json_real(lightOpacity));
 
 		json_t* array = json_array();
 		for (size_t i = 0; i < 8; i++) json_array_append_new(array, mutes[i].toJson());
@@ -282,12 +286,10 @@ struct SyncMute : QuestionableModule {
 
 	void dataFromJson(json_t* rootJ) override {
 		QuestionableModule::dataFromJson(rootJ);
-		if (json_t* ct = json_object_get(rootJ, "clockTime")) {
-			onReset();
-			clockTime = json_real_value(ct);
-		}
+		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
 		if (json_t* er = json_object_get(rootJ, "expanderRight")) expanderRight = json_boolean_value(er);
 		if (json_t* el = json_object_get(rootJ, "expanderLeft")) expanderLeft = json_boolean_value(el);
+		if (json_t* l = json_object_get(rootJ, "lightOpacity")) lightOpacity = json_real_value(l);
 
 		if (json_t* array = json_object_get(rootJ, "mutes")) { // assumes all 8 set
 			for (size_t i = 0; i < 8; i++) { 
@@ -360,7 +362,7 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		int sig = mod->mutes[paramId].timeSignature;
 		
 		if (mod->mutes[paramId].muteState) {
-			nvgFillColor(args.vg, nvgRGB(255, 0, 25));
+			nvgFillColor(args.vg, nvgRGBA(255, 0, 25, mod->lightOpacity*255));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
@@ -370,7 +372,7 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 
 		lightState = mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f;
 
-		if (lightState.isDirty()) lightAlpha = 1.f;
+		if (lightState.isDirty()) lightAlpha = mod->lightOpacity;
 
 		nvgFillColor(args.vg, nvgRGBA(0, 255, 25, lightAlpha*255));
 		nvgBeginPath(args.vg);
@@ -458,6 +460,13 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		menu->addChild(createMenuItem("Toggle Right Expander", mod->expanderRight ? "On" : "Off",[=]() {
 			mod->expanderRight = !mod->expanderRight;
+		}));
+
+		menu->addChild(rack::createSubmenuItem("Light Opacity", to_string(mod->lightOpacity, 1), [=](ui::Menu* menu) {
+			menu->addChild(new QuestionableSlider(
+				[=]() { return mod->lightOpacity; }, 
+				[=](float value) { mod->lightOpacity = math::clamp(value); }
+			));
 		}));
 
 		QuestionableWidget::appendContextMenu(menu);
