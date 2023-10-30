@@ -37,6 +37,7 @@ struct QuestionableQuantity : Quantity {
 	void setValue(float value) override {
 		setValueFunc(value);
 	}
+
 	float getValue() override {
 		return getValueFunc();
 	}
