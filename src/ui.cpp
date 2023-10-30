@@ -37,10 +37,22 @@ struct QuestionableQuantity : Quantity {
 	void setValue(float value) override {
 		setValueFunc(value);
 	}
+
 	float getValue() override {
 		return getValueFunc();
 	}
 
+};
+
+template <typename T = QuestionableQuantity>
+struct QuestionableSlider : ui::Slider {
+	QuestionableSlider(quantityGetFunc valueGet, quantitySetFunc valueSet) {
+		quantity = new T(valueGet, valueSet);
+		box.size.x = 150.0;
+	}
+	~QuestionableSlider() {
+		delete quantity;
+	}
 };
 
 struct QuestionableMenu : Menu {
