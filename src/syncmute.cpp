@@ -122,7 +122,9 @@ struct SyncMute : QuestionableModule {
 		bool muteState = false;
 		bool shouldSwap = false;
 		dirtyable<bool> button = false;
+
 		bool autoPress = false;
+		float lightOpacity = 1.f;
 
 		float accumulatedTime = 0.f;
 
@@ -169,12 +171,14 @@ struct SyncMute : QuestionableModule {
 			json_t* rootJ = json_object();
 			json_object_set_new(rootJ, "muteState", json_boolean(muteState));
 			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
+			json_object_set_new(rootJ, "lightOpacity", json_real(lightOpacity));
 			return rootJ;
 		}
 
 		void fromJson(json_t* json) {
 			if (json_t* v = json_object_get(json, "muteState")) muteState = json_boolean_value(v);
 			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
+			if (json_t* l = json_object_get(json, "lightOpacity")) lightOpacity = json_real_value(l);
 		}
 	};
 
@@ -360,9 +364,10 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 
 		SyncMute* mod = (SyncMute*)module;
 		int sig = mod->mutes[paramId].timeSignature;
+		float opacity = mod->mutes[this->paramId].lightOpacity;
 		
 		if (mod->mutes[paramId].muteState) {
-			nvgFillColor(args.vg, nvgRGBA(255, 0, 25, mod->lightOpacity*255));
+			nvgFillColor(args.vg, nvgRGBA(255, 0, 25, opacity * mod->lightOpacity*255));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
@@ -372,7 +377,7 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 
 		lightState = mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f;
 
-		if (lightState.isDirty()) lightAlpha = mod->lightOpacity;
+		if (lightState.isDirty()) lightAlpha = opacity * mod->lightOpacity;
 
 		nvgFillColor(args.vg, nvgRGBA(0, 255, 25, lightAlpha*255));
 		nvgBeginPath(args.vg);
@@ -388,6 +393,14 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
+
+		menu->addChild(rack::createSubmenuItem("Light Opacity", to_string(mod->mutes[this->paramId].lightOpacity, 1), [=](ui::Menu* menu) {
+			menu->addChild(new QuestionableSlider(
+				[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
+				[=](float value) { mod->mutes[this->paramId].lightOpacity = math::clamp(value); }
+			));
+		}));
+
 		Resizable<QuestionableTimed<QuestionableParam<CKD6>>>::appendContextMenu(menu);
 	}
 
@@ -462,7 +475,7 @@ struct SyncMuteWidget : QuestionableWidget {
 			mod->expanderRight = !mod->expanderRight;
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Light Opacity", to_string(mod->lightOpacity, 1), [=](ui::Menu* menu) {
+		menu->addChild(rack::createSubmenuItem("Global Light Opacity", to_string(mod->lightOpacity, 1), [=](ui::Menu* menu) {
 			menu->addChild(new QuestionableSlider(
 				[=]() { return mod->lightOpacity; }, 
 				[=](float value) { mod->lightOpacity = math::clamp(value); }
