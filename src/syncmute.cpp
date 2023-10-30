@@ -352,13 +352,12 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 };
 
-struct OpacityQuantity : Quantity {
+struct OpacityQuantity : QuestionableQuantity {
 	std::function<float()> getValueFunc;
 	std::function<void(float)> setValueFunc;
 
-	OpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) {
-		getValueFunc = getFunc;
-		setValueFunc = setFunc;
+	OpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
+
 	}
 
 	float getDisplayValue() override {
@@ -366,15 +365,29 @@ struct OpacityQuantity : Quantity {
 	}
 
 	void setDisplayValue(float displayValue) override {
-		setValue(displayValue / 100);
+		setValue(displayValue / 100.f);
 	}
 
 	std::string getLabel() override {
-		return "Opacity";
+		return "Light Opacity";
 	}
 
 	std::string getUnit() override {
 		return "%";
+	}
+
+};
+
+struct GlobalOpacityQuantity : OpacityQuantity {
+	std::function<float()> getValueFunc;
+	std::function<void(float)> setValueFunc;
+
+	GlobalOpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : OpacityQuantity(getFunc, setFunc) {
+		
+	}
+
+	std::string getLabel() override {
+		return "Global Light Opacity";
 	}
 
 };
@@ -423,12 +436,10 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Light Opacity", std::to_string((int)(mod->mutes[this->paramId].lightOpacity*100))+"%", [=](ui::Menu* menu) {
-			menu->addChild(new QuestionableSlider<OpacityQuantity>(
-				[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
-				[=](float value) { mod->mutes[this->paramId].lightOpacity = math::clamp(value); }
-			));
-		}));
+		menu->addChild(new QuestionableSlider<OpacityQuantity>(
+			[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
+			[=](float value) { mod->mutes[this->paramId].lightOpacity = math::clamp(value); }
+		));
 
 		Resizable<QuestionableTimed<QuestionableParam<CKD6>>>::appendContextMenu(menu);
 	}
@@ -504,12 +515,10 @@ struct SyncMuteWidget : QuestionableWidget {
 			mod->expanderRight = !mod->expanderRight;
 		}));
 
-		menu->addChild(rack::createSubmenuItem("Global Light Opacity", std::to_string((int)(mod->lightOpacity*100))+"%", [=](ui::Menu* menu) {
-			menu->addChild(new QuestionableSlider<OpacityQuantity>(
-				[=]() { return mod->lightOpacity; }, 
-				[=](float value) { mod->lightOpacity = math::clamp(value); }
-			));
-		}));
+		menu->addChild(new QuestionableSlider<GlobalOpacityQuantity>(
+			[=]() { return mod->lightOpacity; }, 
+			[=](float value) { mod->lightOpacity = math::clamp(value); }
+		));
 
 		QuestionableWidget::appendContextMenu(menu);
 
