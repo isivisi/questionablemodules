@@ -353,8 +353,6 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 };
 
 struct OpacityQuantity : QuestionableQuantity {
-	std::function<float()> getValueFunc;
-	std::function<void(float)> setValueFunc;
 
 	OpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
 
@@ -379,8 +377,6 @@ struct OpacityQuantity : QuestionableQuantity {
 };
 
 struct GlobalOpacityQuantity : OpacityQuantity {
-	std::function<float()> getValueFunc;
-	std::function<void(float)> setValueFunc;
 
 	GlobalOpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : OpacityQuantity(getFunc, setFunc) {
 		
