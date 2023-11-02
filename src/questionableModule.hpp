@@ -138,16 +138,16 @@ struct ThreadQueue {
 
 	void push(T& obj) {
 		std::lock_guard<std::mutex> guard(mut);
+		queue[!activeQueue] = queue[activeQueue];
 		queue[!activeQueue].push(obj);
 		activeQueue = !activeQueue;
-		queue[!activeQueue].push(obj);
 	}
 
 	void pop() {
 		std::lock_guard<std::mutex> guard(mut);
+		queue[!activeQueue] = queue[activeQueue];
 		queue[!activeQueue].pop();
 		activeQueue = !activeQueue;
-		queue[!activeQueue].pop();
 	}
 
 	// limited functionallity
