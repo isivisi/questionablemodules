@@ -41,14 +41,6 @@ struct SyncMute : QuestionableModule {
 		IN8,
 		CLOCK,
 		RESET,
-		RATIO_OFFSET,
-		RATIO_OFFSET2,
-		RATIO_OFFSET3,
-		RATIO_OFFSET4,
-		RATIO_OFFSET5,
-		RATIO_OFFSET6,
-		RATIO_OFFSET7,
-		RATIO_OFFSET8,
 		INPUTS_LEN
 	};
 	enum OutputId {
@@ -158,14 +150,6 @@ struct SyncMute : QuestionableModule {
 		configInput(IN6, "6");
 		configInput(IN7, "7");
 		configInput(IN8, "8");
-		configInput(RATIO_OFFSET, "Ratio");
-		configInput(RATIO_OFFSET2, "Ratio");
-		configInput(RATIO_OFFSET3, "Ratio");
-		configInput(RATIO_OFFSET4, "Ratio");
-		configInput(RATIO_OFFSET5, "Ratio");
-		configInput(RATIO_OFFSET6, "Ratio");
-		configInput(RATIO_OFFSET7, "Ratio");
-		configInput(RATIO_OFFSET8, "Ratio");
 		configOutput(OUT,  "1");
 		configOutput(OUT2, "2");
 		configOutput(OUT3, "3");
@@ -512,12 +496,6 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 
 };
 
-struct MiniPort : SvgPort {
-	MiniPort() : SvgPort() {
-		setSvg(Svg::load(asset::system("res/SmallPort.svg")));
-	}
-};
-
 struct SyncMuteWidget : QuestionableWidget {
 	//ColorBGSimple* bgSimple;
 	void setText() {
@@ -564,7 +542,6 @@ struct SyncMuteWidget : QuestionableWidget {
 		float yoffset = 13.2;
 		for (size_t i = 0; i < 8; i++) {
 			addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(7.8, initalOffset + (yoffset* i))), module, SyncMute::IN + i));
-			addInput(createInputCentered<QuestionablePort<MiniPort>>(mm2px(Vec(28, 4.5 + initalOffset + (yoffset* i))), module, SyncMute::RATIO_OFFSET + i));
 			addParam(createParamCentered<QuestionableParam<ClockKnob>>(mm2px(Vec(20.2, initalOffset + (yoffset* i))), module, SyncMute::TIME_SIG + i));
 			addParam(createParamCentered<MuteButton>(mm2px(Vec(20.2, initalOffset + (13.2* i))), module, SyncMute::MUTE + i));
 			addOutput(createOutputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(32.8, initalOffset + (yoffset * i))), module, SyncMute::OUT + i));
