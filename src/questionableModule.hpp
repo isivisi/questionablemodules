@@ -362,6 +362,11 @@ struct Resizable : T {
 	
 	bool hasUpdatedBox = false;
 
+	Resizable() {
+		scale = 1.f;
+		centered = true;
+	}
+
 	Resizable(float scale, bool centered) {
 		this->scale = scale;
 		this->centered = centered;
