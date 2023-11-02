@@ -198,6 +198,7 @@ struct QuatOSC : QuestionableModule {
 		configInput(TRIGGER, "Gate");
 
 		supportsSampleRateOverride = true;
+		initInterpolatedOuput({OUT, OUT2});
 
 		xPointOnSphere = gmtl::Vec3f(VECLENGTH, 0.f, 0.f);
 		yPointOnSphere = gmtl::Vec3f(0.f, VECLENGTH, 0.f);
