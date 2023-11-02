@@ -414,7 +414,7 @@ struct Treequencer : QuestionableModule {
 		LIGHTS_LEN
 	};
 
-	std::queue<std::function<void()>> audioThreadQueue;
+	ThreadQueue<std::function<void()>> audioThreadQueue;
 
 	// json data for screen
 	float startScreenScale = 12.9f;
