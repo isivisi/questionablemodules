@@ -11,7 +11,6 @@
 const int MODULE_SIZE = 8;
 
 struct SyncMute : QuestionableModule {
-	std::mutex messageMutex;
 	enum ParamId {
 		MUTE,
 		MUTE2,
@@ -75,7 +74,7 @@ struct SyncMute : QuestionableModule {
 		RIGHT
 	};
 
-	std::queue<ExpanderMessage> expanderMessages;
+	ThreadQueue<ExpanderMessage> expanderMessages;
 
 	void sendExpanderMessage(ExpanderMessage msg, SendDirection sendDirection = SendDirection::BOTH) {
 		bool leftConnected = expanderLeft && expanderConnected(true);

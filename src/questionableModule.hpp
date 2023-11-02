@@ -8,6 +8,8 @@
 #include <sstream>
 #include <array>
 #include <vector>
+#include <mutex>
+#include <queue>
 
 // simple variable that has a dirty state
 // designed for native types
@@ -124,6 +126,35 @@ struct PolyphonicValue {
 	PolyphonicValue operator-(PolyphonicValue other) { PolyphonicValue ret = *this; ret -= other; return ret; }
 	PolyphonicValue operator*(PolyphonicValue other) { PolyphonicValue ret = *this; ret *= other; return ret; }
 	PolyphonicValue operator/(PolyphonicValue other) { PolyphonicValue ret = *this; ret /= other; return ret; }
+
+};
+
+// Threadsafe queue that doesn't lock on read, only write
+template <typename T>
+struct ThreadQueue {
+	std::mutex mut;
+	std::queue<T> queue[2];
+	bool activeQueue = false;
+
+	void push(T& obj) {
+		std::lock_guard<std::mutex> guard(mut);
+		queue[!activeQueue].push(obj);
+		activeQueue = !activeQueue;
+		queue[!activeQueue].push(obj);
+	}
+
+	void pop() {
+		std::lock_guard<std::mutex> guard(mut);
+		queue[!activeQueue].pop();
+		activeQueue = !activeQueue;
+		queue[!activeQueue].pop();
+	}
+
+	// limited functionallity
+	T& front() { return queue[activeQueue].front(); }
+	T& back() { return queue[activeQueue].back(); }
+	bool empty() { return queue[activeQueue].empty(); }
+	size_t size() { return queue[activeQueue].size(); }
 
 };
 
