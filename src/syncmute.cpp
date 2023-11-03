@@ -270,7 +270,7 @@ struct SyncMute : QuestionableModule {
 			if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
 			clockTimer.process(args.sampleTime);
 			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
-			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f) && !ignoreClockTrigger) {
+			if (!ignoreClockTrigger && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
 				clockTime = clockTimer.getTime();
 				clockTimer.reset();
 				clockTicksSinceReset += 1;

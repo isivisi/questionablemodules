@@ -621,9 +621,9 @@ struct Treequencer : QuestionableModule {
 	void process(const ProcessArgs& args) override {
 
 		processOffThreadQueue();
-
-		if (timeSinceReset <= clockIgnoreTime) timeSinceReset += args.sampleTime;
+		
 		bool canClock = timeSinceReset >= clockIgnoreTime;
+		if (timeSinceReset <= clockIgnoreTime) timeSinceReset += args.sampleTime;
 
 		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		bool isGateTriggered = canClock && gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f) && !params[HOLD].getValue();
