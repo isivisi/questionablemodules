@@ -58,61 +58,6 @@ struct SyncMute : QuestionableModule {
 		LIGHTS_LEN
 	};
 
-	enum MessageType {
-		ONBUTTON,
-		ONRESET,
-	};
-
-	struct ExpanderMessage {
-		MessageType type;
-		int buttonId;
-	};
-
-	enum SendDirection {
-		BOTH,
-		LEFT,
-		RIGHT
-	};
-
-	ThreadQueue<ExpanderMessage> expanderMessages;
-
-	void sendExpanderMessage(ExpanderMessage msg, SendDirection sendDirection = SendDirection::BOTH) {
-		bool leftConnected = expanderLeft && expanderConnected(true);
-		bool rightConnected = expanderRight && expanderConnected(false);
-		
-		if (leftConnected && sendDirection != SendDirection::RIGHT) {
-			SyncMute* mod = (SyncMute*)getLeftExpander().module;
-			mod->recieveExpanderMessage(msg);
-			if (mod->expanderLeft) mod->sendExpanderMessage(msg, SendDirection::LEFT);
-		}
-		if (rightConnected && sendDirection != SendDirection::LEFT) {
-			SyncMute* mod = (SyncMute*)getRightExpander().module;
-			mod->recieveExpanderMessage(msg);
-			if (mod->expanderRight) mod->sendExpanderMessage(msg, SendDirection::RIGHT);
-		}
-	}
-
-	void recieveExpanderMessage(ExpanderMessage msg) {
-		expanderMessages.push(msg);
-	}
-
-	void processMessages() {
-		while (!expanderMessages.empty()) {
-			ExpanderMessage msg = expanderMessages.front();
-			if (msg.type == MessageType::ONRESET) onReset();
-			if (msg.type == MessageType::ONBUTTON) mutes[msg.buttonId].shouldSwap = !mutes[msg.buttonId].shouldSwap;
-			expanderMessages.pop();
-		}
-	}
-
-	bool expanderRight = false;
-	bool expanderLeft = false;
-
-	bool expanderConnected(bool left) {
-		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
-		return expander && expander->model == this->model;
-	}
-
 	float lightOpacity = 1.f;
 
 	dsp::SchmittTrigger resetTrigger;
@@ -122,6 +67,103 @@ struct SyncMute : QuestionableModule {
 	float clockTime = 0.5f; // in seconds
 
 	float accumulatedTime[8] = {0.f};
+
+	enum MessageType {
+		ONBUTTON,
+		ONBUTTONAUTO,
+		ONRESET,
+		ONCLOCK,
+	};
+
+	struct ExpanderMessage {
+		SyncMute* sender = nullptr;
+		MessageType type;
+		int buttonId;
+		bool autoPress;
+		float time;
+		uint64_t clockTicksSinceReset;
+
+		static ExpanderMessage resetMessage(SyncMute* sender) {
+			return ExpanderMessage({sender, MessageType::ONRESET});
+		}
+
+		static ExpanderMessage buttonMessage(SyncMute* sender, int buttonId) {
+			return ExpanderMessage({sender, MessageType::ONBUTTON, buttonId});
+		}
+
+		static ExpanderMessage clockMessage(SyncMute* sender, float clockTime, uint64_t clockTicksSinceReset = std::numeric_limits<uint64_t>::max()) {
+			return ExpanderMessage({sender, MessageType::ONCLOCK, 0, 0, clockTime, clockTicksSinceReset});
+		}
+
+		static ExpanderMessage buttonAutoPress(SyncMute* sender, int buttonId, bool autoPress) {
+			return ExpanderMessage({sender, MessageType::ONBUTTONAUTO, buttonId, autoPress});
+		}
+
+	};
+
+	enum SendDirection {
+		BOTH,
+		LEFT,
+		RIGHT
+	};
+
+	ThreadQueue<ExpanderMessage> expanderMessages;
+	bool expanderRight = false;
+	bool expanderLeft = false;
+
+	// Send message to any controlled smutes
+	void sendExpanderMessage(ExpanderMessage msg, SendDirection sendDirection = SendDirection::BOTH) {
+		bool leftConnected = expanderLeft && expanderConnected(true);
+		bool rightConnected = expanderRight && expanderConnected(false);
+		
+		if (leftConnected && sendDirection != SendDirection::RIGHT) {
+			SyncMute* mod = (SyncMute*)getLeftExpander().module;
+			mod->recieveExpanderMessage(msg);
+		}
+		if (rightConnected && sendDirection != SendDirection::LEFT) {
+			SyncMute* mod = (SyncMute*)getRightExpander().module;
+			mod->recieveExpanderMessage(msg);
+		}
+	}
+	
+	void recieveExpanderMessage(ExpanderMessage msg) {
+		if (inputs[CLOCK].isConnected() && msg.type == MessageType::ONCLOCK) return; // we dont accept clock control when our own clock is connected
+
+		expanderMessages.push(msg);
+
+		// pass along if we're also controlling a smute
+		if (expanderLeft) sendExpanderMessage(msg, SendDirection::LEFT);
+		if (expanderRight) sendExpanderMessage(msg, SendDirection::RIGHT);
+	}
+
+	void processMessages() {
+		while (!expanderMessages.empty()) {
+			ExpanderMessage msg = expanderMessages.front();
+			if (msg.type == MessageType::ONRESET) onReset();
+			if (msg.type == MessageType::ONBUTTON) mutes[msg.buttonId].shouldSwap = !mutes[msg.buttonId].shouldSwap;
+			if (msg.type == MessageType::ONBUTTONAUTO) mutes[msg.buttonId].autoPress = msg.autoPress;
+			if (msg.type == MessageType::ONCLOCK) {
+				if (inputs[CLOCK].isConnected()) continue; // we take control
+				clockTime = msg.time;
+				if (msg.clockTicksSinceReset != std::numeric_limits<uint64_t>::max()) clockTicksSinceReset = msg.clockTicksSinceReset;
+			}
+			expanderMessages.pop();
+		}
+	}
+
+	// Are you being controlled by another smute?
+	bool isControlled() {
+		Module* left = getLeftExpander().module;
+		Module* right = getRightExpander().module;
+		if (left && left->model == this->model && ((SyncMute*)left)->expanderRight) return true;
+		if (right && right->model == this->model && ((SyncMute*)right)->expanderLeft) return true;
+		return false;
+	}
+
+	bool expanderConnected(bool left) {
+		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
+		return expander && expander->model == this->model;
+	}
 
 	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
 
@@ -178,7 +220,7 @@ struct SyncMute : QuestionableModule {
 		bool shouldSwap = false;
 		dirtyable<bool> button = false;
 
-		bool autoPress = false;
+		dirtyable<bool> autoPress = false;
 		float lightOpacity = 1.f;
 
 		float accumulatedTime = 0.f;
@@ -190,8 +232,10 @@ struct SyncMute : QuestionableModule {
 			button = module->params[MUTE+paramId].getValue();
 			if (button.isDirty() && button == true) {
 				shouldSwap = !shouldSwap;
-				module->sendExpanderMessage(ExpanderMessage{MessageType::ONBUTTON, paramId});
+				module->sendExpanderMessage(ExpanderMessage::buttonMessage(module, paramId));
 			}
+
+			if (autoPress.isDirty()) module->sendExpanderMessage(ExpanderMessage::buttonAutoPress(module, paramId, autoPress));
 
 			bool clockHit = false;
 
@@ -254,7 +298,7 @@ struct SyncMute : QuestionableModule {
 		//clockTimer.reset();
 		clockTrigger.reset();
 		ignoreClockTrigger = true; // ignore for 0.001 seconds
-		sendExpanderMessage(ExpanderMessage{MessageType::ONRESET, 0});
+		sendExpanderMessage(ExpanderMessage::resetMessage(this));
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -270,18 +314,26 @@ struct SyncMute : QuestionableModule {
 			if (isClockInputConnected) {
 				if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
 				clockTimer.process(args.sampleTime);
-				if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
+				if (clockTimer.getTime() > clockTime) {
+					clockTime = clockTimer.getTime();
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime));
+				}
 				if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
 					clockTime = clockTimer.getTime();
 					clockTimer.reset();
 					clockTicksSinceReset += 1;
 					subClockTime = 0;
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime, clockTicksSinceReset));
 				}
-			} else { // 0.5f clock
-				if (isClockInputConnected.isDirty()) clockTime = 0.5f;
+			} else if (!isControlled()) { // 0.5f clock
+				if (isClockInputConnected.isDirty()) {
+					clockTime = 0.5f;
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime));
+				}
 				if (subClockTime >= clockTime) {
 					clockTicksSinceReset += 1;
 					subClockTime = 0.f;
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime, clockTicksSinceReset));
 				}
 			}
 		}
@@ -291,40 +343,6 @@ struct SyncMute : QuestionableModule {
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
 
 		subClockTime += args.sampleTime; // this must be after step to fix clock never getting hit with multiply ratio
-
-		if (expanderRight) {
-			Module* rightModule = getRightExpander().module;
-			if (rightModule && rightModule->model == this->model) {
-				SyncMute* other = (SyncMute*)rightModule;
-				if (!other->expanderLeft) {
-					if (!other->inputs[CLOCK].isConnected()) {
-						other->clockTime = clockTime;
-						other->clockTicksSinceReset = clockTicksSinceReset;
-						other->subClockTime = subClockTime;
-					}
-					for (size_t i = 0; i < 8; i++) {
-						other->mutes[i].autoPress = mutes[i].autoPress;	
-					}
-				}
-			}
-		}
-
-		if (expanderLeft) {
-			Module* leftModule = getLeftExpander().module;
-			if (leftModule && leftModule->model == this->model) {
-				SyncMute* other = (SyncMute*)leftModule;
-				if (!other->expanderRight) {
-					if (!other->inputs[CLOCK].isConnected()) {
-						other->clockTime = clockTime;
-						other->clockTicksSinceReset = clockTicksSinceReset;
-						other->subClockTime = subClockTime;
-					}
-					for (size_t i = 0; i < 8; i++) {
-						other->mutes[i].autoPress = mutes[i].autoPress;	
-					}
-				}
-			}
-		}
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
