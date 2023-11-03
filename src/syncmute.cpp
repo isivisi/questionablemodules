@@ -8,6 +8,8 @@
 
 const int MODULE_SIZE = 8;
 
+static float clockIgnoreTime = 0.001;
+
 struct SyncMute : QuestionableModule {
 	enum ParamId {
 		MUTE,
@@ -115,6 +117,7 @@ struct SyncMute : QuestionableModule {
 
 	dsp::SchmittTrigger resetTrigger;
 	dsp::SchmittTrigger clockTrigger;
+	bool ignoreClockTrigger = true;
 	dsp::Timer clockTimer;
 	float clockTime = 0.5f; // in seconds
 
@@ -250,6 +253,7 @@ struct SyncMute : QuestionableModule {
 		subClockTime = 0.f;
 		//clockTimer.reset();
 		clockTrigger.reset();
+		ignoreClockTrigger = true; // ignore for 0.001 seconds
 		sendExpanderMessage(ExpanderMessage{MessageType::ONRESET, 0});
 	}
 
@@ -258,12 +262,15 @@ struct SyncMute : QuestionableModule {
 		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		isClockInputConnected = inputs[CLOCK].isConnected();
 
+		// wait a set amount of time after reset before accepting clock input
+		if (ignoreClockTrigger) if (subClockTime >= clockIgnoreTime) ignoreClockTrigger = false;
+
 		// clock stuff from lfo
 		if (isClockInputConnected) {
 			if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
 			clockTimer.process(args.sampleTime);
 			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
-			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
+			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f) && !ignoreClockTrigger) {
 				clockTime = clockTimer.getTime();
 				clockTimer.reset();
 				clockTicksSinceReset += 1;
