@@ -5,8 +5,6 @@
 #include "ui.cpp"
 #include <vector>
 #include <algorithm>
-#include <mutex>
-#include <queue>
 
 const int MODULE_SIZE = 8;
 
