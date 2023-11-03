@@ -8,6 +8,8 @@
 
 const int MODULE_SIZE = 8;
 
+const float clockIgnoreTime = 0.001;
+
 struct SyncMute : QuestionableModule {
 	enum ParamId {
 		MUTE,
@@ -56,13 +58,66 @@ struct SyncMute : QuestionableModule {
 		LIGHTS_LEN
 	};
 
+	enum MessageType {
+		ONBUTTON,
+		ONRESET,
+	};
+
+	struct ExpanderMessage {
+		MessageType type;
+		int buttonId;
+	};
+
+	enum SendDirection {
+		BOTH,
+		LEFT,
+		RIGHT
+	};
+
+	ThreadQueue<ExpanderMessage> expanderMessages;
+
+	void sendExpanderMessage(ExpanderMessage msg, SendDirection sendDirection = SendDirection::BOTH) {
+		bool leftConnected = expanderLeft && expanderConnected(true);
+		bool rightConnected = expanderRight && expanderConnected(false);
+		
+		if (leftConnected && sendDirection != SendDirection::RIGHT) {
+			SyncMute* mod = (SyncMute*)getLeftExpander().module;
+			mod->recieveExpanderMessage(msg);
+			if (mod->expanderLeft) mod->sendExpanderMessage(msg, SendDirection::LEFT);
+		}
+		if (rightConnected && sendDirection != SendDirection::LEFT) {
+			SyncMute* mod = (SyncMute*)getRightExpander().module;
+			mod->recieveExpanderMessage(msg);
+			if (mod->expanderRight) mod->sendExpanderMessage(msg, SendDirection::RIGHT);
+		}
+	}
+
+	void recieveExpanderMessage(ExpanderMessage msg) {
+		expanderMessages.push(msg);
+	}
+
+	void processMessages() {
+		while (!expanderMessages.empty()) {
+			ExpanderMessage msg = expanderMessages.front();
+			if (msg.type == MessageType::ONRESET) onReset();
+			if (msg.type == MessageType::ONBUTTON) mutes[msg.buttonId].shouldSwap = !mutes[msg.buttonId].shouldSwap;
+			expanderMessages.pop();
+		}
+	}
+
 	bool expanderRight = false;
 	bool expanderLeft = false;
+
+	bool expanderConnected(bool left) {
+		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
+		return expander && expander->model == this->model;
+	}
 
 	float lightOpacity = 1.f;
 
 	dsp::SchmittTrigger resetTrigger;
 	dsp::SchmittTrigger clockTrigger;
+	bool ignoreClockTrigger = true;
 	dsp::Timer clockTimer;
 	float clockTime = 0.5f; // in seconds
 
@@ -133,7 +188,10 @@ struct SyncMute : QuestionableModule {
 		void step(float deltaTime) {
 			timeSignature = module->params[TIME_SIG+paramId].getValue();
 			button = module->params[MUTE+paramId].getValue();
-			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
+			if (button.isDirty() && button == true) {
+				shouldSwap = !shouldSwap;
+				module->sendExpanderMessage(ExpanderMessage{MessageType::ONBUTTON, paramId});
+			}
 
 			bool clockHit = false;
 
@@ -195,28 +253,36 @@ struct SyncMute : QuestionableModule {
 		subClockTime = 0.f;
 		//clockTimer.reset();
 		clockTrigger.reset();
+		ignoreClockTrigger = true; // ignore for 0.001 seconds
+		sendExpanderMessage(ExpanderMessage{MessageType::ONRESET, 0});
 	}
 
 	void process(const ProcessArgs& args) override {
+		processMessages();
 		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		isClockInputConnected = inputs[CLOCK].isConnected();
 
+		// wait a set amount of time after reset before accepting clock input
+		if (ignoreClockTrigger) if (subClockTime >= clockIgnoreTime) ignoreClockTrigger = false;
+
 		// clock stuff from lfo
-		if (isClockInputConnected) {
-			if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
-			clockTimer.process(args.sampleTime);
-			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
-			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
-				clockTime = clockTimer.getTime();
-				clockTimer.reset();
-				clockTicksSinceReset += 1;
-				subClockTime = 0;
-			}
-		} else { // 0.5f clock
-			if (isClockInputConnected.isDirty()) clockTime = 0.5f;
-			if (subClockTime >= clockTime) {
-				clockTicksSinceReset += 1;
-				subClockTime = 0.f;
+		if (!ignoreClockTrigger) {
+			if (isClockInputConnected) {
+				if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
+				clockTimer.process(args.sampleTime);
+				if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
+				if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
+					clockTime = clockTimer.getTime();
+					clockTimer.reset();
+					clockTicksSinceReset += 1;
+					subClockTime = 0;
+				}
+			} else { // 0.5f clock
+				if (isClockInputConnected.isDirty()) clockTime = 0.5f;
+				if (subClockTime >= clockTime) {
+					clockTicksSinceReset += 1;
+					subClockTime = 0.f;
+				}
 			}
 		}
 
@@ -225,22 +291,19 @@ struct SyncMute : QuestionableModule {
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
 
 		subClockTime += args.sampleTime; // this must be after step to fix clock never getting hit with multiply ratio
-		
-		// expander logic
+
 		if (expanderRight) {
 			Module* rightModule = getRightExpander().module;
 			if (rightModule && rightModule->model == this->model) {
 				SyncMute* other = (SyncMute*)rightModule;
 				if (!other->expanderLeft) {
-					if (!other->inputs[RESET].isConnected()) other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
 					if (!other->inputs[CLOCK].isConnected()) {
 						other->clockTime = clockTime;
 						other->clockTicksSinceReset = clockTicksSinceReset;
 						other->subClockTime = subClockTime;
 					}
 					for (size_t i = 0; i < 8; i++) {
-						other->mutes[i].autoPress = mutes[i].autoPress;
-						if (params[MUTE+i].getValue() != other->params[MUTE+i].getValue()) other->params[MUTE+i].setValue(params[MUTE+i].getValue());
+						other->mutes[i].autoPress = mutes[i].autoPress;	
 					}
 				}
 			}
@@ -251,15 +314,13 @@ struct SyncMute : QuestionableModule {
 			if (leftModule && leftModule->model == this->model) {
 				SyncMute* other = (SyncMute*)leftModule;
 				if (!other->expanderRight) {
-					if (!other->inputs[RESET].isConnected()) other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
 					if (!other->inputs[CLOCK].isConnected()) {
 						other->clockTime = clockTime;
 						other->clockTicksSinceReset = clockTicksSinceReset;
 						other->subClockTime = subClockTime;
 					}
 					for (size_t i = 0; i < 8; i++) {
-						other->mutes[i].autoPress = mutes[i].autoPress;
-						if (params[MUTE+i].getValue() != other->params[MUTE+i].getValue()) other->params[MUTE+i].setValue(params[MUTE+i].getValue());
+						other->mutes[i].autoPress = mutes[i].autoPress;	
 					}
 				}
 			}
@@ -353,8 +414,6 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 };
 
 struct OpacityQuantity : QuestionableQuantity {
-	std::function<float()> getValueFunc;
-	std::function<void(float)> setValueFunc;
 
 	OpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
 
@@ -379,8 +438,6 @@ struct OpacityQuantity : QuestionableQuantity {
 };
 
 struct GlobalOpacityQuantity : OpacityQuantity {
-	std::function<float()> getValueFunc;
-	std::function<void(float)> setValueFunc;
 
 	GlobalOpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : OpacityQuantity(getFunc, setFunc) {
 		
