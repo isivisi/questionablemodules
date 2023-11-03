@@ -266,21 +266,23 @@ struct SyncMute : QuestionableModule {
 		if (ignoreClockTrigger) if (subClockTime >= clockIgnoreTime) ignoreClockTrigger = false;
 
 		// clock stuff from lfo
-		if (isClockInputConnected) {
-			if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
-			clockTimer.process(args.sampleTime);
-			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
-			if (!ignoreClockTrigger && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
-				clockTime = clockTimer.getTime();
-				clockTimer.reset();
-				clockTicksSinceReset += 1;
-				subClockTime = 0;
-			}
-		} else { // 0.5f clock
-			if (isClockInputConnected.isDirty()) clockTime = 0.5f;
-			if (subClockTime >= clockTime) {
-				clockTicksSinceReset += 1;
-				subClockTime = 0.f;
+		if (!ignoreClockTrigger) {
+			if (isClockInputConnected) {
+				if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
+				clockTimer.process(args.sampleTime);
+				if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
+				if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
+					clockTime = clockTimer.getTime();
+					clockTimer.reset();
+					clockTicksSinceReset += 1;
+					subClockTime = 0;
+				}
+			} else { // 0.5f clock
+				if (isClockInputConnected.isDirty()) clockTime = 0.5f;
+				if (subClockTime >= clockTime) {
+					clockTicksSinceReset += 1;
+					subClockTime = 0.f;
+				}
 			}
 		}
 
