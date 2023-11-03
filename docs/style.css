@@ -86,7 +86,10 @@ footer a {
     opacity: 0;
     transition: opacity 0.3s;
 }
-  
+
+.tooltiptext {
+    font-size:var(--bs-body-font-size);
+}
   
 .tooltipped:hover .tooltiptext {
     visibility: visible;
