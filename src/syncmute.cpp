@@ -8,7 +8,7 @@
 
 const int MODULE_SIZE = 8;
 
-static float clockIgnoreTime = 0.001;
+const float clockIgnoreTime = 0.001;
 
 struct SyncMute : QuestionableModule {
 	enum ParamId {
