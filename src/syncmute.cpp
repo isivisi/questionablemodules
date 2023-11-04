@@ -161,14 +161,14 @@ struct SyncMute : QuestionableModule {
 	bool isControlledLeft() {
 		SyncMute* left = getExpander(true);
 		if (expanderLeft) return false;
-		if (left && left->model == this->model && left->expanderRight) return true;
+		if (left && left->expanderRight) return true;
 		return false;
 	}
 
 	bool isControlledRight() {
 		SyncMute* right = getExpander(false);
 		if (expanderRight) return false;
-		if (right && right->model == this->model && right->expanderRight) return true;
+		if (right && right->expanderLeft) return true;
 		return false;
 	}
 
@@ -179,7 +179,7 @@ struct SyncMute : QuestionableModule {
 
 	SyncMute* getExpander(bool left) {
 		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
-		if (expander != nullptr) return (SyncMute*)expander;
+		if (expander != nullptr && expander->model == this->model) return (SyncMute*)expander;
 		return nullptr;
 	}
 
