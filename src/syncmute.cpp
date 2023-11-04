@@ -76,7 +76,7 @@ struct SyncMute : QuestionableModule {
 	};
 
 	struct ExpanderMessage {
-		SyncMute* sender = nullptr;
+		SyncMute* sender = nullptr; // original sender
 		MessageType type;
 		int buttonId;
 		bool autoPress;
@@ -118,16 +118,18 @@ struct SyncMute : QuestionableModule {
 		
 		if (leftConnected && sendDirection != SendDirection::RIGHT) {
 			SyncMute* mod = (SyncMute*)getLeftExpander().module;
-			mod->recieveExpanderMessage(msg);
+			mod->recieveExpanderMessage(SendDirection::LEFT, msg);
 		}
 		if (rightConnected && sendDirection != SendDirection::LEFT) {
 			SyncMute* mod = (SyncMute*)getRightExpander().module;
-			mod->recieveExpanderMessage(msg);
+			mod->recieveExpanderMessage(SendDirection::RIGHT, msg);
 		}
 	}
 	
-	void recieveExpanderMessage(ExpanderMessage msg) {
+	void recieveExpanderMessage(SendDirection fromDirection, ExpanderMessage msg) {
 		if (inputs[CLOCK].isConnected() && msg.type == MessageType::ONCLOCK) return; // we dont accept clock control when our own clock is connected
+		if (fromDirection == SendDirection::LEFT && expanderRight) return; // dont try to control each other
+		if (fromDirection == SendDirection::RIGHT && expanderLeft) return; // dont try to control each other
 
 		expanderMessages.push(msg);
 
@@ -153,16 +155,32 @@ struct SyncMute : QuestionableModule {
 
 	// Are you being controlled by another smute?
 	bool isControlled() {
-		Module* left = getLeftExpander().module;
-		Module* right = getRightExpander().module;
-		if (left && left->model == this->model && ((SyncMute*)left)->expanderRight) return true;
-		if (right && right->model == this->model && ((SyncMute*)right)->expanderLeft) return true;
+		return isControlledLeft() || isControlledRight();
+	}
+
+	bool isControlledLeft() {
+		SyncMute* left = getExpander(true);
+		if (expanderLeft) return false;
+		if (left && left->model == this->model && left->expanderRight) return true;
+		return false;
+	}
+
+	bool isControlledRight() {
+		SyncMute* right = getExpander(false);
+		if (expanderRight) return false;
+		if (right && right->model == this->model && right->expanderRight) return true;
 		return false;
 	}
 
 	bool expanderConnected(bool left) {
 		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
 		return expander && expander->model == this->model;
+	}
+
+	SyncMute* getExpander(bool left) {
+		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
+		if (expander != nullptr) return (SyncMute*)expander;
+		return nullptr;
 	}
 
 	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
@@ -582,13 +600,20 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		SyncMute* mod = (SyncMute*)module;
 
+		SyncMute* leftExpander = mod->getExpander(true);
+		SyncMute* rightExpander = mod->getExpander(false);
+
+		// check if already controlled, or neighbor is already controlled
+		bool cantControlLeft = mod->isControlledLeft() ? true : leftExpander && leftExpander->isControlledLeft();
+		bool cantControlRight = mod->isControlledRight() ? true : rightExpander && rightExpander->isControlledRight();
+
 		menu->addChild(createMenuItem("Toggle Left Expander", mod->expanderLeft ? "On" : "Off",[=]() {
 			mod->expanderLeft = !mod->expanderLeft;
-		}));
+		}, cantControlLeft));
 
 		menu->addChild(createMenuItem("Toggle Right Expander", mod->expanderRight ? "On" : "Off",[=]() {
 			mod->expanderRight = !mod->expanderRight;
-		}));
+		}, cantControlRight));
 
 		menu->addChild(new QuestionableSlider<GlobalOpacityQuantity>(
 			[=]() { return mod->lightOpacity; }, 
