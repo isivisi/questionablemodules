@@ -10,81 +10,6 @@
 
 const int MODULE_SIZE = 3;
 
-struct Greenscreen : QuestionableModule {
-	enum ParamId {
-		PARAMS_LEN
-	};
-	enum InputId {
-		INPUT_R,
-		INPUT_G,
-		INPUT_B,
-		INPUTS_LEN
-	};
-	enum OutputId {
-		OUTPUTS_LEN
-	};
-	enum LightId {
-		LIGHTS_LEN
-	};
-
-	NVGcolor color = nvgRGB(4, 244, 4);
-	NVGcolor shownColor = color;
-	std::string text = "Green";
-	bool showText = true;
-	bool showInputs = false;
-	bool hasShadow = false;
-	bool drawRack = false;
-	Vec boxShadow = Vec(0,0);
-	NVGcolor boxShadowColor = nvgRGB(25,25,25);
-
-	Greenscreen() {
-		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-
-		configInput(INPUT_R, "red");
-		configInput(INPUT_G, "green");
-		configInput(INPUT_B, "blue");
-
-		supportsThemes = false;
-		toggleableDescriptors = false;
-		
-	}
-
-	void process(const ProcessArgs& args) override {
-
-	}
-
-	json_t* dataToJson() override {
-		json_t* rootJ = QuestionableModule::dataToJson();
-		json_object_set_new(rootJ, "colorR", json_real(color.r));
-		json_object_set_new(rootJ, "colorG", json_real(color.g));
-		json_object_set_new(rootJ, "colorB", json_real(color.b));
-		json_object_set_new(rootJ, "text", json_string(text.c_str()));
-		json_object_set_new(rootJ, "showText", json_boolean(showText));
-		json_object_set_new(rootJ, "showInputs", json_boolean(showInputs));
-		json_object_set_new(rootJ, "hasShadow", json_boolean(hasShadow));
-		json_object_set_new(rootJ, "drawRack", json_boolean(drawRack));
-		json_object_set_new(rootJ, "boxShadowX", json_real(boxShadow.x));
-		json_object_set_new(rootJ, "boxShadowY", json_real(boxShadow.y));
-		return rootJ;
-	}
-
-	void dataFromJson(json_t* rootJ) override {
-		QuestionableModule::dataFromJson(rootJ);
-		json_t* r = json_object_get(rootJ, "colorR");
-		json_t* g = json_object_get(rootJ, "colorG");
-		json_t* b = json_object_get(rootJ, "colorB");
-		if (r && g && b) color = nvgRGBf(json_real_value(r), json_real_value(g), json_real_value(b));
-		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
-		if (json_t* i = json_object_get(rootJ, "showInputs")) showInputs = json_boolean_value(i);
-		if (json_t* s = json_object_get(rootJ, "hasShadow")) hasShadow = json_boolean_value(s);
-		if (json_t* r = json_object_get(rootJ, "drawRack")) drawRack = json_boolean_value(r);
-		if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
-		if (json_t* x = json_object_get(rootJ, "boxShadowX")) boxShadow.x = json_real_value(x);
-		if (json_t* y = json_object_get(rootJ, "boxShadowY")) boxShadow.y = json_real_value(y);
-	}
-
-};
-
 struct Color : QuestionableJsonable {
 	std::string name;
 	float r;
@@ -109,6 +34,17 @@ struct Color : QuestionableJsonable {
 		r = c.r;
 		g = c.g;
 		b = c.b;
+	}
+
+	Color(NVGcolor c) {
+		this->name = "";
+		r = c.r;
+		g = c.g;
+		b = c.b;
+	}
+
+	operator NVGcolor() {
+		return getNVGColor();
 	}
 
 	// https://stackoverflow.com/a/9733452
@@ -158,6 +94,83 @@ struct Color : QuestionableJsonable {
 	bool operator==(Color other) {
 		return name == other.name;
 	}
+};
+
+struct Greenscreen : QuestionableModule {
+	enum ParamId {
+		PARAMS_LEN
+	};
+	enum InputId {
+		INPUT_R,
+		INPUT_G,
+		INPUT_B,
+		INPUTS_LEN
+	};
+	enum OutputId {
+		OUTPUTS_LEN
+	};
+	enum LightId {
+		LIGHTS_LEN
+	};
+
+	NVGcolor color = nvgRGB(4, 244, 4);
+	NVGcolor shownColor = color;
+	std::string text = "Green";
+	bool showText = true;
+	bool showInputs = false;
+	bool hasShadow = false;
+	bool drawRack = false;
+	Vec boxShadow = Vec(0,0);
+	Color boxShadowColor = nvgRGB(25,25,25);
+
+	Greenscreen() {
+		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+
+		configInput(INPUT_R, "red");
+		configInput(INPUT_G, "green");
+		configInput(INPUT_B, "blue");
+
+		supportsThemes = false;
+		toggleableDescriptors = false;
+		
+	}
+
+	void process(const ProcessArgs& args) override {
+
+	}
+
+	json_t* dataToJson() override {
+		json_t* rootJ = QuestionableModule::dataToJson();
+		json_object_set_new(rootJ, "colorR", json_real(color.r));
+		json_object_set_new(rootJ, "colorG", json_real(color.g));
+		json_object_set_new(rootJ, "colorB", json_real(color.b));
+		json_object_set_new(rootJ, "text", json_string(text.c_str()));
+		json_object_set_new(rootJ, "showText", json_boolean(showText));
+		json_object_set_new(rootJ, "showInputs", json_boolean(showInputs));
+		json_object_set_new(rootJ, "hasShadow", json_boolean(hasShadow));
+		json_object_set_new(rootJ, "drawRack", json_boolean(drawRack));
+		json_object_set_new(rootJ, "boxShadowX", json_real(boxShadow.x));
+		json_object_set_new(rootJ, "boxShadowY", json_real(boxShadow.y));
+		json_object_set_new(rootJ, "boxShadowColor", boxShadowColor.toJson());
+		return rootJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		QuestionableModule::dataFromJson(rootJ);
+		json_t* r = json_object_get(rootJ, "colorR");
+		json_t* g = json_object_get(rootJ, "colorG");
+		json_t* b = json_object_get(rootJ, "colorB");
+		if (r && g && b) color = nvgRGBf(json_real_value(r), json_real_value(g), json_real_value(b));
+		if (json_t* d = json_object_get(rootJ, "showText")) showText = json_boolean_value(d);
+		if (json_t* i = json_object_get(rootJ, "showInputs")) showInputs = json_boolean_value(i);
+		if (json_t* s = json_object_get(rootJ, "hasShadow")) hasShadow = json_boolean_value(s);
+		if (json_t* r = json_object_get(rootJ, "drawRack")) drawRack = json_boolean_value(r);
+		if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
+		if (json_t* x = json_object_get(rootJ, "boxShadowX")) boxShadow.x = json_real_value(x);
+		if (json_t* y = json_object_get(rootJ, "boxShadowY")) boxShadow.y = json_real_value(y);
+		if (json_t* bc = json_object_get(rootJ, "boxShadowColor")) boxShadowColor.fromJson(bc);
+	}
+
 };
 
 struct ShadowSliderQuantity : QuestionableQuantity {
