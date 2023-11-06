@@ -35,6 +35,7 @@ struct Greenscreen : QuestionableModule {
 	bool hasShadow = false;
 	bool drawRack = false;
 	Vec boxShadow = Vec(0,0);
+	NVGcolor boxShadowColor = nvgRGB(25,25,25);
 
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -128,7 +129,7 @@ struct Color : QuestionableJsonable {
 		return sqrt(std::pow((other.r-r), 2) + std::pow((other.g-g), 2) + std::pow((other.b-b), 2));
 	}
 
-	NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
+	NVGcolor getNVGColor() const { return nvgRGBf(r, g, b); }
 
 	static Color getClosestTo(std::vector<Color> list, Color other) {
 		Color returnColor("Black", nvgRGB(0,0,0));
@@ -323,7 +324,7 @@ struct BackgroundWidget : Widget {
 
 				nvgSave(args.vg);
 				nvgTranslate(args.vg, modules[i]->box.pos.x + ((module->boxShadow.x > 0) ? modules[i]->box.size.x : 0), modules[i]->box.pos.y);
-				nvgFillColor(args.vg, nvgRGB(25,25,25));
+				nvgFillColor(args.vg, module->boxShadowColor);
 				nvgBeginPath(args.vg);
 				nvgMoveTo(args.vg, 0, 0);
 				nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
@@ -583,9 +584,9 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		Greenscreen* mod = (Greenscreen*)module;
 
-		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
-			std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
+		std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 
+		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 				menu->addChild(createSubmenuItem("Add Custom Color", "", [=](Menu* menu) {
 
 					menu->addChild(rack::createMenuLabel("Name:"));
@@ -691,8 +692,25 @@ struct GreenscreenWidget : QuestionableWidget {
 		menu->addChild(createMenuItem("Toggle Rack", mod->drawRack ? "On" : "Off",[=]() {
 			mod->drawRack = !mod->drawRack;
 		}));
-
+		
 		menu->addChild(createSubmenuItem("Box Shadow", "", [=](Menu* menu) {
+			menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
+				if (!custom.empty()) {
+					for (const auto & ccData : custom) {
+						menu->addChild(createMenuItem(ccData.name, "", [=]() { 
+							mod->boxShadowColor = ccData.getNVGColor();
+						}));
+					}
+					menu->addChild(new MenuSeparator);
+				}
+
+				for (const auto & selectableColor : selectableColors) {
+					menu->addChild(createMenuItem(selectableColor.name, "", [=]() { 
+						mod->boxShadowColor = selectableColor.getNVGColor();
+					}));
+				}
+			}));
+
 			ShadowSlider* param = new ShadowSlider(
 				[=]() { return mod->boxShadow.x; }, 
 				[=](float value) { mod->boxShadow.x = value; }
@@ -703,6 +721,7 @@ struct GreenscreenWidget : QuestionableWidget {
 				[=](float value) { mod->boxShadow.y = std::max(0.f, value); }
 			);
 			menu->addChild(param2);
+
 		}));
 
 		/*ui::TextField* param = new QuestionableTextField([=](std::string text) {
