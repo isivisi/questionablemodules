@@ -234,19 +234,26 @@ struct SyncMute : QuestionableModule {
 		int paramId = -1;
 		SyncMute* module = nullptr;
 		float timeSignature = 0.f;
+		int signatureOffset = 0.f;
 		bool muteState = false;
 		bool shouldSwap = false;
 		dirtyable<bool> button = false;
 
 		dirtyable<bool> autoPress = false;
 		float lightOpacity = 1.f;
+		bool softTransition = true;
+		float ratioRange = 0;
 
 		float accumulatedTime = 0.f;
 
 		float volume = 1.f;
 
+		float getRawSignatureValue() {
+			return module->params[TIME_SIG+paramId].getValue();
+		}
+
 		void step(float deltaTime) {
-			timeSignature = module->params[TIME_SIG+paramId].getValue();
+			timeSignature = getRawSignatureValue() + signatureOffset;
 			button = module->params[MUTE+paramId].getValue();
 			if (button.isDirty() && button == true) {
 				shouldSwap = !shouldSwap;
@@ -278,13 +285,21 @@ struct SyncMute : QuestionableModule {
 			if (shouldSwap && clockHit) {
 				muteState = !muteState;
 				shouldSwap = false;
+				// if range specified, randomly offset ratio
+				if (ratioRange) signatureOffset = randomInt(-(int)ratioRange, (int)ratioRange);
 			}
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			float timeMultiply = 25;
-			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
-			volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
+			if (!softTransition) {
+				// immediate swap
+				volume = muteState ? 0.f : 1.f;
+			} else {
+				// soft swap
+				float timeMultiply = 25;
+				if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
+				volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
+			}
 		}
 
 		json_t* toJson() {
@@ -292,6 +307,8 @@ struct SyncMute : QuestionableModule {
 			json_object_set_new(rootJ, "muteState", json_boolean(muteState));
 			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
 			json_object_set_new(rootJ, "lightOpacity", json_real(lightOpacity));
+			json_object_set_new(rootJ, "softTransition", json_boolean(softTransition));
+			json_object_set_new(rootJ, "ratioRange", json_integer(ratioRange));
 			return rootJ;
 		}
 
@@ -299,6 +316,8 @@ struct SyncMute : QuestionableModule {
 			if (json_t* v = json_object_get(json, "muteState")) muteState = json_boolean_value(v);
 			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
 			if (json_t* l = json_object_get(json, "lightOpacity")) lightOpacity = json_real_value(l);
+			if (json_t* s = json_object_get(json, "softTransition")) softTransition = json_boolean_value(s);
+			if (json_t* r = json_object_get(json, "ratioRange")) ratioRange = json_integer_value(r);
 		}
 	};
 
@@ -408,18 +427,51 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
 	}
 
+	void step() override {
+		Resizable<QuestionableLargeKnob>::step();
+
+		if (!module) return;
+		SyncMute* mod = (SyncMute*)module;
+		ParamQuantity* pq = getParamQuantity();
+		int range = (int)mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange;
+		if (pq && range) pq->description = "offset: " + std::to_string(mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset);
+	}
+
 	void draw(const DrawArgs &args) override {
 		SyncMute* mod = (SyncMute*)module;
 
-		float anglePerTick = 31 / 1.65;
+		float anglePerTick = 32 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
+		int ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
+		float offset = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset : 0.f;
 		
 		Resizable<QuestionableLargeKnob>::draw(args);
 
 		nvgSave(args.vg);
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
+
+		if (ratioRange != 0) {
+			float anglePerRatio = 8 / 1.65;
+			float baseRatio = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].getRawSignatureValue() : 0.f;
+
+			nvgSave(args.vg);
+			nvgRotate(args.vg, nvgDegToRad((baseRatio)*(90.f/anglePerTick)));
+
+			nvgStrokeColor(args.vg, nvgRGB(0, 200, 255));
+			nvgBeginPath(args.vg);
+			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRange)), nvgDegToRad(-90 + (anglePerRatio*ratioRange)), NVG_CW);
+			nvgStrokeWidth(args.vg, 2);
+			nvgStroke(args.vg);
+
+			nvgRotate(args.vg, nvgDegToRad((offset)*(90.f/anglePerTick)));
+			nvgFillColor(args.vg, nvgRGB(0, 200, 255));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, 0, 2.75-box.size.y/2, 1.45);
+			nvgFill(args.vg);
+			nvgRestore(args.vg);
+		}
 
 		for (int i = -15; i < 16; i++) {
 			nvgSave(args.vg);
@@ -445,6 +497,33 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 		nvgRestore(args.vg);
 	
+	}
+
+};
+
+struct OffsetQuantity : QuestionableQuantity {
+
+	OffsetQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
+
+	}
+
+	float getMaxValue() {
+		return 32.f;
+	}
+
+	std::string getLabel() override {
+		return "Ratio Range";
+	}
+
+	std::string getUnit() override {
+		return "";
+	}
+
+	std::string getDisplayValueString() override {
+		float v = getDisplayValue();
+		if (std::isnan(v))
+			return "NaN";
+		return std::to_string((int)getDisplayValue());
 	}
 
 };
@@ -528,6 +607,15 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
+
+		menu->addChild(createMenuItem("Soft Transition", mod->mutes[this->paramId].softTransition ? "On" : "Off", [=]() {
+			mod->mutes[this->paramId].softTransition = !mod->mutes[this->paramId].softTransition;
+		}));
+
+		menu->addChild(new QuestionableSlider<OffsetQuantity>(
+			[=]() { return mod->mutes[this->paramId].ratioRange; }, 
+			[=](float value) { mod->mutes[this->paramId].ratioRange = math::clamp(value, 0.f, 32.f); }
+		));
 
 		menu->addChild(new QuestionableSlider<OpacityQuantity>(
 			[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
