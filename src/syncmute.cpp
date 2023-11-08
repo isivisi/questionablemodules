@@ -308,6 +308,7 @@ struct SyncMute : QuestionableModule {
 			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
 			json_object_set_new(rootJ, "lightOpacity", json_real(lightOpacity));
 			json_object_set_new(rootJ, "softTransition", json_boolean(softTransition));
+			json_object_set_new(rootJ, "ratioRange", json_integer(ratioRange));
 			return rootJ;
 		}
 
@@ -316,6 +317,7 @@ struct SyncMute : QuestionableModule {
 			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
 			if (json_t* l = json_object_get(json, "lightOpacity")) lightOpacity = json_real_value(l);
 			if (json_t* s = json_object_get(json, "softTransition")) softTransition = json_boolean_value(s);
+			if (json_t* r = json_object_get(json, "ratioRange")) ratioRange = json_integer_value(r);
 		}
 	};
 
@@ -425,10 +427,20 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
 	}
 
+	void step() override {
+		Resizable<QuestionableLargeKnob>::step();
+
+		if (!module) return;
+		SyncMute* mod = (SyncMute*)module;
+		ParamQuantity* pq = getParamQuantity();
+		int range = (int)mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange;
+		if (pq && range) pq->description = "offset: " + std::to_string(mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset);
+	}
+
 	void draw(const DrawArgs &args) override {
 		SyncMute* mod = (SyncMute*)module;
 
-		float anglePerTick = 31 / 1.65;
+		float anglePerTick = 32 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
 		int ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
@@ -447,14 +459,14 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 			nvgSave(args.vg);
 			nvgRotate(args.vg, nvgDegToRad((baseRatio)*(90.f/anglePerTick)));
 
-			nvgStrokeColor(args.vg, nvgRGB(0, 175, 100));
+			nvgStrokeColor(args.vg, nvgRGB(0, 175, 75));
 			nvgBeginPath(args.vg);
 			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRange)), nvgDegToRad(-90 + (anglePerRatio*ratioRange)), NVG_CW);
 			nvgStrokeWidth(args.vg, 2);
 			nvgStroke(args.vg);
 
 			nvgRotate(args.vg, nvgDegToRad((offset)*(90.f/anglePerTick)));
-			nvgFillColor(args.vg, nvgRGB(0, 175, 100));
+			nvgFillColor(args.vg, nvgRGB(0, 175, 75));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, 0, 3-box.size.y/2, 1);
 			nvgFill(args.vg);
