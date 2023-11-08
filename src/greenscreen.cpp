@@ -67,7 +67,7 @@ struct Color : QuestionableJsonable {
 
 	NVGcolor getNVGColor() const { return nvgRGBf(r, g, b); }
 
-	static Color getClosestTo(std::vector<Color> list, Color other) {
+	static Color getClosestTo(std::vector<Color>& list, Color other) {
 		Color returnColor("Black", nvgRGB(0,0,0));
 		for (auto c : list) {
 			if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
@@ -114,7 +114,7 @@ struct Greenscreen : QuestionableModule {
 	};
 
 	NVGcolor color = nvgRGB(4, 244, 4);
-	NVGcolor shownColor = color;
+	Color shownColor = color;
 	std::string text = "Green";
 	bool showText = true;
 	bool showInputs = false;
@@ -582,6 +582,8 @@ struct GreenscreenWidget : QuestionableWidget {
 	}
 
 	~GreenscreenWidget() {
+		if (!APP->scene) return;
+		if (!APP->scene->rack) return;
 		if (newBackground) APP->scene->rack->removeChild(newBackground);
 	}
 
