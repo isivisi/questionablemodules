@@ -240,6 +240,7 @@ struct SyncMute : QuestionableModule {
 
 		dirtyable<bool> autoPress = false;
 		float lightOpacity = 1.f;
+		bool softTransition = true;
 
 		float accumulatedTime = 0.f;
 
@@ -282,9 +283,15 @@ struct SyncMute : QuestionableModule {
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			float timeMultiply = 25;
-			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
-			volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
+			if (!softTransition) {
+				// immediate swap
+				volume = muteState ? 0.f : 1.f;
+			} else {
+				// soft swap
+				float timeMultiply = 25;
+				if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
+				volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
+			}
 		}
 
 		json_t* toJson() {
@@ -292,6 +299,7 @@ struct SyncMute : QuestionableModule {
 			json_object_set_new(rootJ, "muteState", json_boolean(muteState));
 			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
 			json_object_set_new(rootJ, "lightOpacity", json_real(lightOpacity));
+			json_object_set_new(rootJ, "softTransition", json_boolean(softTransition));
 			return rootJ;
 		}
 
@@ -299,6 +307,7 @@ struct SyncMute : QuestionableModule {
 			if (json_t* v = json_object_get(json, "muteState")) muteState = json_boolean_value(v);
 			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
 			if (json_t* l = json_object_get(json, "lightOpacity")) lightOpacity = json_real_value(l);
+			if (json_t* s = json_object_get(json, "softTransition")) softTransition = json_boolean_value(s);
 		}
 	};
 
@@ -527,6 +536,10 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		SyncMute* mod = (SyncMute*)this->module;
 		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
+		}));
+
+		menu->addChild(createMenuItem("Soft Transition", mod->mutes[this->paramId].softTransition ? "On" : "Off", [=]() {
+			mod->mutes[this->paramId].softTransition = !mod->mutes[this->paramId].softTransition;
 		}));
 
 		menu->addChild(new QuestionableSlider<OpacityQuantity>(
