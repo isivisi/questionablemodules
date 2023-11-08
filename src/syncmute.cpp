@@ -427,7 +427,7 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		float anglePerTick = 31 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
-		float ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
+		float ratioRange =  5; //mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
 		float offset = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset : 0.f;
 		
 		Resizable<QuestionableLargeKnob>::draw(args);
@@ -436,10 +436,10 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
 
-		if (ratioRange != 0) {
+		if (true) { //ratioRange != 0) {
 			nvgFillColor(args.vg, nvgRGB(0, 100, 100));
 			nvgBeginPath(args.vg);
-			nvgArc(args.vg, 0, 0, 15.f, 25, 90, NVG_CW);
+			nvgArc(args.vg, 0, 0, 15.f, nvgDegToRad(90 - (anglePerTick*ratioRange)), nvgDegToRad(90 + (anglePerTick*ratioRange)), NVG_CCW);
 			nvgFill(args.vg);
 		}
 
