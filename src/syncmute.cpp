@@ -242,14 +242,18 @@ struct SyncMute : QuestionableModule {
 		dirtyable<bool> autoPress = false;
 		float lightOpacity = 1.f;
 		bool softTransition = true;
-		int ratioRange = 0;
+		float ratioRange = 0;
 
 		float accumulatedTime = 0.f;
 
 		float volume = 1.f;
 
+		float getRawSignatureValue() {
+			return module->params[TIME_SIG+paramId].getValue();
+		}
+
 		void step(float deltaTime) {
-			timeSignature = module->params[TIME_SIG+paramId].getValue() + signatureOffset;
+			timeSignature = getRawSignatureValue() + signatureOffset;
 			button = module->params[MUTE+paramId].getValue();
 			if (button.isDirty() && button == true) {
 				shouldSwap = !shouldSwap;
@@ -282,7 +286,7 @@ struct SyncMute : QuestionableModule {
 				muteState = !muteState;
 				shouldSwap = false;
 				// if range specified, randomly offset ratio
-				if (ratioRange) signatureOffset = randomInt(-ratioRange, ratioRange);
+				if (ratioRange) signatureOffset = randomInt(-(int)ratioRange, (int)ratioRange);
 			}
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
@@ -427,7 +431,7 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		float anglePerTick = 31 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
-		float ratioRange =  5; //mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
+		int ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
 		float offset = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset : 0.f;
 		
 		Resizable<QuestionableLargeKnob>::draw(args);
@@ -436,11 +440,25 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
 
-		if (true) { //ratioRange != 0) {
-			nvgFillColor(args.vg, nvgRGB(0, 100, 100));
+		if (ratioRange != 0) {
+			float anglePerRatio = 8 / 1.65;
+			float baseRatio = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].getRawSignatureValue() : 0.f;
+
+			nvgSave(args.vg);
+			nvgRotate(args.vg, nvgDegToRad((baseRatio)*(90.f/anglePerTick)));
+
+			nvgStrokeColor(args.vg, nvgRGB(0, 175, 100));
 			nvgBeginPath(args.vg);
-			nvgArc(args.vg, 0, 0, 15.f, nvgDegToRad(90 - (anglePerTick*ratioRange)), nvgDegToRad(90 + (anglePerTick*ratioRange)), NVG_CCW);
+			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRange)), nvgDegToRad(-90 + (anglePerRatio*ratioRange)), NVG_CW);
+			nvgStrokeWidth(args.vg, 2);
+			nvgStroke(args.vg);
+
+			nvgRotate(args.vg, nvgDegToRad((offset)*(90.f/anglePerTick)));
+			nvgFillColor(args.vg, nvgRGB(0, 175, 100));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, 0, 3-box.size.y/2, 1);
 			nvgFill(args.vg);
+			nvgRestore(args.vg);
 		}
 
 		for (int i = -15; i < 16; i++) {
@@ -477,12 +495,23 @@ struct OffsetQuantity : QuestionableQuantity {
 
 	}
 
+	float getMaxValue() {
+		return 32.f;
+	}
+
 	std::string getLabel() override {
 		return "Ratio Range";
 	}
 
 	std::string getUnit() override {
 		return "";
+	}
+
+	std::string getDisplayValueString() override {
+		float v = getDisplayValue();
+		if (std::isnan(v))
+			return "NaN";
+		return std::to_string((int)getDisplayValue());
 	}
 
 };
@@ -573,7 +602,7 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 
 		menu->addChild(new QuestionableSlider<OffsetQuantity>(
 			[=]() { return mod->mutes[this->paramId].ratioRange; }, 
-			[=](float value) { mod->mutes[this->paramId].ratioRange = math::clamp((int)value, 0, 32); }
+			[=](float value) { mod->mutes[this->paramId].ratioRange = math::clamp(value, 0.f, 32.f); }
 		));
 
 		menu->addChild(new QuestionableSlider<OpacityQuantity>(
