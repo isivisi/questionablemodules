@@ -234,6 +234,7 @@ struct SyncMute : QuestionableModule {
 		int paramId = -1;
 		SyncMute* module = nullptr;
 		float timeSignature = 0.f;
+		int signatureOffset = 0.f;
 		bool muteState = false;
 		bool shouldSwap = false;
 		dirtyable<bool> button = false;
@@ -241,13 +242,14 @@ struct SyncMute : QuestionableModule {
 		dirtyable<bool> autoPress = false;
 		float lightOpacity = 1.f;
 		bool softTransition = true;
+		int ratioRange = 0;
 
 		float accumulatedTime = 0.f;
 
 		float volume = 1.f;
 
 		void step(float deltaTime) {
-			timeSignature = module->params[TIME_SIG+paramId].getValue();
+			timeSignature = module->params[TIME_SIG+paramId].getValue() + signatureOffset;
 			button = module->params[MUTE+paramId].getValue();
 			if (button.isDirty() && button == true) {
 				shouldSwap = !shouldSwap;
@@ -279,6 +281,8 @@ struct SyncMute : QuestionableModule {
 			if (shouldSwap && clockHit) {
 				muteState = !muteState;
 				shouldSwap = false;
+				// if range specified, randomly offset ratio
+				if (ratioRange) signatureOffset = randomInt(-ratioRange, ratioRange);
 			}
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
@@ -423,12 +427,21 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		float anglePerTick = 31 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
+		float ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
+		float offset = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset : 0.f;
 		
 		Resizable<QuestionableLargeKnob>::draw(args);
 
 		nvgSave(args.vg);
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
+
+		if (ratioRange != 0) {
+			nvgFillColor(args.vg, nvgRGB(0, 100, 100));
+			nvgBeginPath(args.vg);
+			nvgArc(args.vg, 0, 0, 15.f, 25, 90, NVG_CW);
+			nvgFill(args.vg);
+		}
 
 		for (int i = -15; i < 16; i++) {
 			nvgSave(args.vg);
@@ -454,6 +467,22 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 		nvgRestore(args.vg);
 	
+	}
+
+};
+
+struct OffsetQuantity : QuestionableQuantity {
+
+	OffsetQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
+
+	}
+
+	std::string getLabel() override {
+		return "Ratio Range";
+	}
+
+	std::string getUnit() override {
+		return "";
 	}
 
 };
@@ -541,6 +570,11 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		menu->addChild(createMenuItem("Soft Transition", mod->mutes[this->paramId].softTransition ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].softTransition = !mod->mutes[this->paramId].softTransition;
 		}));
+
+		menu->addChild(new QuestionableSlider<OffsetQuantity>(
+			[=]() { return mod->mutes[this->paramId].ratioRange; }, 
+			[=](float value) { mod->mutes[this->paramId].ratioRange = math::clamp((int)value, 0, 32); }
+		));
 
 		menu->addChild(new QuestionableSlider<OpacityQuantity>(
 			[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
