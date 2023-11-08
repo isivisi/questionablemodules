@@ -459,16 +459,16 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 			nvgSave(args.vg);
 			nvgRotate(args.vg, nvgDegToRad((baseRatio)*(90.f/anglePerTick)));
 
-			nvgStrokeColor(args.vg, nvgRGB(0, 175, 75));
+			nvgStrokeColor(args.vg, nvgRGB(0, 200, 255));
 			nvgBeginPath(args.vg);
 			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRange)), nvgDegToRad(-90 + (anglePerRatio*ratioRange)), NVG_CW);
 			nvgStrokeWidth(args.vg, 2);
 			nvgStroke(args.vg);
 
 			nvgRotate(args.vg, nvgDegToRad((offset)*(90.f/anglePerTick)));
-			nvgFillColor(args.vg, nvgRGB(0, 175, 75));
+			nvgFillColor(args.vg, nvgRGB(0, 200, 255));
 			nvgBeginPath(args.vg);
-			nvgCircle(args.vg, 0, 3-box.size.y/2, 1);
+			nvgCircle(args.vg, 0, 2.75-box.size.y/2, 1.45);
 			nvgFill(args.vg);
 			nvgRestore(args.vg);
 		}
