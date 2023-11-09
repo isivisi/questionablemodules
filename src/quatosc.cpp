@@ -33,8 +33,6 @@ const float VECLENGTH = 65.f;
 
 const float HALF_SEMITONE = 1.029302;
 
-bool reading = false;
-
 struct QuatOSC : QuestionableModule {
 	enum ParamId {
 		VOCT1_OCT,
@@ -356,7 +354,7 @@ struct QuatOSC : QuestionableModule {
 			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-			if (((args.frame % (int)(args.sampleRate/std::fmin(SAMPLES_PER_SECOND, args.sampleRate)) == 0)) && !reading) {
+			if (((args.frame % (int)(args.sampleRate/std::fmin(SAMPLES_PER_SECOND, args.sampleRate)) == 0))) {
 				pointSamples[i].x.push(newX);
 				pointSamples[i].y.push(newY);
 				pointSamples[i].z.push(newZ);
@@ -523,13 +521,11 @@ struct QuatDisplay : Widget {
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
 
 		if (layer == 1) {
-			reading = true;
 			for (int i = 0; i < module->getSpread(); i++) {
 				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), history[i].x);
 				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), history[i].y);
 				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), history[i].z);
 			}
-			reading = false;
 		}
 
 		nvgRestore(args.vg);
