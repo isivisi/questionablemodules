@@ -147,7 +147,10 @@ struct SyncMute : QuestionableModule {
 			if (msg.type == MessageType::ONCLOCK) {
 				if (inputs[CLOCK].isConnected()) continue; // we take control
 				clockTime = msg.time;
-				if (msg.clockTicksSinceReset != std::numeric_limits<uint64_t>::max()) clockTicksSinceReset = msg.clockTicksSinceReset;
+				if (msg.clockTicksSinceReset != std::numeric_limits<uint64_t>::max()) {
+					clockTicksSinceReset = msg.clockTicksSinceReset;
+					subClockTime = 0.f;
+				}
 			}
 			expanderMessages.pop();
 		}
