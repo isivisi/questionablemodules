@@ -667,9 +667,6 @@ struct Treequencer : QuestionableModule {
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
 
-		// Phasor mode only supports sequence trigger type atm
-		if (clockInPhasorMode && params[TRIGGER_TYPE].getValue() != TrigType::SEQUENCE) params[TRIGGER_TYPE].setValue(TrigType::SEQUENCE);
-
 		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
 		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
 		lights[HOLD_LIGHT].setBrightness(params[HOLD].getValue());

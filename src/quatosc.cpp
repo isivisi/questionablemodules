@@ -88,6 +88,8 @@ struct QuatOSC : QuestionableModule {
 		SIDES
 	};
 
+	std::atomic<bool> reading = false;
+
 	std::unordered_map<std::string, gmtl::Vec3f> projectionPlanes = {
 		{"X", gmtl::Vec3f{0.f, 1.f, 1.f}},
 		{"Y", gmtl::Vec3f{1.f, 0.f, 1.f}},
@@ -354,7 +356,7 @@ struct QuatOSC : QuestionableModule {
 			gmtl::Vec3f newX = offsetRot * xPointOnSphere;
 			gmtl::Vec3f newY = offsetRot * yPointOnSphere;
 			gmtl::Vec3f newZ = offsetRot * zPointOnSphere;
-			if (((args.frame % (int)(args.sampleRate/std::fmin(SAMPLES_PER_SECOND, args.sampleRate)) == 0))) {
+			if (((args.frame % (int)(args.sampleRate/std::fmin(SAMPLES_PER_SECOND, args.sampleRate)) == 0)) && !reading) {
 				pointSamples[i].x.push(newX);
 				pointSamples[i].y.push(newY);
 				pointSamples[i].z.push(newZ);
@@ -521,11 +523,13 @@ struct QuatDisplay : Widget {
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
 
 		if (layer == 1) {
+			module->reading = true;
 			for (int i = 0; i < module->getSpread(); i++) {
 				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), history[i].x);
 				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), history[i].y);
 				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), history[i].z);
 			}
+			module->reading = false;
 		}
 
 		nvgRestore(args.vg);
