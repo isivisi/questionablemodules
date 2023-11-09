@@ -17,6 +17,8 @@
 const int MAX_OUTPUTS = 8;
 const int MODULE_SIZE = 22;
 
+const float clockIgnoreTime = 0.001;
+
 // make sure module thread and widget threads cooperate :)
 //std::recursive_mutex treeMutex;
 
@@ -414,7 +416,7 @@ struct Treequencer : QuestionableModule {
 		LIGHTS_LEN
 	};
 
-	std::queue<std::function<void()>> audioThreadQueue;
+	ThreadQueue<std::function<void()>> audioThreadQueue;
 
 	// json data for screen
 	float startScreenScale = 12.9f;
@@ -437,6 +439,7 @@ struct Treequencer : QuestionableModule {
 	dsp::SchmittTrigger bounceTrigger;
 	dsp::PulseGenerator pulse;
 	dsp::PulseGenerator sequencePulse;
+	float timeSinceReset = 0.f;
 
 	Node rootNode;
 	Node* activeNode;
@@ -524,7 +527,7 @@ struct Treequencer : QuestionableModule {
 		activeNode = &rootNode;
 
 		pushHistory();
-		
+		onReset();
 	}
 
 	float fclamp(float min, float max, float value) {
@@ -640,15 +643,25 @@ struct Treequencer : QuestionableModule {
 			if (!bounce && prevActiveNode == activeSequence.back() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
 			else if (bounce && prevActiveNode != activeSequence.front() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
 		}
+
+	void onReset() override {
+		resetActiveNode();
+		gateTrigger.reset();
+		clockTrigger.reset();
+		sequencePos = 0;
+		timeSinceReset = 0.f; // delay clock inputs for 0.001 seconds
 	}
 
 	void process(const ProcessArgs& args) override {
 
 		processOffThreadQueue();
+		
+		bool canClock = timeSinceReset >= clockIgnoreTime;
+		if (timeSinceReset <= clockIgnoreTime) timeSinceReset += args.sampleTime;
 
 		bool reset = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
-		bool isGateTriggered = !params[HOLD].getValue() && gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f);
-		bool isClockTriggered = !params[HOLD].getValue() && !clockInPhasorMode && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f);
+		bool isGateTriggered = canClock && gateTrigger.process(inputs[GATE_IN_1].getVoltage(), 0.1f, 2.f) && !params[HOLD].getValue();
+		bool isClockTriggered = canClock && clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f) && !params[HOLD].getValue();
 		bool holdSwap = holdTrigger.process(inputs[HOLD_INPUT].getVoltage(), 0.1, 2.f);
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
@@ -668,8 +681,7 @@ struct Treequencer : QuestionableModule {
 		bool seqTrigger = params[TRIGGER_TYPE].getValue();
 
 		if (reset) {
-			resetActiveNode();
-			sequencePos = 0;
+			onReset();
 			isGateTriggered = false;
 			isClockTriggered = false;
 		}

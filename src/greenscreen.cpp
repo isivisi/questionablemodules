@@ -10,6 +10,92 @@
 
 const int MODULE_SIZE = 3;
 
+struct Color : QuestionableJsonable {
+	std::string name;
+	float r;
+	float g;
+	float b;
+
+	Color() {
+		r = 1.f;
+		g = 1.f;
+		b = 1.f;
+	}
+
+	Color(std::string name, unsigned char r, unsigned char g, unsigned char b) {
+		this->name = name;
+		this->r = r / 255.f;
+		this->g = g / 255.f;
+		this->b = b / 255.f;
+	}
+
+	Color(std::string name, NVGcolor c) {
+		this->name = name;
+		r = c.r;
+		g = c.g;
+		b = c.b;
+	}
+
+	Color(NVGcolor c) {
+		this->name = "";
+		r = c.r;
+		g = c.g;
+		b = c.b;
+	}
+
+	operator NVGcolor() {
+		return getNVGColor();
+	}
+
+	// https://stackoverflow.com/a/9733452
+	float getBrightness() {
+		return (0.2126*r + 0.7152*g + 0.0722*b);
+	}
+
+	float getContrastFrom(Color& other) {
+		return abs(getBrightness() - other.getBrightness());
+	}
+
+	float getContrastFrom(NVGcolor other) {
+		return abs(getBrightness() - Color("", other).getBrightness());
+	}
+		 
+	// https://stackoverflow.com/a/1847112
+	float getDifferenceFrom(Color other) {
+		return sqrt(std::pow((other.r-r), 2) + std::pow((other.g-g), 2) + std::pow((other.b-b), 2));
+	}
+
+	NVGcolor getNVGColor() const { return nvgRGBf(r, g, b); }
+
+	static Color getClosestTo(std::vector<Color>& list, Color other) {
+		Color returnColor("Black", nvgRGB(0,0,0));
+		for (auto c : list) {
+			if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
+		}
+		return returnColor;
+	}
+
+	json_t* toJson() override {
+		json_t* rootJ = json_object();
+		json_object_set_new(rootJ, "r", json_real(r));
+		json_object_set_new(rootJ, "g", json_real(g));
+		json_object_set_new(rootJ, "b", json_real(b));
+		json_object_set_new(rootJ, "name", json_string(name.c_str()));
+		return rootJ;
+	}
+
+	void fromJson(json_t* rootJ) override {
+		if (json_t* rj = json_object_get(rootJ, "r")) r = json_real_value(rj);
+		if (json_t* gj = json_object_get(rootJ, "g")) g = json_real_value(gj);
+		if (json_t* bj = json_object_get(rootJ, "b")) b = json_real_value(bj);
+		if (json_t* t = json_object_get(rootJ, "name")) name = json_string_value(t);
+	}
+
+	bool operator==(Color other) {
+		return name == other.name;
+	}
+};
+
 struct Greenscreen : QuestionableModule {
 	enum ParamId {
 		PARAMS_LEN
@@ -28,13 +114,14 @@ struct Greenscreen : QuestionableModule {
 	};
 
 	NVGcolor color = nvgRGB(4, 244, 4);
-	NVGcolor shownColor = color;
+	Color shownColor = color;
 	std::string text = "Green";
 	bool showText = true;
 	bool showInputs = false;
 	bool hasShadow = false;
 	bool drawRack = false;
 	Vec boxShadow = Vec(0,0);
+	Color boxShadowColor = nvgRGB(25,25,25);
 
 	Greenscreen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -64,6 +151,7 @@ struct Greenscreen : QuestionableModule {
 		json_object_set_new(rootJ, "drawRack", json_boolean(drawRack));
 		json_object_set_new(rootJ, "boxShadowX", json_real(boxShadow.x));
 		json_object_set_new(rootJ, "boxShadowY", json_real(boxShadow.y));
+		json_object_set_new(rootJ, "boxShadowColor", boxShadowColor.toJson());
 		return rootJ;
 	}
 
@@ -80,83 +168,9 @@ struct Greenscreen : QuestionableModule {
 		if (json_t* t = json_object_get(rootJ, "text")) text = json_string_value(t);
 		if (json_t* x = json_object_get(rootJ, "boxShadowX")) boxShadow.x = json_real_value(x);
 		if (json_t* y = json_object_get(rootJ, "boxShadowY")) boxShadow.y = json_real_value(y);
+		if (json_t* bc = json_object_get(rootJ, "boxShadowColor")) boxShadowColor.fromJson(bc);
 	}
 
-};
-
-struct Color : QuestionableJsonable {
-	std::string name;
-	float r;
-	float g;
-	float b;
-
-	Color() {
-		r = 1.f;
-		g = 1.f;
-		b = 1.f;
-	}
-
-	Color(std::string name, unsigned char r, unsigned char g, unsigned char b) {
-		this->name = name;
-		this->r = r / 255.f;
-		this->g = g / 255.f;
-		this->b = b / 255.f;
-	}
-
-	Color(std::string name, NVGcolor c) {
-		this->name = name;
-		r = c.r;
-		g = c.g;
-		b = c.b;
-	}
-
-	// https://stackoverflow.com/a/9733452
-	float getBrightness() {
-		return (0.2126*r + 0.7152*g + 0.0722*b);
-	}
-
-	float getContrastFrom(Color& other) {
-		return abs(getBrightness() - other.getBrightness());
-	}
-
-	float getContrastFrom(NVGcolor other) {
-		return abs(getBrightness() - Color("", other).getBrightness());
-	}
-		 
-	// https://stackoverflow.com/a/1847112
-	float getDifferenceFrom(Color other) {
-		return sqrt(std::pow((other.r-r), 2) + std::pow((other.g-g), 2) + std::pow((other.b-b), 2));
-	}
-
-	NVGcolor getNVGColor() { return nvgRGBf(r, g, b); }
-
-	static Color getClosestTo(std::vector<Color> list, Color other) {
-		Color returnColor("Black", nvgRGB(0,0,0));
-		for (auto c : list) {
-			if (other.getDifferenceFrom(c) < other.getDifferenceFrom(returnColor)) returnColor = c;
-		}
-		return returnColor;
-	}
-
-	json_t* toJson() override {
-		json_t* rootJ = json_object();
-		json_object_set_new(rootJ, "r", json_real(r));
-		json_object_set_new(rootJ, "g", json_real(g));
-		json_object_set_new(rootJ, "b", json_real(b));
-		json_object_set_new(rootJ, "name", json_string(name.c_str()));
-		return rootJ;
-	}
-
-	void fromJson(json_t* rootJ) override {
-		if (json_t* rj = json_object_get(rootJ, "r")) r = json_real_value(rj);
-		if (json_t* gj = json_object_get(rootJ, "g")) g = json_real_value(gj);
-		if (json_t* bj = json_object_get(rootJ, "b")) b = json_real_value(bj);
-		if (json_t* t = json_object_get(rootJ, "name")) name = json_string_value(t);
-	}
-
-	bool operator==(Color other) {
-		return name == other.name;
-	}
 };
 
 struct ShadowSliderQuantity : QuestionableQuantity {
@@ -323,7 +337,7 @@ struct BackgroundWidget : Widget {
 
 				nvgSave(args.vg);
 				nvgTranslate(args.vg, modules[i]->box.pos.x + ((module->boxShadow.x > 0) ? modules[i]->box.size.x : 0), modules[i]->box.pos.y);
-				nvgFillColor(args.vg, nvgRGB(25,25,25));
+				nvgFillColor(args.vg, module->boxShadowColor);
 				nvgBeginPath(args.vg);
 				nvgMoveTo(args.vg, 0, 0);
 				nvgLineTo(args.vg, module->boxShadow.x, module->boxShadow.y);
@@ -568,6 +582,8 @@ struct GreenscreenWidget : QuestionableWidget {
 	}
 
 	~GreenscreenWidget() {
+		if (!APP->scene) return;
+		if (!APP->scene->rack) return;
 		if (newBackground) APP->scene->rack->removeChild(newBackground);
 	}
 
@@ -583,9 +599,9 @@ struct GreenscreenWidget : QuestionableWidget {
 
 		Greenscreen* mod = (Greenscreen*)module;
 
-		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
-			std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
+		std::vector<Color> custom = userSettings.getArraySetting<Color>("greenscreenCustomColors");
 
+		menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
 				menu->addChild(createSubmenuItem("Add Custom Color", "", [=](Menu* menu) {
 
 					menu->addChild(rack::createMenuLabel("Name:"));
@@ -691,8 +707,25 @@ struct GreenscreenWidget : QuestionableWidget {
 		menu->addChild(createMenuItem("Toggle Rack", mod->drawRack ? "On" : "Off",[=]() {
 			mod->drawRack = !mod->drawRack;
 		}));
-
+		
 		menu->addChild(createSubmenuItem("Box Shadow", "", [=](Menu* menu) {
+			menu->addChild(createSubmenuItem("Change Color", "",[=](Menu* menu) {
+				if (!custom.empty()) {
+					for (const auto & ccData : custom) {
+						menu->addChild(createMenuItem(ccData.name, "", [=]() { 
+							mod->boxShadowColor = ccData.getNVGColor();
+						}));
+					}
+					menu->addChild(new MenuSeparator);
+				}
+
+				for (const auto & selectableColor : selectableColors) {
+					menu->addChild(createMenuItem(selectableColor.name, "", [=]() { 
+						mod->boxShadowColor = selectableColor.getNVGColor();
+					}));
+				}
+			}));
+
 			ShadowSlider* param = new ShadowSlider(
 				[=]() { return mod->boxShadow.x; }, 
 				[=](float value) { mod->boxShadow.x = value; }
@@ -703,6 +736,7 @@ struct GreenscreenWidget : QuestionableWidget {
 				[=](float value) { mod->boxShadow.y = std::max(0.f, value); }
 			);
 			menu->addChild(param2);
+
 		}));
 
 		/*ui::TextField* param = new QuestionableTextField([=](std::string text) {

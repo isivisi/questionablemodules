@@ -62,13 +62,13 @@
               </p>
               
               <h2>Parameters</h2>
-              <p id="Input"><span class="fw-bold">Input</span> Input voltage for the row.</p>
-              <p id="Output"><span class="fw-bold">Output</span> The output voltage if the mute is inactive for the row.</p>
+              <p id="Input"> <polyinputbadge></polyinputbadge> <span class="fw-bold">Input</span> Input voltage for the row.</p>
+              <p id="Output"> <polyoutputbadge></polyoutputbadge> <span class="fw-bold">Output</span> The output voltage if the mute is inactive for the row.</p>
               <p id="Mute"><span class="fw-bold">Mute</span> When this button is pressed it indicates that you want this row muted. The voltage will be muted when the deisred ratio is met with the clock or immediatly based on the <a href="#Ratio"><span class="fw-bold">Ratio</span></a> knob.</p>
               <p id="Ratio"><span class="fw-bold">Ratio</span> Specify the clock ratio you want to synchronize the mute with. From /32 to X32. By default it is set to immediatly.</p>
     
-              <p id="Clock"><span class="fw-bold">Clock</span> Smute will synchronize to this clock value. </p>
-              <p id="Reset"><span class="fw-bold">Reset</span> Resets the internal clock values and triggers any waiting mutes when this is triggered. </p>
+              <p id="Clock"> <clockbadge></clockbadge> <span class="fw-bold">Clock</span> Smute will synchronize to this clock value. </p>
+              <p id="Reset"> <triggerbadge></triggerbadge> <span class="fw-bold">Reset</span> Resets the internal clock values and triggers any waiting mutes when this is triggered. </p>
               
               <div style="min-height: 150px"></div> <!-- Spacer -->
 
@@ -79,8 +79,9 @@
               
               <h3>Expanders</h3>
               <p id="Expanders"> Smute can expand another Smute module beside it, this sends the button presses, clock, and reset values to the other smute module. This can be enabled via the <span class="fw-bold">Toggle {Left,Right} Expander</span> option in the modules context menu. This is useful for syncing <span class="fw-bold">stereo</span> signals.</p>
-              <p> A connected clock and reset signal will be prioritized over one from a connected Smute. If you want all the clocks to be the same only connect a clock signal to the first Smute in the chain.</p>
-              <p> Smutes cannot control another Smute that is already controlling it. Trying to do so will just disable the functionality. (for now)</p>
+              <img src="./images/smuteexpander.svg" width="100%"/>
+              <p> Clock, reset, and button information can travel through many connected modules unidirectionally. A connected clock signal is prioritized over one from an incoming Smute.</p>
+              <p class="alert alert-info"> <span class="fw-bold">Note:</span> Smutes cannot control another Smute that is already controlling it. Trying to do so will just disable the functionality.</p>
 
               <div style="min-height: 0px"></div> <!-- Spacer -->
             </div>

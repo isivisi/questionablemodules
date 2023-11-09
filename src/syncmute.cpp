@@ -2,10 +2,13 @@
 #include "imagepanel.cpp"
 #include "colorBG.hpp"
 #include "questionableModule.hpp"
+#include "ui.cpp"
 #include <vector>
 #include <algorithm>
 
 const int MODULE_SIZE = 8;
+
+const float clockIgnoreTime = 0.001;
 
 struct SyncMute : QuestionableModule {
 	enum ParamId {
@@ -55,15 +58,130 @@ struct SyncMute : QuestionableModule {
 		LIGHTS_LEN
 	};
 
-	bool expanderRight = false;
-	bool expanderLeft = false;
+	float lightOpacity = 1.f;
 
 	dsp::SchmittTrigger resetTrigger;
 	dsp::SchmittTrigger clockTrigger;
+	bool ignoreClockTrigger = true;
 	dsp::Timer clockTimer;
 	float clockTime = 0.5f; // in seconds
 
 	float accumulatedTime[8] = {0.f};
+
+	enum MessageType {
+		ONBUTTON,
+		ONBUTTONAUTO,
+		ONRESET,
+		ONCLOCK,
+	};
+
+	struct ExpanderMessage {
+		SyncMute* sender = nullptr; // original sender
+		MessageType type;
+		int buttonId;
+		bool autoPress;
+		float time;
+		uint64_t clockTicksSinceReset;
+
+		static ExpanderMessage resetMessage(SyncMute* sender) {
+			return ExpanderMessage({sender, MessageType::ONRESET});
+		}
+
+		static ExpanderMessage buttonMessage(SyncMute* sender, int buttonId) {
+			return ExpanderMessage({sender, MessageType::ONBUTTON, buttonId});
+		}
+
+		static ExpanderMessage clockMessage(SyncMute* sender, float clockTime, uint64_t clockTicksSinceReset = std::numeric_limits<uint64_t>::max()) {
+			return ExpanderMessage({sender, MessageType::ONCLOCK, 0, 0, clockTime, clockTicksSinceReset});
+		}
+
+		static ExpanderMessage buttonAutoPress(SyncMute* sender, int buttonId, bool autoPress) {
+			return ExpanderMessage({sender, MessageType::ONBUTTONAUTO, buttonId, autoPress});
+		}
+
+	};
+
+	enum SendDirection {
+		BOTH,
+		LEFT,
+		RIGHT
+	};
+
+	ThreadQueue<ExpanderMessage> expanderMessages;
+	bool expanderRight = false;
+	bool expanderLeft = false;
+
+	// Send message to any controlled smutes
+	void sendExpanderMessage(ExpanderMessage msg, SendDirection sendDirection = SendDirection::BOTH) {
+		bool leftConnected = expanderLeft && expanderConnected(true);
+		bool rightConnected = expanderRight && expanderConnected(false);
+		
+		if (leftConnected && sendDirection != SendDirection::RIGHT) {
+			SyncMute* mod = (SyncMute*)getLeftExpander().module;
+			mod->recieveExpanderMessage(SendDirection::LEFT, msg);
+		}
+		if (rightConnected && sendDirection != SendDirection::LEFT) {
+			SyncMute* mod = (SyncMute*)getRightExpander().module;
+			mod->recieveExpanderMessage(SendDirection::RIGHT, msg);
+		}
+	}
+	
+	void recieveExpanderMessage(SendDirection fromDirection, ExpanderMessage msg) {
+		if (inputs[CLOCK].isConnected() && msg.type == MessageType::ONCLOCK) return; // we dont accept clock control when our own clock is connected
+		if (fromDirection == SendDirection::LEFT && expanderRight) return; // dont try to control each other
+		if (fromDirection == SendDirection::RIGHT && expanderLeft) return; // dont try to control each other
+
+		expanderMessages.push(msg);
+
+		// pass along if we're also controlling a smute
+		if (expanderLeft) sendExpanderMessage(msg, SendDirection::LEFT);
+		if (expanderRight) sendExpanderMessage(msg, SendDirection::RIGHT);
+	}
+
+	void processMessages() {
+		while (!expanderMessages.empty()) {
+			ExpanderMessage msg = expanderMessages.front();
+			if (msg.type == MessageType::ONRESET) onReset();
+			if (msg.type == MessageType::ONBUTTON) mutes[msg.buttonId].shouldSwap = !mutes[msg.buttonId].shouldSwap;
+			if (msg.type == MessageType::ONBUTTONAUTO) mutes[msg.buttonId].autoPress = msg.autoPress;
+			if (msg.type == MessageType::ONCLOCK) {
+				if (inputs[CLOCK].isConnected()) continue; // we take control
+				clockTime = msg.time;
+				if (msg.clockTicksSinceReset != std::numeric_limits<uint64_t>::max()) clockTicksSinceReset = msg.clockTicksSinceReset;
+			}
+			expanderMessages.pop();
+		}
+	}
+
+	// Are you being controlled by another smute?
+	bool isControlled() {
+		return isControlledLeft() || isControlledRight();
+	}
+
+	bool isControlledLeft() {
+		SyncMute* left = getExpander(true);
+		if (expanderLeft) return false;
+		if (left && left->expanderRight) return true;
+		return false;
+	}
+
+	bool isControlledRight() {
+		SyncMute* right = getExpander(false);
+		if (expanderRight) return false;
+		if (right && right->expanderLeft) return true;
+		return false;
+	}
+
+	bool expanderConnected(bool left) {
+		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
+		return expander && expander->model == this->model;
+	}
+
+	SyncMute* getExpander(bool left) {
+		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
+		if (expander != nullptr && expander->model == this->model) return (SyncMute*)expander;
+		return nullptr;
+	}
 
 	std::vector<std::string> sigsStrings = {"/32", "/31", "/30", "/29", "/28", "/27", "/26", "/25", "/24", "/23", "/22", "/21", "/20", "/19", "/18", "/17", "/16", "/15", "/14", "/13", "/12", "/11", "/10", "/9", "/8", "/7", "/6", "/5", "/4", "/3", "/2", "/1", "Immediate", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24", "X25", "X26", "X27", "X28", "X29", "X30", "X31", "X32"};
 
@@ -116,19 +234,33 @@ struct SyncMute : QuestionableModule {
 		int paramId = -1;
 		SyncMute* module = nullptr;
 		float timeSignature = 0.f;
+		int signatureOffset = 0.f;
 		bool muteState = false;
 		bool shouldSwap = false;
 		dirtyable<bool> button = false;
-		bool autoPress = false;
+
+		dirtyable<bool> autoPress = false;
+		float lightOpacity = 1.f;
+		bool softTransition = true;
+		float ratioRange = 0;
 
 		float accumulatedTime = 0.f;
 
 		float volume = 1.f;
 
+		float getRawSignatureValue() {
+			return module->params[TIME_SIG+paramId].getValue();
+		}
+
 		void step(float deltaTime) {
-			timeSignature = module->params[TIME_SIG+paramId].getValue();
+			timeSignature = getRawSignatureValue() + signatureOffset;
 			button = module->params[MUTE+paramId].getValue();
-			if (button.isDirty() && button == true) shouldSwap = !shouldSwap;
+			if (button.isDirty() && button == true) {
+				shouldSwap = !shouldSwap;
+				module->sendExpanderMessage(ExpanderMessage::buttonMessage(module, paramId));
+			}
+
+			if (autoPress.isDirty()) module->sendExpanderMessage(ExpanderMessage::buttonAutoPress(module, paramId, autoPress));
 
 			bool clockHit = false;
 
@@ -153,25 +285,39 @@ struct SyncMute : QuestionableModule {
 			if (shouldSwap && clockHit) {
 				muteState = !muteState;
 				shouldSwap = false;
+				// if range specified, randomly offset ratio
+				if (ratioRange) signatureOffset = randomInt(-(int)ratioRange, (int)ratioRange);
 			}
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
 
-			float timeMultiply = 25;
-			if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
-			volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
+			if (!softTransition) {
+				// immediate swap
+				volume = muteState ? 0.f : 1.f;
+			} else {
+				// soft swap
+				float timeMultiply = 25;
+				if (timeSignature > 0.f) timeMultiply = 25 * timeSignature; // speed up volume mute for faster intervals
+				volume = math::clamp(volume + (muteState ? -(deltaTime*timeMultiply) : deltaTime*timeMultiply));
+			}
 		}
 
 		json_t* toJson() {
 			json_t* rootJ = json_object();
 			json_object_set_new(rootJ, "muteState", json_boolean(muteState));
 			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
+			json_object_set_new(rootJ, "lightOpacity", json_real(lightOpacity));
+			json_object_set_new(rootJ, "softTransition", json_boolean(softTransition));
+			json_object_set_new(rootJ, "ratioRange", json_integer(ratioRange));
 			return rootJ;
 		}
 
 		void fromJson(json_t* json) {
 			if (json_t* v = json_object_get(json, "muteState")) muteState = json_boolean_value(v);
 			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
+			if (json_t* l = json_object_get(json, "lightOpacity")) lightOpacity = json_real_value(l);
+			if (json_t* s = json_object_get(json, "softTransition")) softTransition = json_boolean_value(s);
+			if (json_t* r = json_object_get(json, "ratioRange")) ratioRange = json_integer_value(r);
 		}
 	};
 
@@ -186,74 +332,54 @@ struct SyncMute : QuestionableModule {
 	void onReset() override {
 		clockTicksSinceReset = 0;
 		subClockTime = 0.f;
+		//clockTimer.reset();
+		clockTrigger.reset();
+		ignoreClockTrigger = true; // ignore for 0.001 seconds
+		sendExpanderMessage(ExpanderMessage::resetMessage(this));
 	}
 
 	void process(const ProcessArgs& args) override {
+		processMessages();
 		resetClocksThisTick = resetTrigger.process(inputs[RESET].getVoltage(), 0.1f, 2.f);
 		isClockInputConnected = inputs[CLOCK].isConnected();
 
-		if (resetClocksThisTick) onReset();
+		// wait a set amount of time after reset before accepting clock input
+		if (ignoreClockTrigger) if (subClockTime >= clockIgnoreTime) ignoreClockTrigger = false;
 
 		// clock stuff from lfo
-		if (isClockInputConnected) {
-			clockTimer.process(args.sampleTime);
-			if (clockTimer.getTime() > clockTime) clockTime = clockTimer.getTime();
-			if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
-				clockTime = clockTimer.getTime();
-				clockTimer.reset();
-				clockTicksSinceReset += 1;
-				subClockTime = 0;
-			}
-		} else { // 0.5f clock
-			if (isClockInputConnected.isDirty()) clockTime = 0.5f;
-			if (subClockTime >= clockTime) {
-				clockTicksSinceReset += 1;
-				subClockTime = 0.f;
+		if (!ignoreClockTrigger) {
+			if (isClockInputConnected) {
+				if (isClockInputConnected.isDirty()) onReset(); // on first entry of true
+				clockTimer.process(args.sampleTime);
+				if (clockTimer.getTime() > clockTime) {
+					clockTime = clockTimer.getTime();
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime));
+				}
+				if (clockTrigger.process(inputs[CLOCK].getVoltage(), 0.1f, 2.f)) {
+					clockTime = clockTimer.getTime();
+					clockTimer.reset();
+					clockTicksSinceReset += 1;
+					subClockTime = 0;
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime, clockTicksSinceReset));
+				}
+			} else if (!isControlled()) { // 0.5f clock
+				if (isClockInputConnected.isDirty()) {
+					clockTime = 0.5f;
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime));
+				}
+				if (subClockTime >= clockTime) {
+					clockTicksSinceReset += 1;
+					subClockTime = 0.f;
+					sendExpanderMessage(ExpanderMessage::clockMessage(this, clockTime, clockTicksSinceReset));
+				}
 			}
 		}
+
+		if (resetClocksThisTick) onReset();
 
 		for (size_t i = 0; i < 8; i++) mutes[i].step(args.sampleTime);
 
 		subClockTime += args.sampleTime; // this must be after step to fix clock never getting hit with multiply ratio
-		
-		// expander logic
-		if (expanderRight) {
-			Module* rightModule = getRightExpander().module;
-			if (rightModule && rightModule->model == this->model) {
-				SyncMute* other = (SyncMute*)rightModule;
-				if (!other->expanderLeft) {
-					if (!other->inputs[RESET].isConnected()) other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
-					if (!other->inputs[CLOCK].isConnected()) {
-						other->clockTime = clockTime;
-						other->clockTicksSinceReset = clockTicksSinceReset;
-						other->subClockTime = subClockTime;
-					}
-					for (size_t i = 0; i < 8; i++) {
-						other->mutes[i].autoPress = mutes[i].autoPress;
-						if (params[MUTE+i].getValue() != other->params[MUTE+i].getValue()) other->params[MUTE+i].setValue(params[MUTE+i].getValue());
-					}
-				}
-			}
-		}
-
-		if (expanderLeft) {
-			Module* leftModule = getLeftExpander().module;
-			if (leftModule && leftModule->model == this->model) {
-				SyncMute* other = (SyncMute*)leftModule;
-				if (!other->expanderRight) {
-					if (!other->inputs[RESET].isConnected()) other->inputs[RESET].setVoltage(inputs[RESET].getVoltage());
-					if (!other->inputs[CLOCK].isConnected()) {
-						other->clockTime = clockTime;
-						other->clockTicksSinceReset = clockTicksSinceReset;
-						other->subClockTime = subClockTime;
-					}
-					for (size_t i = 0; i < 8; i++) {
-						other->mutes[i].autoPress = mutes[i].autoPress;
-						if (params[MUTE+i].getValue() != other->params[MUTE+i].getValue()) other->params[MUTE+i].setValue(params[MUTE+i].getValue());
-					}
-				}
-			}
-		}
 		
 		// outputs
 		for (size_t i = 0; i < 8; i++) {
@@ -269,6 +395,7 @@ struct SyncMute : QuestionableModule {
 		json_object_set_new(nodeJ, "clockTime", json_real(clockTime));
 		json_object_set_new(nodeJ, "expanderRight", json_boolean(expanderRight)); 
 		json_object_set_new(nodeJ, "expanderLeft", json_boolean(expanderLeft)); 
+		json_object_set_new(nodeJ, "lightOpacity", json_real(lightOpacity));
 
 		json_t* array = json_array();
 		for (size_t i = 0; i < 8; i++) json_array_append_new(array, mutes[i].toJson());
@@ -282,6 +409,7 @@ struct SyncMute : QuestionableModule {
 		if (json_t* ct = json_object_get(rootJ, "clockTime")) clockTime = json_real_value(ct);
 		if (json_t* er = json_object_get(rootJ, "expanderRight")) expanderRight = json_boolean_value(er);
 		if (json_t* el = json_object_get(rootJ, "expanderLeft")) expanderLeft = json_boolean_value(el);
+		if (json_t* l = json_object_get(rootJ, "lightOpacity")) lightOpacity = json_real_value(l);
 
 		if (json_t* array = json_object_get(rootJ, "mutes")) { // assumes all 8 set
 			for (size_t i = 0; i < 8; i++) { 
@@ -299,18 +427,51 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		setSvg(Svg::load(asset::plugin(pluginInstance, "res/BlackKnobFG.svg")));
 	}
 
+	void step() override {
+		Resizable<QuestionableLargeKnob>::step();
+
+		if (!module) return;
+		SyncMute* mod = (SyncMute*)module;
+		ParamQuantity* pq = getParamQuantity();
+		int range = (int)mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange;
+		if (pq && range) pq->description = "offset: " + std::to_string(mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset);
+	}
+
 	void draw(const DrawArgs &args) override {
 		SyncMute* mod = (SyncMute*)module;
 
-		float anglePerTick = 31 / 1.65;
+		float anglePerTick = 32 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
+		int ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
+		float offset = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset : 0.f;
 		
 		Resizable<QuestionableLargeKnob>::draw(args);
 
 		nvgSave(args.vg);
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
+
+		if (ratioRange != 0) {
+			float anglePerRatio = 8 / 1.65;
+			float baseRatio = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].getRawSignatureValue() : 0.f;
+
+			nvgSave(args.vg);
+			nvgRotate(args.vg, nvgDegToRad((baseRatio)*(90.f/anglePerTick)));
+
+			nvgStrokeColor(args.vg, nvgRGB(0, 200, 255));
+			nvgBeginPath(args.vg);
+			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRange)), nvgDegToRad(-90 + (anglePerRatio*ratioRange)), NVG_CW);
+			nvgStrokeWidth(args.vg, 2);
+			nvgStroke(args.vg);
+
+			nvgRotate(args.vg, nvgDegToRad((offset)*(90.f/anglePerTick)));
+			nvgFillColor(args.vg, nvgRGB(0, 200, 255));
+			nvgBeginPath(args.vg);
+			nvgCircle(args.vg, 0, 2.75-box.size.y/2, 1.45);
+			nvgFill(args.vg);
+			nvgRestore(args.vg);
+		}
 
 		for (int i = -15; i < 16; i++) {
 			nvgSave(args.vg);
@@ -340,6 +501,69 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 };
 
+struct OffsetQuantity : QuestionableQuantity {
+
+	OffsetQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
+
+	}
+
+	float getMaxValue() {
+		return 32.f;
+	}
+
+	std::string getLabel() override {
+		return "Ratio Range";
+	}
+
+	std::string getUnit() override {
+		return "";
+	}
+
+	std::string getDisplayValueString() override {
+		float v = getDisplayValue();
+		if (std::isnan(v))
+			return "NaN";
+		return std::to_string((int)getDisplayValue());
+	}
+
+};
+
+struct OpacityQuantity : QuestionableQuantity {
+
+	OpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : QuestionableQuantity(getFunc, setFunc) {
+
+	}
+
+	float getDisplayValue() override {
+		return getValue() * 100;
+	}
+
+	void setDisplayValue(float displayValue) override {
+		setValue(displayValue / 100.f);
+	}
+
+	std::string getLabel() override {
+		return "Light Opacity";
+	}
+
+	std::string getUnit() override {
+		return "%";
+	}
+
+};
+
+struct GlobalOpacityQuantity : OpacityQuantity {
+
+	GlobalOpacityQuantity(quantityGetFunc getFunc, quantitySetFunc setFunc) : OpacityQuantity(getFunc, setFunc) {
+		
+	}
+
+	std::string getLabel() override {
+		return "Global Light Opacity";
+	}
+
+};
+
 struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 	dirtyable<bool> lightState = false;
 	float lightAlpha = 0.f;
@@ -350,11 +574,14 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		if (!module) return;
 		if (layer != 1) return;
 
+		nvgGlobalCompositeBlendFunc(args.vg, NVG_ONE_MINUS_DST_COLOR, NVG_ONE);
+
 		SyncMute* mod = (SyncMute*)module;
 		int sig = mod->mutes[paramId].timeSignature;
+		float opacity = mod->mutes[this->paramId].lightOpacity;
 		
 		if (mod->mutes[paramId].muteState) {
-			nvgFillColor(args.vg, nvgRGB(255, 0, 25));
+			nvgFillColor(args.vg, nvgRGBA(255, 0, 25, opacity * mod->lightOpacity*255));
 			nvgBeginPath(args.vg);
 			nvgCircle(args.vg, box.size.x/2, box.size.y/2, 10.f);
 			nvgFill(args.vg);
@@ -364,7 +591,7 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 
 		lightState = mod->mutes[paramId].shouldSwap && (sig < 0.f ? mod->clockTicksSinceReset%2 : fmod((mod->subClockTime / (mod->clockTime/32)), 2)) < 0.5f;
 
-		if (lightState.isDirty()) lightAlpha = 1.f;
+		if (lightState.isDirty()) lightAlpha = opacity * mod->lightOpacity;
 
 		nvgFillColor(args.vg, nvgRGBA(0, 255, 25, lightAlpha*255));
 		nvgBeginPath(args.vg);
@@ -380,6 +607,21 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 		menu->addChild(createMenuItem("Automatically Press", mod->mutes[this->paramId].autoPress ? "On" : "Off", [=]() {
 			mod->mutes[this->paramId].autoPress = !mod->mutes[this->paramId].autoPress;
 		}));
+
+		menu->addChild(createMenuItem("Soft Transition", mod->mutes[this->paramId].softTransition ? "On" : "Off", [=]() {
+			mod->mutes[this->paramId].softTransition = !mod->mutes[this->paramId].softTransition;
+		}));
+
+		menu->addChild(new QuestionableSlider<OffsetQuantity>(
+			[=]() { return mod->mutes[this->paramId].ratioRange; }, 
+			[=](float value) { mod->mutes[this->paramId].ratioRange = math::clamp(value, 0.f, 32.f); }
+		));
+
+		menu->addChild(new QuestionableSlider<OpacityQuantity>(
+			[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
+			[=](float value) { mod->mutes[this->paramId].lightOpacity = math::clamp(value); }
+		));
+
 		Resizable<QuestionableTimed<QuestionableParam<CKD6>>>::appendContextMenu(menu);
 	}
 
@@ -446,13 +688,25 @@ struct SyncMuteWidget : QuestionableWidget {
 
 		SyncMute* mod = (SyncMute*)module;
 
+		SyncMute* leftExpander = mod->getExpander(true);
+		SyncMute* rightExpander = mod->getExpander(false);
+
+		// check if already controlled, or neighbor is already controlled
+		bool cantControlLeft = mod->isControlledLeft() ? true : leftExpander && leftExpander->isControlledLeft();
+		bool cantControlRight = mod->isControlledRight() ? true : rightExpander && rightExpander->isControlledRight();
+
 		menu->addChild(createMenuItem("Toggle Left Expander", mod->expanderLeft ? "On" : "Off",[=]() {
 			mod->expanderLeft = !mod->expanderLeft;
-		}));
+		}, cantControlLeft));
 
 		menu->addChild(createMenuItem("Toggle Right Expander", mod->expanderRight ? "On" : "Off",[=]() {
 			mod->expanderRight = !mod->expanderRight;
-		}));
+		}, cantControlRight));
+
+		menu->addChild(new QuestionableSlider<GlobalOpacityQuantity>(
+			[=]() { return mod->lightOpacity; }, 
+			[=](float value) { mod->lightOpacity = math::clamp(value); }
+		));
 
 		QuestionableWidget::appendContextMenu(menu);
 
