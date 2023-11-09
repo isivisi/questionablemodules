@@ -134,7 +134,7 @@ template <typename T>
 struct ThreadQueue {
 	std::mutex mut;
 	std::queue<T> queue[2];
-	bool activeQueue = false;
+	std::atomic<bool> activeQueue = false;
 
 	void push(T& obj) {
 		std::lock_guard<std::mutex> guard(mut);
