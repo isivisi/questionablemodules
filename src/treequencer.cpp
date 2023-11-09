@@ -643,6 +643,7 @@ struct Treequencer : QuestionableModule {
 			if (!bounce && prevActiveNode == activeSequence.back() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
 			else if (bounce && prevActiveNode != activeSequence.front() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
 		}
+	}
 
 	void onReset() override {
 		resetActiveNode();
