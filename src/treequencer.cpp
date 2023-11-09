@@ -425,6 +425,7 @@ struct Treequencer : QuestionableModule {
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
 	bool followNodes = false;
+	bool clockInPhasorMode = false;
 	std::string defaultScale = "Minor Pentatonic"; // scale for new node gen
 
 	bool isDirty = true;
@@ -490,16 +491,21 @@ struct Treequencer : QuestionableModule {
 		isDirty = true;
 	}
 
+	enum TrigType {
+		STEP,
+		SEQUENCE,
+	};
+  
 	Treequencer() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configInput(GATE_IN_1, "Gate");
-		configInput(CLOCK, "Clock");
+		configInput(CLOCK, "Clock/Phasor");
 		configInput(RESET, "Reset");
 		configInput(CHANCE_MOD_INPUT, "Chance Mod VC");
 		configInput(BOUNCE_GATE, "Bounce Gate");
 		configInput(HOLD_INPUT, "Hold Gate");
 		configInput(TTYPE_GATE, "Trigger Type Gate");
-		configSwitch(TRIGGER_TYPE, 0.f, 1.f, 0.f, "Trigger Type", {"Step", "Sequence"});
+		configSwitch(TRIGGER_TYPE, TrigType::STEP, TrigType::SEQUENCE, TrigType::STEP, "Trigger Type", {"Step", "Sequence"});
 		configSwitch(BOUNCE, 0.f, 1.f, 0.f, "Bounce", {"Off", "On"});
 		configParam(CHANCE_MOD, -1.f, 1.f, 0.0f, "Chance Mod");
 		configSwitch(HOLD, 0.f, 1.f, 0.f, "Hold", {"Off", "On"});
@@ -610,6 +616,34 @@ struct Treequencer : QuestionableModule {
 		if (!lastBounce && (lastBounce != bouncing)) processSequence();
 	}
 
+	void processPhasorSequence() {
+		bool bounce = params[BOUNCE].getValue();
+		Node* prevActiveNode = nullptr;
+		if (activeNode) {
+			activeNode->enabled = false;
+			prevActiveNode = activeNode;
+		} else {
+			// sequence is broken
+			activeSequence = getWholeSequence(&rootNode);
+			activeNode = &rootNode;
+		}
+
+		size_t position = 0;
+
+		if (bounce) {
+			position = clamp<size_t>(0, (activeSequence.size()-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size()*2);
+			if (position > activeSequence.size()-1) position = (activeSequence.size()-1) - (position - (activeSequence.size()-1)); // reverse
+		} else position = clamp<size_t>(0, activeSequence.size()-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size());
+
+		activeNode = activeSequence[position];
+		activeNode->enabled = true;
+
+		if (prevActiveNode != nullptr) {
+			// assume sequence complete if moved off last node in sequence to first if not bouncing
+			if (!bounce && prevActiveNode == activeSequence.back() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
+			else if (bounce && prevActiveNode != activeSequence.front() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
+		}
+
 	void onReset() override {
 		resetActiveNode();
 		gateTrigger.reset();
@@ -631,6 +665,9 @@ struct Treequencer : QuestionableModule {
 		bool holdSwap = holdTrigger.process(inputs[HOLD_INPUT].getVoltage(), 0.1, 2.f);
 		bool ttypeSwap = typeTrigger.process(inputs[TTYPE_GATE].getVoltage(), 0.1, 2.f);
 		bool bounceSwap = bounceTrigger.process(inputs[BOUNCE_GATE].getVoltage(), 0.1, 2.f);
+
+		// Phasor mode only supports sequence trigger type atm
+		if (clockInPhasorMode && params[TRIGGER_TYPE].getValue() != TrigType::SEQUENCE) params[TRIGGER_TYPE].setValue(TrigType::SEQUENCE);
 
 		lights[TRIGGER_LIGHT].setBrightness(params[TRIGGER_TYPE].getValue());
 		lights[BOUNCE_LIGHT].setBrightness(params[BOUNCE].getValue());
@@ -669,6 +706,12 @@ struct Treequencer : QuestionableModule {
 			pulse.trigger(1e-3f);
 		}
 
+		// Phasor clock mode
+		if (clockInPhasorMode) {
+			processPhasorSequence();
+			pulse.trigger(1e-3f);
+		}
+
 		bool activeP = pulse.process(args.sampleTime);
 		bool sequenceP = sequencePulse.process(args.sampleTime);
 
@@ -689,6 +732,7 @@ struct Treequencer : QuestionableModule {
 		json_object_set_new(rootJ, "noteRepresentation", json_integer(noteRepresentation));
 		json_object_set_new(rootJ, "followNodes", json_boolean(followNodes));
 		json_object_set_new(rootJ, "defaultScale", json_string(defaultScale.c_str()));
+		json_object_set_new(rootJ, "clockInPhasorMode", json_boolean(clockInPhasorMode));
 		json_object_set_new(rootJ, "rootNode", rootNode.toJson());
 
 		return rootJ;
@@ -704,6 +748,7 @@ struct Treequencer : QuestionableModule {
 		if (json_t* cbm = json_object_get(rootJ, "colorMode")) colorMode = json_integer_value(cbm);
 		if (json_t* fn = json_object_get(rootJ, "followNodes")) followNodes = json_boolean_value(fn);
 		if (json_t* ds = json_object_get(rootJ, "defaultScale")) defaultScale = json_string_value(ds);
+		if (json_t* fm = json_object_get(rootJ, "clockInPhasorMode")) clockInPhasorMode = json_boolean_value(fm);
 
 		if (json_t* nr = json_object_get(rootJ, "noteRepresentation")) noteRepresentation = json_integer_value(nr);
 		else noteRepresentation = 0; // preserve previous users visuals
@@ -868,6 +913,23 @@ struct TreequencerFollowButton : TreequencerButton {
 		}
 	}
 
+};
+
+
+template <typename T>
+struct TreequencerClockPhasorComboPort : QuestionablePort<T> {
+	ColorBG* background = nullptr;
+	static_assert(std::is_base_of<PortWidget, T>::value, "T must inherit from PortWidget");
+
+	void appendContextMenu(Menu* menu) override {
+		if (!this->module || !background) return;
+		Treequencer* mod = (Treequencer*)this->module;
+		menu->addChild(createMenuItem(mod->clockInPhasorMode ? "Switch to Clock" : "Switch to Phaser", "", [=]() {
+			mod->clockInPhasorMode = !mod->clockInPhasorMode;
+			background->updateText(3, mod->clockInPhasorMode ? "PHASOR" : "CLOCK");
+		}));
+		QuestionablePort<T>::appendContextMenu(menu);
+	}
 };
 
 struct NodeDisplay : Widget {
@@ -1323,12 +1385,13 @@ struct TreequencerWidget : QuestionableWidget {
 
 	void setText() {
 		NVGcolor c = nvgRGB(255,255,255);
+		Treequencer* mod = module ? ((Treequencer*)module) : nullptr;
 		color->textList.clear();
 		color->addText("TREEQUENCER", "OpenSans-ExtraBold.ttf", c, 14, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, 20));
 		color->addText("·ISI·", "OpenSans-ExtraBold.ttf", c, 28, Vec((MODULE_SIZE * RACK_GRID_WIDTH) / 2, RACK_GRID_HEIGHT-13));
 
 		color->addText("GATE", "OpenSans-Bold.ttf", c, 7, Vec(30.5, 48), "descriptor"); // 38
-		color->addText("CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(69, 48), "descriptor");
+		color->addText(mod ? mod->clockInPhasorMode ? "PHASOR" : "CLOCK" : "CLOCK", "OpenSans-Bold.ttf", c, 7, Vec(69, 48), "descriptor");
 		color->addText("RESET", "OpenSans-Bold.ttf", c, 7, Vec(108, 48), "descriptor");
 
 		color->addText("SEQ COM", "OpenSans-Bold.ttf", c, 7, Vec(261.5, 48), "descriptor");
@@ -1344,7 +1407,7 @@ struct TreequencerWidget : QuestionableWidget {
 		color->addText("UNDO", "OpenSans-Bold.ttf", c, 7, Vec(159.5, 285), "descriptor");
 		color->addText("REDO", "OpenSans-Bold.ttf", c, 7, Vec(184.5, 285), "descriptor");
 		
-		bool isNumber = module ? ((Treequencer*)module)->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
+		bool isNumber = mod ? mod->noteRepresentation != NodeDisplay::NoteRep::LETTERS : true;
 		color->addText(isNumber ? "1" : Scale::getNoteString(0, true), "OpenSans-Bold.ttf", c, 7, Vec(30.5, 353), "descriptor");
 		color->addText(isNumber ? "2" : Scale::getNoteString(1, true), "OpenSans-Bold.ttf", c, 7, Vec(69, 353), "descriptor");
 		color->addText(isNumber ? "3" : Scale::getNoteString(2, true), "OpenSans-Bold.ttf", c, 7, Vec(108, 353), "descriptor");
@@ -1403,7 +1466,8 @@ struct TreequencerWidget : QuestionableWidget {
 		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(10.319f, 10)), module, Treequencer::GATE_IN_1));
-		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
+		addInput(createInputCentered<TreequencerClockPhasorComboPort<PJ301MPort>>(mm2px(Vec(23.336f, 10)), module, Treequencer::CLOCK));
+		((TreequencerClockPhasorComboPort<PJ301MPort>*)getInput(Treequencer::CLOCK))->background = color;
 		addInput(createInputCentered<QuestionablePort<PJ301MPort>>(mm2px(Vec(36.354f, 10)), module, Treequencer::RESET));
 
 		addParam(createLightParamCentered<QuestionableParam<VCVLightLatch<MediumSimpleLight<WhiteLight>>>>(mm2px(Vec(101.441f, 100.f)), module, Treequencer::TRIGGER_TYPE, Treequencer::TRIGGER_LIGHT));
