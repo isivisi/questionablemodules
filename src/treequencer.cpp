@@ -437,6 +437,7 @@ struct Treequencer : QuestionableModule {
 	int noteRepresentation = 2;
 	bool followNodes = false;
 	bool clockInPhasorMode = false;
+	int phasorSteps = 10;
 	std::string defaultScale = "Minor Pentatonic"; // scale for new node gen
 
 	bool isDirty = true;
@@ -632,9 +633,9 @@ struct Treequencer : QuestionableModule {
 		size_t position = 0;
 
 		if (bounce) {
-			position = clamp<size_t>(0, (10-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)10*2);
-			if (position > 10-1) position = (10-1) - (position - (10-1)); // reverse
-		} else position = clamp<size_t>(0, 10-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)10);
+			position = clamp<size_t>(0, (phasorSteps-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)phasorSteps*2);
+			if (position > 10-1) position = (phasorSteps-1) - (position - (phasorSteps-1)); // reverse
+		} else position = clamp<size_t>(0, phasorSteps-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)phasorSteps);
 
 		// create new position if we dont have history for it
 		if (phasorSequence.size()-1 < position) {
@@ -644,7 +645,7 @@ struct Treequencer : QuestionableModule {
 		activeNode = phasorSequence[position];
 		activeNode->enabled = true;
 
-		if (phasorSequence.size() == 10) {
+		if (phasorSequence.size() == phasorSteps) {
 			sequencePulse.trigger(1e-3f);
 		}
 	}
