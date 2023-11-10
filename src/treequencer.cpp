@@ -297,6 +297,17 @@ struct Node {
 
 	}
 
+	Node* getRandomChild(float chanceOffset) {
+		if (children.size() > 1) {
+				float r = randomReal<float>();
+				float chance = std::min(1.f, std::max(0.0f, chance - chanceOffset));
+				return children[r < chance ? 0 : 1];
+			} else {
+				return children[0];
+		}
+		return nullptr;
+	}
+
 	void remove() {
 		if (!parent) return;
 		parent->children.erase(std::find(parent->children.begin(), parent->children.end(), this));
@@ -570,13 +581,7 @@ struct Treequencer : QuestionableModule {
 				sequencePulse.trigger(1e-3f); // signal sequence completed
 			}
 			else {
-				if (activeNode->children.size() > 1) {
-					float r = randomReal<float>();
-					float chance = std::min(1.f, std::max(0.0f, activeNode->chance - getChanceMod()));
-					activeNode = activeNode->children[r < chance ? 0 : 1];
-				} else {
-					activeNode = activeNode->children[0];
-				}
+				activeNode = activeNode->getRandomChild(getChanceMod());
 			}
 		} else {
 			if (activeNode->parent) activeNode = activeNode->parent;
@@ -616,32 +621,31 @@ struct Treequencer : QuestionableModule {
 		if (!lastBounce && (lastBounce != bouncing)) processSequence();
 	}
 
+	std::vector<Node*> phasorSequence;
 	void processPhasorSequence() {
 		bool bounce = params[BOUNCE].getValue();
-		Node* prevActiveNode = nullptr;
 		if (activeNode) {
 			activeNode->enabled = false;
-			prevActiveNode = activeNode;
-		} else {
-			// sequence is broken
-			activeSequence = getWholeSequence(&rootNode);
-			activeNode = &rootNode;
-		}
+			phasorSequence.push_back(activeNode);
+		} else resetActiveNode();
 
 		size_t position = 0;
 
 		if (bounce) {
-			position = clamp<size_t>(0, (activeSequence.size()-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size()*2);
-			if (position > activeSequence.size()-1) position = (activeSequence.size()-1) - (position - (activeSequence.size()-1)); // reverse
-		} else position = clamp<size_t>(0, activeSequence.size()-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)activeSequence.size());
+			position = clamp<size_t>(0, (10-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)10*2);
+			if (position > 10-1) position = (10-1) - (position - (10-1)); // reverse
+		} else position = clamp<size_t>(0, 10-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)10);
 
-		activeNode = activeSequence[position];
+		// create new position if we dont have history for it
+		if (phasorSequence.size()-1 < position) {
+			phasorSequence.push_back(activeNode->getRandomChild(getChanceMod()));
+		}
+
+		activeNode = phasorSequence[position];
 		activeNode->enabled = true;
 
-		if (prevActiveNode != nullptr) {
-			// assume sequence complete if moved off last node in sequence to first if not bouncing
-			if (!bounce && prevActiveNode == activeSequence.back() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
-			else if (bounce && prevActiveNode != activeSequence.front() && activeNode == activeSequence.front()) sequencePulse.trigger(1e-3f); // signal sequence completed
+		if (phasorSequence.size() == 10) {
+			sequencePulse.trigger(1e-3f);
 		}
 	}
 
