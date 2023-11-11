@@ -436,7 +436,7 @@ struct Treequencer : QuestionableModule {
 	int colorMode = userSettings.getSetting<int>("treequencerScreenColor");
 	int noteRepresentation = 2;
 	bool followNodes = false;
-	bool clockInPhasorMode = false;
+	dirtyable<bool> clockInPhasorMode = false;
 	int phasorSteps = 10;
 	std::string defaultScale = "Minor Pentatonic"; // scale for new node gen
 
@@ -625,27 +625,27 @@ struct Treequencer : QuestionableModule {
 	std::vector<Node*> phasorSequence;
 	void processPhasorSequence() {
 		bool bounce = params[BOUNCE].getValue();
-		if (activeNode) {
-			activeNode->enabled = false;
-			phasorSequence.push_back(activeNode);
-		} else resetActiveNode();
-
 		size_t position = 0;
+
+		if (phasorSequence.empty()) {
+			
+			for (size_t i = 0; i < phasorSteps; i++) {
+
+			}
+		}
+
+		if (activeNode) activeNode->enabled = false;
+		else activeNode = &rootNode;
 
 		if (bounce) {
 			position = clamp<size_t>(0, (phasorSteps-1)*2, (inputs[CLOCK].getVoltage() / 10.f) * (float)phasorSteps*2);
 			if (position > 10-1) position = (phasorSteps-1) - (position - (phasorSteps-1)); // reverse
 		} else position = clamp<size_t>(0, phasorSteps-1, (inputs[CLOCK].getVoltage() / 10.f) * (float)phasorSteps);
 
-		// create new position if we dont have history for it
-		if (phasorSequence.size()-1 < position) {
-			phasorSequence.push_back(activeNode->getRandomChild(getChanceMod()));
-		}
-
 		activeNode = phasorSequence[position];
 		activeNode->enabled = true;
 
-		if (phasorSequence.size() == phasorSteps) {
+		if (position == phasorSteps) {
 			sequencePulse.trigger(1e-3f);
 		}
 	}
@@ -712,7 +712,7 @@ struct Treequencer : QuestionableModule {
 		// Phasor clock mode
 		if (clockInPhasorMode) {
 			processPhasorSequence();
-			pulse.trigger(1e-3f);
+			//pulse.trigger(1e-3f);
 		}
 
 		bool activeP = pulse.process(args.sampleTime);
