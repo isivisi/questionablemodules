@@ -245,7 +245,8 @@ struct SyncMute : QuestionableModule {
 		dirtyable<bool> autoPress = false;
 		float lightOpacity = 1.f;
 		bool softTransition = true;
-		float ratioRange = 0;
+		float ratioRangeLeft = 0;
+		float ratioRangeRight = 0;
 
 		float accumulatedTime = 0.f;
 
@@ -256,7 +257,8 @@ struct SyncMute : QuestionableModule {
 		}
 
 		void step(float deltaTime) {
-			timeSignature = getRawSignatureValue() + signatureOffset;
+			float rawSig = getRawSignatureValue();
+			timeSignature = rawSig + signatureOffset;
 			button = module->params[MUTE+paramId].getValue();
 			if (button.isDirty() && button == true) {
 				shouldSwap = !shouldSwap;
@@ -266,6 +268,10 @@ struct SyncMute : QuestionableModule {
 			if (autoPress.isDirty()) module->sendExpanderMessage(ExpanderMessage::buttonAutoPress(module, paramId, autoPress));
 
 			bool clockHit = false;
+
+			// keep ratio ranges within limits
+			ratioRangeLeft = math::clamp(ratioRangeLeft, 0.f, 32.f - (rawSig < 0 ? abs(rawSig) : 0));
+			ratioRangeRight = math::clamp(ratioRangeRight, 0.f, 32.f - (rawSig > 0 ? abs(rawSig) : 0));
 
 			// on clock
 			if (timeSignature < 0.f) {
@@ -289,7 +295,8 @@ struct SyncMute : QuestionableModule {
 				muteState = !muteState;
 				shouldSwap = false;
 				// if range specified, randomly offset ratio
-				if (ratioRange) signatureOffset = randomInt(-(int)ratioRange, (int)ratioRange);
+				if (ratioRangeLeft || ratioRangeRight) signatureOffset = randomInt(-(int)ratioRangeLeft, (int)ratioRangeRight);
+				else signatureOffset = 0;
 			}
 
 			if (timeSignature != 0 && autoPress && clockHit) shouldSwap = true; // auto press on clock option
@@ -311,7 +318,8 @@ struct SyncMute : QuestionableModule {
 			json_object_set_new(rootJ, "autoPress", json_boolean(autoPress));
 			json_object_set_new(rootJ, "lightOpacity", json_real(lightOpacity));
 			json_object_set_new(rootJ, "softTransition", json_boolean(softTransition));
-			json_object_set_new(rootJ, "ratioRange", json_integer(ratioRange));
+			json_object_set_new(rootJ, "ratioRangeLeft", json_integer(ratioRangeLeft));
+			json_object_set_new(rootJ, "ratioRangeRight", json_integer(ratioRangeRight));
 			return rootJ;
 		}
 
@@ -320,7 +328,8 @@ struct SyncMute : QuestionableModule {
 			if (json_t* v = json_object_get(json, "autoPress")) autoPress = json_boolean_value(v);
 			if (json_t* l = json_object_get(json, "lightOpacity")) lightOpacity = json_real_value(l);
 			if (json_t* s = json_object_get(json, "softTransition")) softTransition = json_boolean_value(s);
-			if (json_t* r = json_object_get(json, "ratioRange")) ratioRange = json_integer_value(r);
+			if (json_t* l = json_object_get(json, "ratioRangeLeft")) ratioRangeLeft = json_integer_value(l);
+			if (json_t* r = json_object_get(json, "ratioRangeRight")) ratioRangeRight = json_integer_value(r);
 		}
 	};
 
@@ -436,8 +445,9 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		if (!module) return;
 		SyncMute* mod = (SyncMute*)module;
 		ParamQuantity* pq = getParamQuantity();
-		int range = (int)mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange;
-		if (pq && range) pq->description = "offset: " + std::to_string(mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset);
+		int rangeL = (int)mod->mutes[paramId - SyncMute::TIME_SIG].ratioRangeLeft;
+		int rangeR = (int)mod->mutes[paramId - SyncMute::TIME_SIG].ratioRangeRight;
+		if (pq && (rangeL || rangeR)) pq->description = "offset: " + std::to_string(mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset);
 	}
 
 	void draw(const DrawArgs &args) override {
@@ -446,7 +456,8 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 		float anglePerTick = 32 / 1.65;
 
 		float sig = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].timeSignature : 0.f;
-		int ratioRange = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRange : 0.f;
+		int ratioRangeL = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRangeLeft : 0.f;
+		int ratioRangeR = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].ratioRangeRight : 0.f;
 		float offset = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].signatureOffset : 0.f;
 		
 		Resizable<QuestionableLargeKnob>::draw(args);
@@ -455,7 +466,7 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 		nvgTranslate(args.vg, box.size.x/2, box.size.y/2);
 
-		if (ratioRange != 0) {
+		if (ratioRangeL != 0 || ratioRangeR != 0) {
 			float anglePerRatio = 8 / 1.65;
 			float baseRatio = mod ? mod->mutes[paramId - SyncMute::TIME_SIG].getRawSignatureValue() : 0.f;
 
@@ -464,7 +475,13 @@ struct ClockKnob : Resizable<QuestionableLargeKnob> {
 
 			nvgStrokeColor(args.vg, nvgRGB(0, 200, 255));
 			nvgBeginPath(args.vg);
-			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRange)), nvgDegToRad(-90 + (anglePerRatio*ratioRange)), NVG_CW);
+			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90 - (anglePerRatio*ratioRangeL)), nvgDegToRad(-90), NVG_CW);
+			nvgStrokeWidth(args.vg, 2);
+			nvgStroke(args.vg);
+
+			nvgStrokeColor(args.vg, nvgRGB(0, 200, 255));
+			nvgBeginPath(args.vg);
+			nvgArc(args.vg, 0, 0, 13.f, nvgDegToRad(-90), nvgDegToRad(-90 + (anglePerRatio*ratioRangeR)), NVG_CW);
 			nvgStrokeWidth(args.vg, 2);
 			nvgStroke(args.vg);
 
@@ -514,10 +531,6 @@ struct OffsetQuantity : QuestionableQuantity {
 		return 32.f;
 	}
 
-	std::string getLabel() override {
-		return "Ratio Range";
-	}
-
 	std::string getUnit() override {
 		return "";
 	}
@@ -529,6 +542,20 @@ struct OffsetQuantity : QuestionableQuantity {
 		return std::to_string((int)getDisplayValue());
 	}
 
+};
+
+struct OffsetQuantityLeft : OffsetQuantity {
+	OffsetQuantityLeft(quantityGetFunc getFunc, quantitySetFunc setFunc) : OffsetQuantity(getFunc, setFunc) {
+
+	}
+	std::string getLabel() override { return "Range Left"; }
+};
+
+struct OffsetQuantityRight : OffsetQuantity {
+	OffsetQuantityRight(quantityGetFunc getFunc, quantitySetFunc setFunc) : OffsetQuantity(getFunc, setFunc) {
+
+	}
+	std::string getLabel() override { return "Range Right"; }
 };
 
 struct OpacityQuantity : QuestionableQuantity {
@@ -615,10 +642,19 @@ struct MuteButton : Resizable<QuestionableTimed<QuestionableParam<CKD6>>> {
 			mod->mutes[this->paramId].softTransition = !mod->mutes[this->paramId].softTransition;
 		}));
 
-		menu->addChild(new QuestionableSlider<OffsetQuantity>(
-			[=]() { return mod->mutes[this->paramId].ratioRange; }, 
-			[=](float value) { mod->mutes[this->paramId].ratioRange = math::clamp(value, 0.f, 32.f); }
-		));
+
+		menu->addChild(createSubmenuItem("Random Ratio Ranges", "", [=](ui::Menu* menu) {
+			float rawSig = mod->mutes[this->paramId].getRawSignatureValue();
+			menu->addChild(new QuestionableSlider<OffsetQuantityLeft>(
+				[=]() { return mod->mutes[this->paramId].ratioRangeLeft; }, 
+				[=](float value) { mod->mutes[this->paramId].ratioRangeLeft = math::clamp(value, 0.f, 32.f - (rawSig < 0 ? abs(rawSig) : 0)); }
+			));
+
+			menu->addChild(new QuestionableSlider<OffsetQuantityRight>(
+				[=]() { return mod->mutes[this->paramId].ratioRangeRight; }, 
+				[=](float value) { mod->mutes[this->paramId].ratioRangeRight = math::clamp(value, 0.f, 32.f - (rawSig > 0 ? abs(rawSig) : 0)); }
+			));
+		}));
 
 		menu->addChild(new QuestionableSlider<OpacityQuantity>(
 			[=]() { return mod->mutes[this->paramId].lightOpacity; }, 
