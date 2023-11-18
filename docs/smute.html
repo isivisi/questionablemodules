@@ -77,11 +77,17 @@
               <h3>Auto pressing</h3>
               <p id="Auto Pressing"> You can set a button to automatically press by using the <span class="fw-bold">Automatically Press</span> option in the buttons context menu. The automatic pressing will begin when the clock ratio is hit. The row will then cycle on and off until the end of time... or until you disable it.</p>
               
+              <h3>Soft/Hard Transitions</h3>
+              <p id="Transitions">You can disable soft transitions per mute in the corresponding buttons context menu.</p>
+              
+              <h3>Random Ratio Range</h3>
+              <p id="Random Ratio">In the buttons context menu you can enable a randomized range value by changing the ratio range slider. This value is relative to the set ratio and only will switch the ratio after a mute is actually triggered.</p>
+
               <h3>Expanders</h3>
               <p id="Expanders"> Smute can expand another Smute module beside it, this sends the button presses, clock, and reset values to the other smute module. This can be enabled via the <span class="fw-bold">Toggle {Left,Right} Expander</span> option in the modules context menu. This is useful for syncing <span class="fw-bold">stereo</span> signals.</p>
               <img src="./images/smuteexpander.svg" width="100%"/>
               <p> Clock, reset, and button information can travel through many connected modules unidirectionally. A connected clock signal is prioritized over one from an incoming Smute.</p>
-              <p class="alert alert-info"> <span class="fw-bold">Note:</span> Smutes cannot control another Smute that is already controlling it. Trying to do so will just disable the functionality.</p>
+              <p class="alert alert-info"> <span class="fw-bold">Note:</span> Smutes cannot control another Smute that is already directly controlling it.</p>
 
               <div style="min-height: 0px"></div> <!-- Spacer -->
             </div>
