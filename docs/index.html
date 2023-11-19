@@ -4,6 +4,9 @@
     <head>
 
       <link href="./style.css" rel="stylesheet">
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+      <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@700&amp;display=swap" rel="stylesheet">
       <link href="./bootstrap/bootstrap.min.css" rel="stylesheet">
       <script src="./bootstrap/bootstrap.min.js"></script>
       <script src="./script.js"></script>
@@ -47,6 +50,10 @@
 
       body {
         background-color: rgb(37, 40, 46);
+      }
+
+      .bg-darkgrey {
+        background-color: rgb(14, 15, 17);
       }
     </style>
 
@@ -165,10 +172,19 @@
 
         </div>
 
+        <div class="w-100 bg-darkgrey">
+          <footer class="container pb-5 pt-5 text-white bg-darkgrey">
+            <div class="d-flex justify-content-between py-4 my-4">
+              <div class=""> <span style="font-family: 'Open Sans', sans-serif;">ISIVISI</span> © <span id="year">2023</span></div>
+              <!--<a href="https://isivisi.ca"><button class="btn btn-light btn-md" type="button"><span style="font-family: 'Open Sans', sans-serif;">ISIVISI</span>.CA</button></a>-->
+            </div>
+          </footer>
+        </div>
 
     </body>
 
     <script>
+      document.getElementById("year").innerHTML = new Date().getFullYear() 
       var version = document.getElementById("version")
       version.innerHTML = DocVersion
     </script>
