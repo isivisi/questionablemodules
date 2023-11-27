@@ -700,7 +700,7 @@ struct GreenscreenWidget : QuestionableWidget {
 			mod->showInputs = !mod->showInputs;
 		}));
 
-		menu->addChild(createMenuItem("Toggle Shadow", mod->hasShadow ? "On" : "Off",[=]() {
+		menu->addChild(createMenuItem("Toggle VCV Shadow", mod->hasShadow ? "On" : "Off",[=]() {
 			mod->hasShadow = !mod->hasShadow;
 		}));
 
