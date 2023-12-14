@@ -33,8 +33,6 @@ const float VECLENGTH = 65.f;
 
 const float HALF_SEMITONE = 1.029302;
 
-bool reading = false;
-
 struct QuatOSC : QuestionableModule {
 	enum ParamId {
 		VOCT1_OCT,
@@ -89,6 +87,8 @@ struct QuatOSC : QuestionableModule {
 		FULL,
 		SIDES
 	};
+
+	std::atomic<bool> reading = false;
 
 	std::unordered_map<std::string, gmtl::Vec3f> projectionPlanes = {
 		{"X", gmtl::Vec3f{0.f, 1.f, 1.f}},
@@ -523,13 +523,13 @@ struct QuatDisplay : Widget {
 		float zInf = module->getValue(QuatOSC::Z_POS_I_PARAM, true);
 
 		if (layer == 1) {
-			reading = true;
+			module->reading = true;
 			for (int i = 0; i < module->getSpread(); i++) {
 				drawHistory(args.vg, module->pointSamples[i].x, nvgRGBA(15, 250, 15, xInf*255), history[i].x);
 				drawHistory(args.vg, module->pointSamples[i].y, nvgRGBA(250, 250, 15, yInf*255), history[i].y);
 				drawHistory(args.vg, module->pointSamples[i].z, nvgRGBA(15, 250, 250, zInf*255), history[i].z);
 			}
-			reading = false;
+			module->reading = false;
 		}
 
 		nvgRestore(args.vg);
