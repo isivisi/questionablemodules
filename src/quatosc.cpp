@@ -386,10 +386,6 @@ struct QuatOSC : QuestionableModule {
 			}
 		}
 
-		// normalize left right channels 
-        float diff = abs(outputs[OUT].getVoltage() - outputs[OUT2].getVoltage());
-        outputs[OUT].setVoltage(outputs[OUT].getVoltage() + (diff/2));
-		outputs[OUT2].setVoltage(outputs[OUT].getVoltage() - (diff/2));
 	}
 
 	float audioMinima = 0.f;
