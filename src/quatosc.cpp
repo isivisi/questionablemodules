@@ -236,7 +236,7 @@ struct QuatOSC : QuestionableModule {
 		float voctFreq = calcVOctFreq(voct);
 
 		double time = ((args.frame/args.sampleRate) - syncClockOffset);
-        double perfectPhase = (voctFreq * time);
+        double perfectPhase = (voctFreq * time) + frequency;
         perfectPhase -= trunc(perfectPhase);
         double phaseErr = perfectPhase - phase;
         phase += phaseErr * args.sampleTime * 5;
@@ -292,19 +292,6 @@ struct QuatOSC : QuestionableModule {
 
 	void processUndersampled(const ProcessArgs& args) override {
 
-		if (oct1Connected != inputs[VOCT].isConnected()) {
-			oct1Connected = inputs[VOCT].isConnected();
-			resetPhase(true);
-		}
-		if (oct2Connected != inputs[VOCT2].isConnected()) {
-			oct2Connected = inputs[VOCT2].isConnected();
-			resetPhase(true);
-		}
-		if (oct3Connected != inputs[VOCT3].isConnected()) {
-			oct3Connected = inputs[VOCT3].isConnected();
-			resetPhase(true);
-		}
-
 		// clock stuff from lfo
 		if (inputs[CLOCK_INPUT].isConnected()) {
 			clockTimer.process(args.sampleTime);
@@ -321,9 +308,9 @@ struct QuatOSC : QuestionableModule {
 
 		// quat rotation from lfos
 		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
-			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args, VOCT))), 
-			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args, VOCT2))), 
-			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args, VOCT3)))
+			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.8364f, args, VOCT))), 
+			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.435f, args, VOCT2))), 
+			(getValue(VOCT3) < 0) ? 0.95 : getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.3234f, args, VOCT3)))
 		));
 		gmtl::normalize(rotOffset);
 
