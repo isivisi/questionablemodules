@@ -322,7 +322,7 @@ struct QuatOSC : QuestionableModule {
 			rotOffset = gmtl::makePure(gmtl::Vec3f(
 				getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.8364f, args, VOCT))), 
 				getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.435f, args, VOCT2))), 
-				(getValue(VOCT3) < 0) ? 0.65 : getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.3234f, args, VOCT3)))
+				(getValue(VOCT3) < 0) ? 0.95 : getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.3234f, args, VOCT3)))
 			));
 		}
 		gmtl::normalize(rotOffset);
