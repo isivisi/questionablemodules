@@ -230,11 +230,18 @@ struct QuatOSC : QuestionableModule {
 		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
 	}
 
-	inline float processLFO(float &phase, float frequency, float deltaTime, int voct = -1) {
+	float syncClockOffset = 0.f;
 
+	inline float processLFO(float &phase, float frequency, const ProcessArgs& args, int voct = -1) {
 		float voctFreq = calcVOctFreq(voct);
 
-		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * deltaTime;
+		double time = ((args.frame/args.sampleRate) - syncClockOffset);
+        double perfectPhase = (voctFreq * time);
+        perfectPhase -= trunc(perfectPhase);
+        double phaseErr = perfectPhase - phase;
+        phase += phaseErr * args.sampleTime * 5;
+
+		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * args.sampleTime;
 		phase -= trunc(phase);
 
 		return sin(2.f * M_PI * phase);
@@ -314,9 +321,9 @@ struct QuatOSC : QuestionableModule {
 
 		// quat rotation from lfos
 		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
-			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args.sampleTime, VOCT))), 
-			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args.sampleTime, VOCT2))), 
-			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args.sampleTime, VOCT3)))
+			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.f, args, VOCT))), 
+			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.f, args, VOCT2))), 
+			getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.f, args, VOCT3)))
 		));
 		gmtl::normalize(rotOffset);
 
@@ -335,9 +342,9 @@ struct QuatOSC : QuestionableModule {
 		gmtl::normalize(sphereQuat);
 
 		//dephase
-		lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
-		lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
-		lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
+		//lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
+		//lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
+		//lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
 
 		// spread polyphonic logic
 		int spread = getSpread();
