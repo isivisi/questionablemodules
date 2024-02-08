@@ -242,7 +242,7 @@ struct QuatOSC : QuestionableModule {
 			double perfectPhase = (voctFreq * time) + frequency;
 			perfectPhase -= trunc(perfectPhase);
 			double phaseErr = perfectPhase - phase;
-			phase += phaseErr * args.sampleTime * 50;
+			phase += phaseErr * args.sampleTime * 25;
 		}
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * args.sampleTime;
