@@ -49,6 +49,7 @@ struct QuatOSC : QuestionableModule {
 		Z_POS_I_PARAM,
 		STEREO,
 		SPREAD,
+		DEPHASE,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -173,8 +174,9 @@ struct QuatOSC : QuestionableModule {
 		configSwitch(VOCT1_OCT, -1.f, 8.f, 0.f, "VOct 1 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT2_OCT, -1.f, 8.f, 6.f, "VOct 2 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT3_OCT, -1.f, 8.f, -1.f, "VOct 3 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(STEREO, 0.f, 2.f, 0.f, "Stereo", {"Mono", "Full Stereo", "Sides"});
+		configSwitch(STEREO, 0.f, 2.f, 1.f, "Stereo", {"Mono", "Full Stereo", "Sides"});
 		configSwitch(SPREAD, 1.f, 16.f, 1.f, "Spread", {"Off", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
+		configSwitch(DEPHASE, 0.f, 1.f, 0.f, "Dephase Algorithm", {"Old", "New"});
 		configInput(VOCT, "VOct");
 		configInput(VOCT2, "VOct 2");
 		configInput(VOCT3, "VOct 3");
@@ -226,7 +228,7 @@ struct QuatOSC : QuestionableModule {
 
 	inline float calcVOctFreq(int input) {
 		float voctOffset = quantizedVOCT[input] ? std::round(getValue(input)) : getValue(input);
-		if (voctOffset < 0.f) return 1.f;
+		if (voctOffset < 0.f) return params[DEPHASE].getValue() == 0.f ? 1.f : 0.f;
 		return HALF_SEMITONE * (clockFreq / 2.f) * dsp::approxExp2_taylor5((inputs[input].getVoltage() + voctOffset) + 30.f) / std::pow(2.f, 30.f);
 	}
 
@@ -235,11 +237,13 @@ struct QuatOSC : QuestionableModule {
 	inline float processLFO(float &phase, float frequency, const ProcessArgs& args, int voct = -1) {
 		float voctFreq = calcVOctFreq(voct);
 
-		double time = ((args.frame/args.sampleRate) - syncClockOffset);
-        double perfectPhase = (voctFreq * time) + frequency;
-        perfectPhase -= trunc(perfectPhase);
-        double phaseErr = perfectPhase - phase;
-        phase += phaseErr * args.sampleTime * 50;
+		if (params[DEPHASE].getValue() == 1.f) { // new dephase
+			double time = ((args.frame/args.sampleRate) - syncClockOffset);
+			double perfectPhase = (voctFreq * time) + frequency;
+			perfectPhase -= trunc(perfectPhase);
+			double phaseErr = perfectPhase - phase;
+			phase += phaseErr * args.sampleTime * 50;
+		}
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * args.sampleTime;
 		phase -= trunc(phase);
@@ -291,6 +295,7 @@ struct QuatOSC : QuestionableModule {
 	}
 
 	void processUndersampled(const ProcessArgs& args) override {
+		gmtl::Quatf rotOffset;
 
 		// clock stuff from lfo
 		if (inputs[CLOCK_INPUT].isConnected()) {
@@ -307,11 +312,19 @@ struct QuatOSC : QuestionableModule {
 		} else clockFreq = 2.f;
 
 		// quat rotation from lfos
-		gmtl::Quatf rotOffset = gmtl::makePure(gmtl::Vec3f(
-			getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.8364f, args, VOCT))), 
-			getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.435f, args, VOCT2))), 
-			(getValue(VOCT3) < 0) ? 0.95 : getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.3234f, args, VOCT3)))
-		));
+		if (params[DEPHASE].getValue() == 0.f) {
+			rotOffset = gmtl::makePure(gmtl::Vec3f(
+				getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0, args, VOCT))), 
+				getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0, args, VOCT2))), 
+				getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0, args, VOCT3)))
+			));
+		} else {
+			rotOffset = gmtl::makePure(gmtl::Vec3f(
+				getValue(X_FLO_I_PARAM, true)  * ((processLFO(lfo1Phase, 0.8364f, args, VOCT))), 
+				getValue(Y_FLO_I_PARAM, true)  * ((processLFO(lfo2Phase, 0.435f, args, VOCT2))), 
+				(getValue(VOCT3) < 0) ? 0.65 : getValue(Z_FLO_I_PARAM, true)  * ((processLFO(lfo3Phase, 0.3234f, args, VOCT3)))
+			));
+		}
 		gmtl::normalize(rotOffset);
 
 		// quat constant rotation addition
@@ -329,9 +342,11 @@ struct QuatOSC : QuestionableModule {
 		gmtl::normalize(sphereQuat);
 
 		//dephase
-		//lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
-		//lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
-		//lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
+		if (params[DEPHASE].getValue() == 0.f) { // old style
+			lfo1Phase = smoothDephase(0, lfo1Phase, args.sampleTime);
+			lfo2Phase = smoothDephase(0, lfo2Phase, args.sampleTime);
+			lfo3Phase = smoothDephase(0, lfo3Phase, args.sampleTime);
+		}
 
 		// spread polyphonic logic
 		int spread = getSpread();
@@ -770,6 +785,11 @@ struct QuatOSCWidget : QuestionableWidget {
 			menu->addChild(createMenuItem("Z", mod->projection == "Z" ? "•" : "", [=]() { mod->projection = "Z"; }));
 		}));
 		menu->addChild(createMenuItem(mod->normalizeSpreadVolume ? "Disable Spread Volume Normalization" : "Enable Spread Volume Normalization", "",[=]() { mod->normalizeSpreadVolume = !mod->normalizeSpreadVolume; }));
+		
+		menu->addChild(rack::createSubmenuItem("Dephase Algorithm", "", [=](ui::Menu* menu) {
+			menu->addChild(createMenuItem("Old", mod->params[QuatOSC::DEPHASE].getValue() == 0.f ? "•" : "",[=]() { mod->params[QuatOSC::DEPHASE].setValue(0.f); }));
+			menu->addChild(createMenuItem("New", mod->params[QuatOSC::DEPHASE].getValue() == 1.f ? "•" : "", [=]() { mod->params[QuatOSC::DEPHASE].setValue(1.f); }));
+		}));
 
 		QuestionableWidget::appendContextMenu(menu);
 	}
