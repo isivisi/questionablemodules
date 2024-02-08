@@ -172,7 +172,7 @@ struct QuatOSC : QuestionableModule {
 		configParam(Z_POS_I_PARAM, 0.f, 1.f, 1.f, "Z Position Influence");
 		configSwitch(VOCT1_OCT, -1.f, 8.f, 0.f, "VOct 1 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(VOCT2_OCT, -1.f, 8.f, 6.f, "VOct 2 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
-		configSwitch(VOCT3_OCT, -1.f, 8.f, 0.f, "VOct 3 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
+		configSwitch(VOCT3_OCT, -1.f, 8.f, -1.f, "VOct 3 Octave", {"Off", "1", "2", "3", "4", "5", "6", "7", "8"});
 		configSwitch(STEREO, 0.f, 2.f, 0.f, "Stereo", {"Mono", "Full Stereo", "Sides"});
 		configSwitch(SPREAD, 1.f, 16.f, 1.f, "Spread", {"Off", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
 		configInput(VOCT, "VOct");
@@ -239,7 +239,7 @@ struct QuatOSC : QuestionableModule {
         double perfectPhase = (voctFreq * time) + frequency;
         perfectPhase -= trunc(perfectPhase);
         double phaseErr = perfectPhase - phase;
-        phase += phaseErr * args.sampleTime * 5;
+        phase += phaseErr * args.sampleTime * 50;
 
 		phase += ((frequency) + (voct != -1 ? voctFreq : 0.f)) * args.sampleTime;
 		phase -= trunc(phase);
@@ -370,7 +370,15 @@ struct QuatOSC : QuestionableModule {
 				outputs[OUT2].setVoltage(outputs[OUT].getVoltage(i), i);
 			}
 		}
+
+		// normalize left right channels 
+        float diff = abs(outputs[OUT].getVoltage() - outputs[OUT2].getVoltage());
+        outputs[OUT].setVoltage(outputs[OUT].getVoltage() + (diff/2));
+		outputs[OUT2].setVoltage(outputs[OUT].getVoltage() - (diff/2));
 	}
+
+	float audioMinima = 0.f;
+	float audioMaxima = 0.f;
 
 	json_t* dataToJson() override {
 		json_t* nodeJ = QuestionableModule::dataToJson();
