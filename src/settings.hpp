@@ -29,8 +29,14 @@ struct UserSettings {
 	std::string settingFileName;
 	json_t* settingCache = nullptr;
 
+	std::function<json_t*(json_t*)> initFunction = nullptr;
+	const std::function<json_t*(json_t*)>* migrations = nullptr;
+
 	UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction, const std::function<json_t*(json_t*)>* migrations) {
 		settingFileName = fn;
+
+		this->initFunction = initFunction;
+		this->migrations = migrations;
 
 		if (initFunction) {
 			json_t* json = readSettings();
@@ -154,18 +160,41 @@ struct UserSettings {
 
 	json_t * readSettings() {
 		if (!settingCache) {
-			std::string settingsFilename = asset::user(settingFileName);
-			FILE *file = fopen(settingsFilename.c_str(), "r");
-			if (!file) {
-				return json_object();
+			try {
+				std::string settingsFilename = asset::user(settingFileName);
+				FILE *file = fopen(settingsFilename.c_str(), "r");
+				if (!file) {
+					return json_object();
+				}
+				
+				json_error_t error;
+				json_t *rootJ = json_loadf(file, 0, &error);
+				
+				fclose(file);
+				
+				if (!rootJ) {
+					json_t* newJ = json_object();
+					UserSettings::json_create_if_not_exists(newJ, "settingsVersion", json_integer(settingsVersion));
+					if (migrations) newJ = runMigrations(newJ, migrations);
+					newJ = initFunction(newJ);
+					saveSettings(newJ);
+					settingCache = newJ;
+					return newJ;
+				}
+
+				settingCache = rootJ;
+				return rootJ;
+			} catch (const std::exception& e) {
+				json_t* newJ = json_object();
+
+				UserSettings::json_create_if_not_exists(newJ, "settingsVersion", json_integer(settingsVersion));
+				if (migrations) newJ = runMigrations(newJ, migrations);
+				newJ = initFunction(newJ);
+				saveSettings(newJ);
+
+				settingCache = newJ;
+				return newJ;
 			}
-			
-			json_error_t error;
-			json_t *rootJ = json_loadf(file, 0, &error);
-			
-			fclose(file);
-			settingCache = rootJ;
-			return rootJ;
 		} else return settingCache;
 	}
 
