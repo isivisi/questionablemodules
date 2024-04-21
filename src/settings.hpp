@@ -29,8 +29,14 @@ struct UserSettings {
 	std::string settingFileName;
 	json_t* settingCache = nullptr;
 
+	std::function<json_t*(json_t*)> initFunction = nullptr;
+	const std::function<json_t*(json_t*)>* migrations = nullptr;
+
 	UserSettings(std::string fn, std::function<json_t*(json_t*)> initFunction, const std::function<json_t*(json_t*)>* migrations) {
 		settingFileName = fn;
+
+		this->initFunction = initFunction;
+		this->migrations = migrations;
 
 		if (initFunction) {
 			json_t* json = readSettings();
@@ -159,13 +165,19 @@ struct UserSettings {
 			if (!file) {
 				return json_object();
 			}
-			
+				
 			json_error_t error;
 			json_t *rootJ = json_loadf(file, 0, &error);
-			
+				
 			fclose(file);
+				
+			if (!rootJ) {
+				return json_object();
+			}
+
 			settingCache = rootJ;
 			return rootJ;
+			
 		} else return settingCache;
 	}
 
