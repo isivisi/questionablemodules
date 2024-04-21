@@ -160,41 +160,30 @@ struct UserSettings {
 
 	json_t * readSettings() {
 		if (!settingCache) {
-			try {
-				std::string settingsFilename = asset::user(settingFileName);
-				FILE *file = fopen(settingsFilename.c_str(), "r");
-				if (!file) {
-					return json_object();
-				}
+			std::string settingsFilename = asset::user(settingFileName);
+			FILE *file = fopen(settingsFilename.c_str(), "r");
+			if (!file) {
+				return json_object();
+			}
 				
-				json_error_t error;
-				json_t *rootJ = json_loadf(file, 0, &error);
+			json_error_t error;
+			json_t *rootJ = json_loadf(file, 0, &error);
 				
-				fclose(file);
+			fclose(file);
 				
-				if (!rootJ) {
-					json_t* newJ = json_object();
-					UserSettings::json_create_if_not_exists(newJ, "settingsVersion", json_integer(settingsVersion));
-					if (migrations) newJ = runMigrations(newJ, migrations);
-					newJ = initFunction(newJ);
-					saveSettings(newJ);
-					settingCache = newJ;
-					return newJ;
-				}
-
-				settingCache = rootJ;
-				return rootJ;
-			} catch (const std::exception& e) {
+			if (!rootJ) {
 				json_t* newJ = json_object();
-
 				UserSettings::json_create_if_not_exists(newJ, "settingsVersion", json_integer(settingsVersion));
 				if (migrations) newJ = runMigrations(newJ, migrations);
 				newJ = initFunction(newJ);
 				saveSettings(newJ);
-
 				settingCache = newJ;
 				return newJ;
 			}
+
+			settingCache = rootJ;
+			return rootJ;
+			
 		} else return settingCache;
 	}
 
