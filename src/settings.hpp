@@ -172,13 +172,7 @@ struct UserSettings {
 			fclose(file);
 				
 			if (!rootJ) {
-				json_t* newJ = json_object();
-				UserSettings::json_create_if_not_exists(newJ, "settingsVersion", json_integer(settingsVersion));
-				if (migrations) newJ = runMigrations(newJ, migrations);
-				newJ = initFunction(newJ);
-				saveSettings(newJ);
-				settingCache = newJ;
-				return newJ;
+				return json_object();
 			}
 
 			settingCache = rootJ;
