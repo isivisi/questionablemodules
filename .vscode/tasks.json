@@ -51,7 +51,7 @@
             "options": {
                 "cwd": "${workspaceRoot}",
                 "env":{
-                    "RACK_DIR": "../Rack-SDK"
+                    "RACK_DIR": "../Rack"
                 }
             },
             "group": {

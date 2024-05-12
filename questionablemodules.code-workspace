@@ -6,7 +6,7 @@
 		},
 		{
 			"name": "VCVRack",
-			"path": "../Rack-SDK/"
+			"path": "../Rack/"
 		}
 	],
 	"extensions": {

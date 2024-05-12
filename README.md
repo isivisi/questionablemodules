@@ -30,5 +30,17 @@ Modules for [VCV Rack](https://github.com/VCVRack/Rack)
 ## Pulling source
 ```
 git clone git@github.com:isivisi/questionablemodules.git
+cd ./questionablemodules
 git submodule update --init --recursive
+```
+
+## Debugging
+
+``` 
+git clone https://github.com/VCVRack/Rack.git
+cd ./Rack
+git submodule update --init --recursive
+make deps
+make
+# Remove $(STRIP) -s dist/"$(SLUG)"/$(TARGET) from plugin.mk
 ```

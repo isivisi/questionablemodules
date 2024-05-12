@@ -29,8 +29,8 @@
             "name": "Build Program (Linux)",
             "preLaunchTask": "BuildLinApp",
             "launchCompleteCommand": "exec-run",
-            "program": "/usr/bin/vcvrack",
-            "cwd": "${workspaceFolder}",
+            "program": "../Rack/Rack",
+            "cwd": "${workspaceFolder}/../Rack",
             "type":"cppdbg",
             "linux": {
                 "MIMode": "gdb",
@@ -42,8 +42,8 @@
             "request": "launch",
             "name": "(debug) Build Program (Linux)",
             "preLaunchTask": "BuildLinApp",
-            "program": "/usr/bin/vcvrack",
-            "cwd": "${workspaceFolder}",
+            "program": "../Rack/Rack",
+            "cwd": "${workspaceFolder}/../Rack",
             "miDebuggerPath": "/usr/bin/gdb",
             "MIMode": "gdb",
             "type":"cppdbg"
