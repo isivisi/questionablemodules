@@ -182,7 +182,7 @@ struct SyncMute : QuestionableModule {
 
 	SyncMute* getExpander(bool left) {
 		Module* expander = left ? getLeftExpander().module : getRightExpander().module;
-		if (expander != nullptr && expander->model == this->model) return (SyncMute*)expander;
+		if (expander != nullptr && expander->model == this->model) return reinterpret_cast<SyncMute*>(expander);
 		return nullptr;
 	}
 
