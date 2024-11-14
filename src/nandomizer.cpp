@@ -110,7 +110,7 @@ struct Nandomizer : QuestionableModule {
 		for (int i = 0; i < MAX_INPUTS; i++) {
 			if (inputs[i].isConnected()) {
 				usableInputs.push_back(i);
-				lights[i].setBrightness(1.f);
+				lights[i].setBrightness(activeOutput == i ? 1.f : 0.25f);
 			} else {
 				lights[i].setBrightness(0.f);
 			}
