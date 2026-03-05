@@ -8,6 +8,8 @@ jobs:
       runs-on: ubuntu-latest
       steps:
       - uses: actions/setup-go@v6
+        with:
+          check-latest: true
       - name: Check out this repo
         uses: actions/checkout@v2
         with:
