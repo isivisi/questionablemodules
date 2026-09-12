@@ -9,7 +9,7 @@ jobs:
       steps:
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version: '1.26'
       - name: Check out this repo
         uses: actions/checkout@v2
         with:
